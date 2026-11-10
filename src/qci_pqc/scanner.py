@@ -386,7 +386,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         expanded = re.sub(rf"\b{name}\b", val, expanded)
                     m = re.search(r"(?:key_size|KEY_BITS|keyBits|initialize)\s*[=(]\s*(\d{3,5})", expanded)
                     if m and family in {"RSA", "DSA", "ECDSA", "DH"}:
-                        param = f"{family}-{m.group(1)}"
+                        param = m.group(1)
                     curve = re.search(r"SECP(256|384|521)R1|prime256v1|secp256r1|secp384r1", text, re.I)
                     if curve and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
                         bits = "256" if "256" in curve.group(0).upper() else ("384" if "384" in curve.group(0) else "521")
