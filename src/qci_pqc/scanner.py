@@ -35,6 +35,19 @@ PATTERNS = [
     (r"PBKDF2|pbkdf2_hmac|PBEKeySpec", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
     (r"hashlib\.sha3_|SHA3-|SHA-3|hashes\.SHA3_", "SHA-3", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"X25519MLKEM768|X25519Kyber768Draft00|x25519_mlkem768", "X25519MLKEM768", QuantumStatus.HYBRID, False, "kem"),
+
+    # Tier 1 API names without module prefix
+    (r"\bEd25519PrivateKey\b", "Ed25519", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"\bX25519PrivateKey\b", "X25519", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"\bAESGCM\b", "AES-GCM", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
+    (r"\bTripleDES\b", "3DES", QuantumStatus.WEAK, True, "encrypt"),
+    (r"modes\.ECB\b", "AES-ECB", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
+    (r"modes\.GCM\b", "AES-GCM", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
+    (r"PBKDF2HMAC|pbkdf2_hmac", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
+    (r'KeyPairGenerator\.getInstance\s*\(\s*"X25519"', "X25519", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r'KeyPairGenerator\.getInstance\s*\(\s*"DH"', "DH", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r'KeyPairGenerator\.getInstance\s*\(\s*"DSA"', "DSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"SecP384r1MLKEM1024|mlkem768x25519|sntrup761x25519", "Named-Hybrid", QuantumStatus.HYBRID, False, "kem"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
@@ -188,7 +201,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
             # Do not skip PEM headers (-----BEGIN...)
             if not stripped:
                 continue
-            if stripped.startswith(("#", "//", "/*", "*")) and not stripped.startswith("-----"):
+            if stripped.startswith(("#", "//", "/*", "*", '"""', "'''")) and not stripped.startswith("-----"):
                 continue
             if stripped.startswith("--") and not stripped.startswith("-----"):
                 continue

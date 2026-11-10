@@ -74,10 +74,23 @@ def _from_cert(cert, rel: str) -> Finding:
         note = f"Ed25519 certificate; signature {sig_name}"
         rec = "Ed25519 is quantum-vulnerable. Migrate to ML-DSA or SLH-DSA."
     else:
-        family = "X509-Cert"
-        status = QuantumStatus.UNKNOWN
-        note = f"Certificate; signature {sig_name} ({sig_oid})"
-        rec = "Inspect public-key algorithm and plan PQC migration."
+        oid = getattr(cert, "public_key_algorithm_oid", None)
+        oid_s = oid.dotted_string if oid else ""
+        mldsa = {
+            "2.16.840.1.101.3.4.3.17": "ML-DSA-44",
+            "2.16.840.1.101.3.4.3.18": "ML-DSA-65",
+            "2.16.840.1.101.3.4.3.19": "ML-DSA-87",
+        }
+        if oid_s in mldsa:
+            family = mldsa[oid_s]
+            status = QuantumStatus.PQC
+            note = f"{family} certificate; OID {oid_s}"
+            rec = "ML-DSA certificate. Confirm parameter set meets policy."
+        else:
+            family = "X509-Cert"
+            status = QuantumStatus.UNKNOWN
+            note = f"Certificate; signature {sig_name} ({sig_oid})"
+            rec = "Inspect public-key algorithm and plan PQC migration."
 
     not_after = cert.not_valid_after_utc.date().isoformat()
     subject = cert.subject.rfc4514_string()
@@ -94,7 +107,10 @@ def _from_cert(cert, rel: str) -> Finding:
         confidence=0.95,
         notes=f"{note}; subject={subject}; notAfter={not_after}",
         recommendation=rec,
-        parameter_set=str(getattr(pub, "key_size", "")),
+        parameter_set=str(getattr(pub, "key_size", "") or ""),
+        subject=subject,
+        not_after=not_after,
+        curve=getattr(getattr(pub, "curve", None), "name", "") or "",
     )
 
 
