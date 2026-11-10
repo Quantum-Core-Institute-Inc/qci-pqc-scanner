@@ -2,15 +2,31 @@
   "name": "qci-pqc regression ratchet",
   "corpus": "cbom-testbench v12",
   "measured": "2026-11-10",
-  "note": "v1.0 baselines after the review fixes.",
+  "note": "v1.1 re-score held: precision 100, over-claims 0, recall 72.9. Recall is not raised.",
   "gates": {
-    "recall": {"min": 72.9},
-    "primary_site_recall": {"min": 70.6},
-    "params_accuracy": {"min": 72.7},
-    "precision": {"min": 100.0},
-    "negative_control_fps": {"max": 0},
-    "pqc_overclaims": {"max": 0},
-    "ticket_ready_pct": {"min": 61.5},
-    "deadline_weighted_recall": {"min": 73.3}
+    "recall": {
+      "min": 72.9
+    },
+    "primary_site_recall": {
+      "min": 70.6
+    },
+    "params_accuracy": {
+      "min": 72.7
+    },
+    "precision": {
+      "min": 100.0
+    },
+    "negative_control_fps": {
+      "max": 0
+    },
+    "pqc_overclaims": {
+      "max": 0
+    },
+    "ticket_ready_pct": {
+      "min": 61.5
+    },
+    "deadline_weighted_recall": {
+      "min": 73.3
+    }
   }
 }
