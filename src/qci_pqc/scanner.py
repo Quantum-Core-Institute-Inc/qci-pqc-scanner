@@ -109,7 +109,7 @@ PATTERNS = [
 
     (r"ssl_ciphers\s+.*(ECDHE-RSA-AES|AES128-GCM|AES256-SHA|DES-CBC3)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"CipherString\s*=\s*DEFAULT", "OpenSSL-Config", QuantumStatus.WEAK, True, "config"),
-    (r"MinProtocol\s*=\s*TLSv1\b", "TLS-1.0", QuantumStatus.WEAK, True, "protocol"),
+    (r"MinProtocol\s*=\s*TLSv1(?![\d.])", "TLS-1.0", QuantumStatus.WEAK, True, "protocol"),
     (r"\"kty\"\s*:\s*\"EC\"", "ECC-P-256", QuantumStatus.VULNERABLE, False, "key"),
     (r"\"crv\"\s*:\s*\"P-256\"", "ECC-P-256", QuantumStatus.VULNERABLE, False, "key"),
     (r"\"crv\"\s*:\s*\"P-384\"", "ECC-P-384", QuantumStatus.VULNERABLE, False, "key"),
@@ -181,7 +181,8 @@ PATTERNS = [
     (r"pbkdf2Sync\s*\(", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
     (r"node:crypto", "Node-crypto", QuantumStatus.VULNERABLE, False, "dependency"),
 
-    (r"createCipheriv\s*\(\s*[\"'](?:des-ede3|aes-256-cbc|aes-128-gcm)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"createCipheriv\s*\(\s*[\"']des-ede3", "3DES", QuantumStatus.WEAK, True, "cipher"),
+    (r"createCipheriv\s*\(\s*[\"'](?:aes-256-cbc|aes-128-gcm)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"getDiffieHellman\s*\(", "DH", QuantumStatus.VULNERABLE, False, "kex"),
     (r"generateKeyPairSync\s*\(\s*[\"']ed25519", "Ed25519", QuantumStatus.VULNERABLE, False, "sign"),
     (r"subtle\.importKey|subtle\.sign\s*\(", "WebCrypto", QuantumStatus.VULNERABLE, False, "sign"),
