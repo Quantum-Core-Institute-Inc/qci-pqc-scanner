@@ -205,6 +205,16 @@ SKIP_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".tar", ".gz", ".s
 
 
 
+
+def _int_constants(lines: list[str]) -> dict[str, str]:
+    consts = {}
+    pat = re.compile(r"([A-Z_][A-Z0-9_]*)\s*=\s*(\d{3,5})\b")
+    for line in lines:
+        for m in pat.finditer(line):
+            consts[m.group(1)] = m.group(2)
+    return consts
+
+
 def _string_constants(lines: list[str]) -> dict[str, str]:
     """Find string constants, supported defaults, and enum constructor values."""
     consts = {}
@@ -328,9 +338,18 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     if family == "TLS-1.3":
                         param = "TLSv1.3"
                     # Classical parameters from the same line.
-                    m = re.search(r"(?:key_size|KEY_BITS|keyBits|initialize)\s*[=(]\s*(\d{3,5})", code_part)
+                    ints = _int_constants(lines)
+                    expanded = code_part
+                    for name, val in ints.items():
+                        expanded = re.sub(rf"\b{name}\b", val, expanded)
+                    m = re.search(r"(?:key_size|KEY_BITS|keyBits|initialize)\s*[=(]\s*(\d{3,5})", expanded)
                     if m and family in {"RSA", "DSA", "ECDSA"}:
                         param = f"{family}-{m.group(1)}"
+                    curve_consts = _string_constants(lines)
+                    for name, val in curve_consts.items():
+                        if re.search(r"secp|prime256", val, re.I) and (name in code_part or family in {"ECDSA", "ECDH"}):
+                            param = val
+                            break
                     curve = re.search(r"(secp256r1|secp384r1|secp521r1|prime256v1)", code_part, re.I)
                     if curve and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
                         param = curve.group(1)
