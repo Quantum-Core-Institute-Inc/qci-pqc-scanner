@@ -64,10 +64,13 @@ def _json(path: Path, root: Path) -> list[Finding]:
         if isinstance(node, dict):
             algo = str(node.get("algorithm", ""))
             mode = str(node.get("mode", ""))
+            bits = node.get("key_bits") or node.get("keyBits") or node.get("key_size")
             if algo.upper() in KNOWN:
                 fam = f"{algo}-{mode}" if mode else algo
+                if algo.upper() == "AES" and bits:
+                    fam = f"AES-{bits}-{mode}" if mode else f"AES-{bits}"
                 st, role = KNOWN[algo.upper()]
-                found.append(_finding(path, root, 1, fam if mode else algo, st, role, f"{algo}/{mode}" if mode else algo))
+                found.append(_finding(path, root, 1, fam, st, role, f"{algo}/{mode}/{bits}" if bits else f"{algo}/{mode}"))
             for v in node.values():
                 walk(v)
         elif isinstance(node, list):
