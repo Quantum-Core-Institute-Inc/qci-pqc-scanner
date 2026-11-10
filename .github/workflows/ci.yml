@@ -15,7 +15,7 @@ jobs:
           python-version: "3.12"
 
       - name: Install
-        run: pip install -e ".[dev]" || pip install -e . pytest jsonschema
+        run: pip install -e ".[dev]" jsonschema || pip install -e . pytest jsonschema
 
       - name: Golden corpus
         run: |
