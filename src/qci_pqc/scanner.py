@@ -105,6 +105,13 @@ PATTERNS = [
     (r"ecdh\.X25519|EVP_PKEY_X25519|generateKeyPairSync\s*\(\s*[\"']x25519", "X25519", QuantumStatus.VULNERABLE, False, "kex"),
     (r"TLS_RSA_WITH_|tls\.Config|SSL_CTX_set_cipher_list", "TLS", QuantumStatus.WEAK, True, "protocol"),
     (r"subtle\.digest\s*\(\s*[\"']SHA-1|subtle\.generateKey", "SHA-1", QuantumStatus.WEAK, True, "hash"),
+
+    (r"ssl_ciphers\s+.*(ECDHE-RSA-AES|AES128-GCM|AES256-SHA|DES-CBC3)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"CipherString\s*=\s*DEFAULT", "OpenSSL-Config", QuantumStatus.WEAK, True, "config"),
+    (r"MinProtocol\s*=\s*TLSv1\b", "TLS-1.0", QuantumStatus.WEAK, True, "protocol"),
+    (r"\"kty\"\s*:\s*\"EC\"", "ECC-P-256", QuantumStatus.VULNERABLE, False, "key"),
+    (r"\"crv\"\s*:\s*\"P-256\"", "ECC-P-256", QuantumStatus.VULNERABLE, False, "key"),
+    (r"\"crv\"\s*:\s*\"P-384\"", "ECC-P-384", QuantumStatus.VULNERABLE, False, "key"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
