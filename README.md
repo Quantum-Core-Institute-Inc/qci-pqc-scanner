@@ -1,6 +1,6 @@
-# QCI PQC Readiness Scanner
+# QCI Crypto Inventory
 
-**Cryptographic inventory and post-quantum readiness assessment for security teams.**
+**A cryptographic inventory of source, config, and artifacts. Exports a CycloneDX 1.6 CBOM. Not a complete bill of materials.**
 
 [![CI](https://github.com/Quantum-Core-Institute-Inc/qci-pqc-scanner/actions/workflows/ci.yml/badge.svg)](https://github.com/Quantum-Core-Institute-Inc/qci-pqc-scanner/actions)
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
