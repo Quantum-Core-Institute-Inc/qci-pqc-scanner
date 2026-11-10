@@ -48,3 +48,20 @@ The golden corpus is `tests/corpus`. The external corpus is the CBOM testbench.
 ## Customer-shaped corpus
 
 `tests/corpus/customer` is code shaped like what operators ship: AES-GCM and RSA-2048 in a payment helper. It is not a copy of the testbench. Add a file here when a customer miss is fixed, so the published numbers move with real code.
+
+## v1.1 re-score (testbench v12)
+
+Seed `20261110`. Adapter copied from this repo.
+
+| Metric | Value |
+|--------|------:|
+| Recall | 72.9% |
+| Precision | 100% |
+| Parameters | 72.7% |
+| Ticket-ready | 61.5% |
+| False positives | 0 |
+| PQC over-claims | 0 |
+| Holdout recall | 85.9% |
+| Overfit gap | +2.0 |
+
+Precision and over-claims held. Recall is unchanged from 1.0.
