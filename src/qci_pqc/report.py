@@ -6,6 +6,7 @@ from pathlib import Path
 
 from . import __version__
 import re
+from .graph import link
 from .models import Inventory, QuantumStatus
 
 
@@ -363,6 +364,18 @@ def to_html(inv: Inventory) -> str:
   <p>No known dependency manifests matched (requirements.txt, package.json, go.mod, pom.xml, …).</p>
 """
 
+    edges = link(inv.findings, Path(inv.project or "app"))
+    graph_rows = "".join(
+        f"<tr><td>{e['app']}</td><td>{e['library'] or '—'}</td><td>{e['finding']}</td><td><code>{e['path']}</code></td></tr>"
+        for e in edges[:200]
+    ) or "<tr><td colspan=4>No edges</td></tr>"
+    graph_html = f"""
+  <h2>Dependency graph</h2>
+  <p>Which app uses the crypto, and which library implements it. Not a full bill of materials.</p>
+  <table><thead><tr><th>App</th><th>Library</th><th>Finding</th><th>Path</th></tr></thead>
+  <tbody>{graph_rows}</tbody></table>
+"""
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -433,6 +446,7 @@ code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
     <li><strong>Phase 6–7</strong> — Deploy hybrids then retire classical public-key</li>
   </ul>
 
+  {graph_html}
   <h2>All Findings ({len(inv.findings)})</h2>
   <table>
     <thead><tr><th>ID</th><th>Family</th><th>Status</th><th>Location</th><th>Snippet</th><th>Conf.</th></tr></thead>
