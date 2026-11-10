@@ -60,9 +60,8 @@ PATTERNS = [
     (r"ssl_protocols\s+.*TLSv1(?:\s|;|$)|ssl_protocols\s+.*TLSv1\.0", "TLS-1.0", QuantumStatus.VULNERABLE, True, "protocol"),
     (r"ssl_protocols\s+.*TLSv1\.1", "TLS-1.1", QuantumStatus.VULNERABLE, True, "protocol"),
     (r"ssl_protocols\s+.*TLSv1\.2", "TLS-1.2", QuantumStatus.SAFE_SYMMETRIC, False, "protocol"),
-    (r"ssl_ciphers\s+.*AES128-GCM|ECDHE-RSA-AES128-GCM", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
-    (r"ssl_ciphers\s+.*DES-CBC3|3DES", "3DES", QuantumStatus.WEAK, True, "cipher"),
-    (r"ssl_ciphers\s+.*AES256-SHA", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"ssl_ciphers\s+.*(?:AES128-GCM|ECDHE-RSA-AES128-GCM|AES256-SHA|DES-CBC3)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"ssl_ciphers\s+.*DES-CBC3", "3DES", QuantumStatus.WEAK, True, "cipher"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
