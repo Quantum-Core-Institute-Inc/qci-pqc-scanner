@@ -112,7 +112,11 @@ def to_cyclonedx(inv: Inventory) -> dict:
             name = f.parameter_set or "unspecified"
         else:
             risk_category = ""
-        origin = "artifact" if f.source_scanner == "qci-artifact" else ("config" if (f.evidence_path or "").endswith((".conf", ".cnf", ".yml", ".yaml", ".properties")) else "source")
+        origin = {
+            "qci-artifact": "artifact",
+            "qci-deps": "dependency",
+            "qci-crossmod": "source",
+        }.get(f.source_scanner, "config" if (f.evidence_path or "").endswith((".conf", ".cnf", ".yml", ".yaml", ".properties", ".json")) else "source")
         crypto = {
             "assetType": asset_type,
             "algorithmProperties": {k: v for k, v in algo_props.items() if v is not None},
