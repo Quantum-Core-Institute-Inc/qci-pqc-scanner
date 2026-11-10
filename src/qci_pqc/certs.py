@@ -1,66 +1,129 @@
-"""Basic X.509 / PEM certificate inspection (no external deps required for MVP)."""
+"""Real X.509 certificate parsing (optional cryptography dependency)."""
 
-import base64
-import re
 from pathlib import Path
 
 from .models import Finding, QuantumStatus
 
+try:
+    from cryptography import x509
+    from cryptography.hazmat.primitives.asymmetric import rsa, ec, ed25519
+    HAS_CRYPTO = True
+except ImportError:
+    HAS_CRYPTO = False
+
 
 def inspect_pem(path: Path, root: Path) -> list[Finding]:
-    """Extract simple signals from PEM certificates and keys."""
+    """Parse PEM certificates and keys. Uses cryptography if available."""
     findings = []
     try:
-        text = path.read_text(encoding="utf-8", errors="ignore")
+        data = path.read_bytes()
+        text = data.decode("utf-8", errors="ignore")
     except Exception:
         return findings
 
-    if "-----BEGIN CERTIFICATE-----" not in text and "PRIVATE KEY" not in text:
-        return findings
-
     rel = str(path.relative_to(root))
-    # Private key type
-    if "BEGIN RSA PRIVATE KEY" in text or "BEGIN RSA PUBLIC KEY" in text:
-        findings.append(Finding(
-            id=f"CERT-{path.name}-rsa",
-            evidence_path=rel,
-            evidence_line=1,
-            evidence_snippet="RSA key material",
-            family="RSA",
-            quantum_status=QuantumStatus.VULNERABLE,
-            role="key",
-            source_scanner="qci-cert",
-            confidence=0.95,
-            notes="PEM contains RSA key",
-        ))
-    if "BEGIN EC PRIVATE KEY" in text or "BEGIN EC PUBLIC KEY" in text:
-        findings.append(Finding(
-            id=f"CERT-{path.name}-ec",
-            evidence_path=rel,
-            evidence_line=1,
-            evidence_snippet="EC key material",
-            family="ECDSA",
-            quantum_status=QuantumStatus.VULNERABLE,
-            role="key",
-            source_scanner="qci-cert",
-            confidence=0.95,
-            notes="PEM contains EC key",
-        ))
 
-    # Crude certificate algorithm hint from base64 (look for common OIDs in decoded form is heavy;
-    # instead flag presence and recommend manual review)
-    if "BEGIN CERTIFICATE" in text:
-        findings.append(Finding(
-            id=f"CERT-{path.name}-x509",
-            evidence_path=rel,
-            evidence_line=1,
-            evidence_snippet="X.509 certificate",
-            family="X509-Cert",
-            quantum_status=QuantumStatus.UNKNOWN,
-            role="cert",
-            source_scanner="qci-cert",
-            confidence=0.9,
-            notes="Certificate present — inspect public-key and signature algorithm",
-            recommendation="Check signature algorithm (RSA/ECDSA vs ML-DSA) and key size",
-        ))
+    if HAS_CRYPTO and b"-----BEGIN CERTIFICATE-----" in data:
+        findings.extend(_parse_certs(data, rel))
+    elif "BEGIN CERTIFICATE" in text:
+        findings.append(_basic_cert(rel))
+
+    if "BEGIN RSA PRIVATE KEY" in text or "BEGIN RSA PUBLIC KEY" in text:
+        findings.append(_key_finding(rel, "RSA", "PEM contains RSA key"))
+    if "BEGIN EC PRIVATE KEY" in text or "BEGIN EC PUBLIC KEY" in text:
+        findings.append(_key_finding(rel, "ECDSA", "PEM contains EC key"))
+
     return findings
+
+
+def _parse_certs(data: bytes, rel: str) -> list[Finding]:
+    findings = []
+    try:
+        for cert in x509.load_pem_x509_certificates(data):
+            findings.append(_from_cert(cert, rel))
+    except Exception:
+        # Fallback: try single cert
+        try:
+            cert = x509.load_pem_x509_certificate(data)
+            findings.append(_from_cert(cert, rel))
+        except Exception:
+            findings.append(_basic_cert(rel))
+    return findings
+
+
+def _from_cert(cert, rel: str) -> Finding:
+    pub = cert.public_key()
+    sig_oid = cert.signature_algorithm_oid.dotted_string
+    sig_name = cert.signature_hash_algorithm.name if cert.signature_hash_algorithm else "unknown"
+
+    if isinstance(pub, rsa.RSAPublicKey):
+        family = "RSA"
+        status = QuantumStatus.VULNERABLE
+        key_bits = pub.key_size
+        note = f"RSA-{key_bits} certificate; signature {sig_name} ({sig_oid})"
+        rec = "Migrate signature to ML-DSA (FIPS 204). Prefer ML-DSA-65 or higher."
+    elif isinstance(pub, ec.EllipticCurvePublicKey):
+        family = "ECDSA"
+        status = QuantumStatus.VULNERABLE
+        curve = pub.curve.name
+        note = f"ECDSA ({curve}) certificate; signature {sig_name}"
+        rec = "Migrate to ML-DSA (FIPS 204) or SLH-DSA (FIPS 205)."
+    elif isinstance(pub, ed25519.Ed25519PublicKey):
+        family = "Ed25519"
+        status = QuantumStatus.VULNERABLE
+        note = f"Ed25519 certificate; signature {sig_name}"
+        rec = "Ed25519 is quantum-vulnerable. Migrate to ML-DSA or SLH-DSA."
+    else:
+        family = "X509-Cert"
+        status = QuantumStatus.UNKNOWN
+        note = f"Certificate; signature {sig_name} ({sig_oid})"
+        rec = "Inspect public-key algorithm and plan PQC migration."
+
+    not_after = cert.not_valid_after_utc.date().isoformat()
+    subject = cert.subject.rfc4514_string()
+
+    return Finding(
+        id=f"CERT-{rel}",
+        evidence_path=rel,
+        evidence_line=1,
+        evidence_snippet=f"{family} cert exp={not_after}",
+        family=family,
+        quantum_status=status,
+        role="cert",
+        source_scanner="qci-x509",
+        confidence=0.95,
+        notes=f"{note}; subject={subject}; notAfter={not_after}",
+        recommendation=rec,
+        parameter_set=str(getattr(pub, "key_size", "")),
+    )
+
+
+def _basic_cert(rel: str) -> Finding:
+    return Finding(
+        id=f"CERT-{rel}",
+        evidence_path=rel,
+        evidence_line=1,
+        evidence_snippet="X.509 certificate",
+        family="X509-Cert",
+        quantum_status=QuantumStatus.UNKNOWN,
+        role="cert",
+        source_scanner="qci-cert",
+        confidence=0.7,
+        notes="Certificate present (cryptography library not available for full parse)",
+        recommendation="Install cryptography and re-scan for algorithm/key size",
+    )
+
+
+def _key_finding(rel: str, family: str, note: str) -> Finding:
+    return Finding(
+        id=f"KEY-{rel}-{family}",
+        evidence_path=rel,
+        evidence_line=1,
+        evidence_snippet=f"{family} key material",
+        family=family,
+        quantum_status=QuantumStatus.VULNERABLE,
+        role="key",
+        source_scanner="qci-cert",
+        confidence=0.95,
+        notes=note,
+    )
