@@ -7,7 +7,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 0.6.0  
+**Version:** 0.7.0  
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
 
@@ -247,7 +247,7 @@ PYTHONPATH=src python -m pytest tests/test_calibration.py -q
 ```
 
 These numbers apply to the included corpus only.
-External check on the CBOM testbench (v0.6.0): precision 100%, 0 false positives, 0 PQC over-claims, parameters 61%, ticket-ready 44%, recall 70.9% in scope.
+External check on the CBOM testbench (v0.7.0): precision 100%, 0 false positives, 0 PQC over-claims, parameters 83.2%, ticket-ready 68.3%, recall 71.6% in scope.
  See [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
 ---
@@ -314,6 +314,7 @@ This project is an independent implementation.
 
 | Version | Summary |
 |---|---|
+| 0.7.0 | Parameters 83.2%, ticket-ready 68.3%, Java AES size and mode, numeric key sizes |
 | 0.6.0 | Precision 100%, zero false positives, parameter fields, JSON/JWKS resolver |
 | 0.5.0 | Named hybrid groups, certificate and protocol CBOM fields, constant propagation |
 | 0.4.0 | X.509 and PKCS#8 parsing, SSH detection, calibration gate, reproducible evidence |
