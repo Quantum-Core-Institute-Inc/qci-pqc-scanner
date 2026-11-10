@@ -248,7 +248,7 @@ PYTHONPATH=src python -m pytest tests/test_calibration.py -q
 
 These numbers apply to the included corpus only. They are not a claim of complete coverage.
 
-External check on the CBOM testbench (v0.7.0): precision 100%, 0 false positives, 0 PQC over-claims, parameters 83.2%, ticket-ready 68.3%, recall 71.6% in scope.
+External check on the CBOM testbench (v0.7.0, v12 corpus): precision 100%, 0 false positives, 0 PQC over-claims, parameters 71.2%, ticket-ready 61.4%, recall 69.2% in scope. Gates are locked at these numbers.
 
 What the scanner does not cover is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
@@ -316,7 +316,7 @@ This project is an independent implementation.
 
 | Version | Summary |
 |---|---|
-| 0.7.0 | Parameters 83.2%, ticket-ready 68.3%, Java AES size and mode, numeric key sizes |
+| 0.7.0 | Complete. Precision 100%, parameters 71.2%, ticket-ready 61.4% on v12. Gates locked. TLS and hybrid names credited. nginx, OpenSSL, and JWKS asset lines. |
 | 0.6.0 | Precision 100%, zero false positives, parameter fields, JSON/JWKS resolver |
 | 0.5.0 | Named hybrid groups, certificate and protocol CBOM fields, constant propagation |
 | 0.4.0 | X.509 and PKCS#8 parsing, SSH detection, calibration gate, reproducible evidence |
