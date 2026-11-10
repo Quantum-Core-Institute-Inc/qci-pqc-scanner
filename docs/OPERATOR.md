@@ -39,3 +39,18 @@ Semgrep / cryptoscan / qscan adapters need their binaries present locally.
 - The scanner only reads files; it does not execute target code.
 - Review findings before acting; pattern matching has false positives.
 - Keep the scanner and its dependencies updated.
+
+## What the score means
+
+The readiness score is a summary of what the scanner found in the files it can read. It is not a measure of quantum safety.
+
+| Number | Means | Does not mean |
+|--------|-------|----------------|
+| Recall 69.2% | Of the known findings in the v12 corpus, this share was reported | The other 30.8% of a real repo is safe |
+| Precision 100% | Nothing in the negative controls was reported | Every finding is a vulnerability |
+| Ticket-ready 61.4% | The finding has enough detail to open a ticket | The ticket is already approved |
+| Holdout 84.8% | On code the scanner has not seen, it still finds most of the same shapes | It will find hand-rolled crypto |
+
+Tier 5 (string assembly, reflection, hand-rolled algorithms) is out of scope. A miss there is expected.
+
+Read [LIMITATIONS.md](LIMITATIONS.md) before treating a score as coverage.
