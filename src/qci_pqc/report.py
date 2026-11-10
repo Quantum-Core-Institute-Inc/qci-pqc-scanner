@@ -25,7 +25,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
             "cert": "other",
             "cipher": "other",
             "mac": "mac",
-            "protocol": "protocol",
+            "protocol": "other",
             "config": "other",
             "hostkey": "other",
         }
