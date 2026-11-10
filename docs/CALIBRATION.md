@@ -44,3 +44,7 @@ CBOM_HOLDOUT_SEED=20261110 python3 tools/run_qci_pqc.py --qci-bin qci-pqc --no-g
 ```
 
 The golden corpus is `tests/corpus`. The external corpus is the CBOM testbench.
+
+## Customer-shaped corpus
+
+`tests/corpus/customer` is code shaped like what operators ship: AES-GCM and RSA-2048 in a payment helper. It is not a copy of the testbench. Add a file here when a customer miss is fixed, so the published numbers move with real code.
