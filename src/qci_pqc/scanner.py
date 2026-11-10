@@ -48,6 +48,12 @@ PATTERNS = [
     (r'KeyPairGenerator\.getInstance\s*\(\s*"DH"', "DH", QuantumStatus.VULNERABLE, False, "keygen"),
     (r'KeyPairGenerator\.getInstance\s*\(\s*"DSA"', "DSA", QuantumStatus.VULNERABLE, False, "keygen"),
     (r"SecP384r1MLKEM1024|mlkem768x25519|sntrup761x25519", "Named-Hybrid", QuantumStatus.HYBRID, False, "kem"),
+
+    (r"Cipher\.getInstance\s*\(\s*\"DESede", "3DES", QuantumStatus.WEAK, True, "encrypt"),
+    (r"hashes\.SHA1\b|SHA1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
+    (r"MessageDigest\.getInstance\s*\(\s*\"MD5", "MD5", QuantumStatus.WEAK, True, "hash"),
+    (r"MessageDigest\.getInstance\s*\(\s*\"SHA-1", "SHA-1", QuantumStatus.WEAK, True, "hash"),
+    (r"MessageDigest\.getInstance\s*\(\s*\"SHA-256", "SHA-256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
@@ -195,6 +201,51 @@ SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "bu
 SKIP_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".tar", ".gz", ".so", ".dll", ".exe", ".md", ".rst"}
 
 
+
+def _string_constants(lines: list[str]) -> dict[str, str]:
+    consts = {}
+    assign = re.compile(
+        r"(?:(?:public|private|static|final)\s+)*String\s+([A-Z_][A-Z0-9_]*)\s*=\s*[\"']([^\"']+)[\"']"
+        r"|([A-Z_][A-Z0-9_]*)\s*=\s*[\"']([^\"']+)[\"']"
+        r"|([A-Z_][A-Z0-9_]*)\s*=\s*os\.environ\.get\(\s*[\"'][^\"']+[\"']\s*,\s*[\"']([^\"']+)[\"']"
+        r"|([A-Z_][A-Z0-9_]*)\s*=\s*System\.getProperty\(\s*[\"'][^\"']+[\"']\s*,\s*[\"']([^\"']+)[\"']"
+    )
+    enum = re.compile(r"([A-Z_][A-Z0-9_]*)\s*\(\s*[\"']([^\"']+)[\"']\s*\)")
+    for line in lines:
+        for m in assign.finditer(line):
+            name = m.group(1) or m.group(3) or m.group(5) or m.group(7)
+            val = m.group(2) or m.group(4) or m.group(6) or m.group(8)
+            if name and val:
+                consts[name] = val
+        for m in enum.finditer(line):
+            consts[m.group(1)] = m.group(2)
+    return consts
+
+
+def _expand_constants(line: str, consts: dict[str, str]) -> str:
+    if not consts:
+        return line
+    if re.search(r"^\s*(?:(?:public|private|static|final)\s+)*String\s+[A-Z_]", line) or re.search(r"^\s*[A-Z_][A-Z0-9_]*\s*=", line):
+        return line
+    out = line
+    for name, val in consts.items():
+        if name in out:
+            out = re.sub(rf"\b{name}\b", f'"{val}"', out)
+    # Collapse "A" + "/" + "B" into "A/B" so DESede/CBC matches.
+    out = re.sub(r'"([^"]+)"\s*\+\s*"/"\s*\+\s*"([^"]+)"(?:\s*\+\s*"/"\s*\+\s*"([^"]+)")?',
+                 lambda m: '"' + "/".join(p for p in m.groups() if p) + '"', out)
+    return out
+
+
+def _alias_map(lines: list[str]) -> dict[str, str]:
+    aliases = {}
+    for line in lines:
+        m = re.search(r"import\s+([\w.]+)\s+as\s+(\w+)", line)
+        if m:
+            aliases[m.group(2)] = m.group(1).split(".")[-1]
+    return aliases
+
+
 def scan_path(root: Path) -> Iterator[Finding]:
     """Scan a directory tree for cryptographic patterns."""
     finding_id = 0
@@ -211,6 +262,8 @@ def scan_path(root: Path) -> Iterator[Finding]:
             continue
 
         lines = text.splitlines()
+        consts = _string_constants(lines)
+        aliases = _alias_map(lines)
         for line_no, line in enumerate(lines, 1):
             stripped = line.strip()
             # Skip pure comments and empty lines to reduce false positives
@@ -228,7 +281,9 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 continue
 
             # Remove inline comments before matching (Python/JS style)
-            code_part = line
+            code_part = _expand_constants(line, consts)
+            for alias, real in aliases.items():
+                code_part = re.sub(rf"\b{alias}\.", real + ".", code_part)
             if "#" in code_part and not code_part.strip().startswith("-----"):
                 code_part = code_part.split("#", 1)[0]
             if "//" in code_part:
