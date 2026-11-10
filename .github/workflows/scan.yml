@@ -31,6 +31,7 @@ jobs:
 
       - name: Run qci-pqc
         run: |
+          mkdir -p reports
           TARGET="${{ github.event.inputs.path || '.' }}"
           FAIL="${{ github.event.inputs.fail_on || 'none' }}"
           qci-pqc scan "$TARGET" --out reports --reproducible --fail-on "$FAIL" --json | tee reports/summary.json
