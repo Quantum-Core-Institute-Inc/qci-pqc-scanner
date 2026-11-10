@@ -96,6 +96,15 @@ pip install semgrep          # Semgrep adapter
 qci-pqc scan /path/to/code --out reports
 ```
 
+### Local web UI
+
+```bash
+qci-pqc serve
+# open http://127.0.0.1:8080
+```
+
+Same engine as the CLI. Enter a path, run a scan, view the report in the browser.
+
 ### Common options
 
 ```bash
