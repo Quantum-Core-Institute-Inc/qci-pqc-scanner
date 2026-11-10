@@ -20,8 +20,9 @@ This scanner is a pattern-based cryptographic inventory tool. It is **not** a co
 ## Accuracy
 Measured on the included golden corpus (`tests/corpus`):
 - Recall: 1.0
-- Precision: ~0.76–0.83 (varies with corpus size)
+- Precision: 0.744
 - False positives on designated negative files: 0
+- Expected positives: 32
 
 These numbers do **not** transfer automatically to arbitrary codebases.
 
