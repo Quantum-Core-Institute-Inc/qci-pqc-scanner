@@ -1,4 +1,4 @@
-"""CLI entry point for QCI PQC Readiness Scanner."""
+"""CLI entry point for the QCI crypto inventory."""
 
 import json
 import sys
@@ -25,7 +25,7 @@ from .policy import evaluate_policy, load_accepted_risks, load_policy
 @click.group()
 @click.version_option(__version__)
 def cli():
-    """QCI PQC Readiness Scanner – cryptographic inventory and post-quantum assessment."""
+    """QCI crypto inventory. Source, config, and artifacts. Exports a CycloneDX CBOM."""
     pass
 
 

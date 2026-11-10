@@ -25,7 +25,7 @@ def pql():
 @click.option("--save-baseline", type=click.Path(path_type=Path), help="Write a baseline after the scan")
 @click.option("--json", "json_out", is_flag=True, help="Print the summary as JSON")
 def scan(path: Path, out: str, save_baseline: Path, json_out: bool):
-    """Scan a repository and write the CBOM and report."""
+    """Scan a repository and write the inventory and report."""
     from .scanner import scan_path
     from .baseline import save_baseline as write_baseline
     findings = list(scan_path(path))
