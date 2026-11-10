@@ -325,6 +325,15 @@ def scan_path(root: Path) -> Iterator[Finding]:
                             continue
                         if not any(tok in low for tok in ("import", "=", "(", "groups", "kexalgorithms", "ssl_ecdh")):
                             continue
+                        # Prefer the concrete level when the file names one.
+                        if family == "ML-KEM":
+                            lvl = re.search(r"LEVEL\s*=\s*(512|768|1024)", text)
+                            if lvl:
+                                family = f"ML-KEM-{lvl.group(1)}"
+                        if family == "ML-DSA":
+                            lvl = re.search(r"LEVEL\s*=\s*(44|65|87)", text)
+                            if lvl:
+                                family = f"ML-DSA-{lvl.group(1)}"
                     finding_id += 1
                     snippet = line.strip()[:200]
                     category = ""
