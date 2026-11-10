@@ -79,6 +79,21 @@ PATTERNS = [
     (r"sha512\.New\b|crypto\.createHash\s*\(\s*['\"]sha512['\"]", "SHA-512", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"Cipher\.getInstance\s*\(\s*\"AES/(ECB|GCM|CBC)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"digestmod\s*=\s*[\"']sha1[\"']", "HMAC", QuantumStatus.WEAK, True, "mac"),
+
+    # === Go stdlib ===
+    (r"md5\.Sum\b|crypto/md5", "MD5", QuantumStatus.WEAK, True, "hash"),
+    (r"sha1\.Sum\b|crypto/sha1", "SHA-1", QuantumStatus.WEAK, True, "hash"),
+    (r"sha256\.Sum256|sha256\.New\b|crypto/sha256", "SHA-256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"sha512\.Sum512|crypto/sha512", "SHA-512", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"sha3\.|crypto/sha3", "SHA-3", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"aes\.NewCipher|crypto/aes", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"rsa\.GenerateKey|crypto/rsa", "RSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"ecdsa\.GenerateKey|elliptic\.P256|crypto/ecdsa", "ECDSA", QuantumStatus.VULNERABLE, False, "sign"),
+    (r"ed25519\.GenerateKey|crypto/ed25519", "Ed25519", QuantumStatus.VULNERABLE, False, "sign"),
+    (r"ecdh\.X25519|crypto/ecdh", "X25519", QuantumStatus.VULNERABLE, False, "kex"),
+    (r"des\.NewTripleDESCipher|crypto/des", "3DES", QuantumStatus.WEAK, True, "cipher"),
+    (r"rc4\.NewCipher|crypto/rc4", "RC4", QuantumStatus.WEAK, True, "cipher"),
+    (r"hmac\.New\b|crypto/hmac", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
