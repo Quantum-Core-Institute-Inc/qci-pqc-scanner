@@ -352,13 +352,20 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     for name, val in ints.items():
                         expanded = re.sub(rf"\b{name}\b", val, expanded)
                     m = re.search(r"(?:key_size|KEY_BITS|keyBits|initialize)\s*[=(]\s*(\d{3,5})", expanded)
-                    if m and family in {"RSA", "DSA", "ECDSA"}:
+                    if m and family in {"RSA", "DSA", "ECDSA", "DH"}:
                         param = f"{family}-{m.group(1)}"
-                    curve_consts = _string_constants(lines)
-                    for name, val in curve_consts.items():
-                        if re.search(r"secp|prime256", val, re.I) and (name in code_part or family in {"ECDSA", "ECDH"}):
-                            param = val
-                            break
+                    curve = re.search(r"SECP(256|384|521)R1|prime256v1|secp256r1", code_part, re.I)
+                    if curve and family in {"ECDSA", "ECDH"}:
+                        bits = "256" if "256" in curve.group(0) else ("384" if "384" in curve.group(0) else "521")
+                        param = f"P-{bits}"
+                    if family in {"AES", "AES-ECB", "AES-GCM", "AES-CBC"}:
+                        ur = re.search(r"urandom\s*\(\s*(\d+)", text)
+                        if ur:
+                            param = str(int(ur.group(1)) * 8)
+                    if family in {"3DES", "DES"} and re.search(r"modes\.CBC|CBC", code_part):
+                        param = "CBC"
+                    if family in {"HMAC", "PBKDF2"} and re.search(r"sha256|SHA256", code_part, re.I):
+                        param = "SHA-256"
                     curve = re.search(r"(secp256r1|secp384r1|secp521r1|prime256v1)", code_part, re.I)
                     if curve and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
                         param = curve.group(1)
