@@ -34,6 +34,9 @@ class Finding:
     migration_phase: str = ""
     timeline_flags: list[str] = field(default_factory=list)
     recommendation: str = ""
+    subject: str = ""
+    not_after: str = ""
+    curve: str = ""
 
 
 @dataclass
