@@ -26,15 +26,15 @@ def pql():
 @click.option("--json", "json_out", is_flag=True, help="Print the summary as JSON")
 def scan(path: Path, out: str, save_baseline: Path, json_out: bool):
     """Scan a repository and write the CBOM and report."""
-    from click.testing import CliRunner
-    args = [str(path), "--out", out, "--reproducible"]
+    from .scanner import scan_path
+    from .baseline import save_baseline as write_baseline
+    findings = list(scan_path(path))
+    out_path = Path(out)
+    out_path.mkdir(parents=True, exist_ok=True)
+    click.echo(f"Findings: {len(findings)}")
     if save_baseline:
-        args += ["--save-baseline", str(save_baseline)]
-    if json_out:
-        args.append("--json")
-    result = CliRunner().invoke(scan_cmd, args, catch_exceptions=False)
-    sys.stdout.write(result.output)
-    sys.exit(result.exit_code)
+        write_baseline(findings, save_baseline)
+        click.echo(f"Baseline saved to {save_baseline}")
 
 
 @pql.command("diff")
