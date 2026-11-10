@@ -78,6 +78,7 @@ PATTERNS = [
     (r"hashlib\.new\s*\(\s*[\"']sha512[\"']|MessageDigest\.getInstance\s*\(\s*\"SHA-?512\"", "SHA-512", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"sha512\.New\b|crypto\.createHash\s*\(\s*['\"]sha512['\"]", "SHA-512", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"Cipher\.getInstance\s*\(\s*\"AES/(ECB|GCM|CBC)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"digestmod\s*=\s*[\"']sha1[\"']", "HMAC", QuantumStatus.WEAK, True, "mac"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
@@ -384,7 +385,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     m = re.search(r"(?:key_size|KEY_BITS|keyBits|initialize)\s*[=(]\s*(\d{3,5})", expanded)
                     if m and family in {"RSA", "DSA", "ECDSA", "DH"}:
                         param = f"{family}-{m.group(1)}"
-                    curve = re.search(r"SECP(256|384|521)R1|prime256v1|secp256r1|secp384r1", code_part, re.I)
+                    curve = re.search(r"SECP(256|384|521)R1|prime256v1|secp256r1|secp384r1", text, re.I)
                     if curve and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
                         bits = "256" if "256" in curve.group(0).upper() else ("384" if "384" in curve.group(0) else "521")
                         param = f"P-{bits}"
@@ -430,6 +431,8 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         param = "CBC"
                     if family in {"HMAC", "PBKDF2"} and re.search(r"sha256|SHA256", text, re.I):
                         param = "SHA-256"
+                    if family == "HMAC" and re.search(r"digestmod\s*=\s*[\"']sha1[\"']|hmac-sha1", text, re.I):
+                        param = "SHA-1"
                     yield Finding(
                         id=f"QCI-{finding_id:04d}",
                         evidence_path=str(path.relative_to(root)),

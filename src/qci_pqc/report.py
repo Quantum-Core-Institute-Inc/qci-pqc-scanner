@@ -66,11 +66,16 @@ def to_cyclonedx(inv: Inventory) -> dict:
         mode = ""
         if param.upper().startswith("P-") or param.lower().startswith("secp"):
             curve = param if param.upper().startswith("P-") else param
-        size_m = re.match(r"(\d{2,5})", param)
-        if size_m and f.family not in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"} and not param.upper().startswith("SHA"):
+        size_m = re.search(r"(\d{3,5})", param)
+        if size_m and f.family in {"RSA", "DSA", "DH"} and not param.upper().startswith("SHA"):
+            key_size = size_m.group(1)
+        elif size_m and param[:1].isdigit() and f.family not in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"} and "ML" not in param.upper():
             key_size = size_m.group(1)
         elif "-" in param and param.split("-")[-1].isdigit() and not param.upper().startswith("P-") and not param.upper().startswith("SHA"):
             key_size = param.split("-")[-1]
+        if param.upper().startswith("P-") or "SECP" in param.upper():
+            key_size = ""
+            curve = param if param.upper().startswith("P-") else param
         if "ECB" in (param + f.family).upper():
             mode = "ecb"
         elif "GCM" in (param + f.family).upper():
