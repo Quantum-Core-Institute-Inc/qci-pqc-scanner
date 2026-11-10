@@ -1,0 +1,135 @@
+rules:
+  - id: qci-rsa-keygen
+    message: RSA key generation detected (Shor-vulnerable)
+    severity: ERROR
+    languages: [python, java, go, javascript, typescript]
+    metadata:
+      family: RSA
+      quantum_status: vulnerable
+      role: keygen
+    pattern-either:
+      - pattern: rsa.generate_private_key(...)
+      - pattern: rsa.GenerateKey(...)
+      - pattern: KeyPairGenerator.getInstance("RSA")
+      - pattern: crypto.generateKeyPair("rsa", ...)
+      - pattern: crypto.generateKeyPairSync("rsa", ...)
+
+  - id: qci-ecdsa-keygen
+    message: ECDSA/EC key generation detected (Shor-vulnerable)
+    severity: ERROR
+    languages: [python, java, go, javascript]
+    metadata:
+      family: ECDSA
+      quantum_status: vulnerable
+      role: keygen
+    pattern-either:
+      - pattern: ec.generate_private_key(...)
+      - pattern: ecdsa.GenerateKey(...)
+      - pattern: KeyPairGenerator.getInstance("EC")
+      - pattern: crypto.generateKeyPair("ec", ...)
+
+  - id: qci-md5
+    message: MD5 usage detected (classically weak)
+    severity: WARNING
+    languages: [python, java, go, javascript]
+    metadata:
+      family: MD5
+      quantum_status: weak
+      role: hash
+      classical_weak: true
+    pattern-either:
+      - pattern: hashlib.md5(...)
+      - pattern: MessageDigest.getInstance("MD5")
+      - pattern: md5.New()
+      - pattern: crypto.createHash("md5")
+
+  - id: qci-sha1
+    message: SHA-1 usage detected (classically weak)
+    severity: WARNING
+    languages: [python, java, go, javascript]
+    metadata:
+      family: SHA-1
+      quantum_status: weak
+      role: hash
+      classical_weak: true
+    pattern-either:
+      - pattern: hashlib.sha1(...)
+      - pattern: MessageDigest.getInstance("SHA-1")
+      - pattern: MessageDigest.getInstance("SHA1")
+      - pattern: sha1.New()
+      - pattern: crypto.createHash("sha1")
+
+  - id: qci-aes-ecb
+    message: AES-ECB mode detected (insecure mode)
+    severity: WARNING
+    languages: [python, java]
+    metadata:
+      family: AES-ECB
+      quantum_status: safe_symmetric
+      role: encrypt
+    pattern-either:
+      - pattern: AES.new(..., MODE_ECB, ...)
+      - pattern: Cipher.getInstance("AES/ECB/...")
+
+  - id: qci-des
+    message: DES/3DES detected (classically weak)
+    severity: ERROR
+    languages: [java, python]
+    metadata:
+      family: DES
+      quantum_status: weak
+      role: encrypt
+      classical_weak: true
+    pattern-either:
+      - pattern: Cipher.getInstance("DES...")
+      - pattern: Cipher.getInstance("DESede...")
+
+  - id: qci-pqc-mlkem
+    message: ML-KEM / Kyber reference detected (FIPS 203)
+    severity: INFO
+    languages: [python, java, go, javascript]
+    metadata:
+      family: ML-KEM
+      quantum_status: pqc
+      role: kem
+    pattern-regex: (?i)\b(ml-?kem|kyber)\b
+
+  - id: qci-pqc-mldsa
+    message: ML-DSA / Dilithium reference detected (FIPS 204)
+    severity: INFO
+    languages: [python, java, go, javascript]
+    metadata:
+      family: ML-DSA
+      quantum_status: pqc
+      role: sign
+    pattern-regex: (?i)\b(ml-?dsa|mldsa|dilithium)\b
+
+  - id: qci-pqc-slhdsa
+    message: SLH-DSA / SPHINCS+ reference detected (FIPS 205)
+    severity: INFO
+    languages: [python, java, go, javascript]
+    metadata:
+      family: SLH-DSA
+      quantum_status: pqc
+      role: sign
+    pattern-regex: (?i)\b(slh-?dsa|slhdsa|sphincs\+?)\b
+
+  - id: qci-pqc-fndsa
+    message: FN-DSA / Falcon reference detected
+    severity: INFO
+    languages: [python, java, go, javascript]
+    metadata:
+      family: FN-DSA
+      quantum_status: pqc
+      role: sign
+    pattern-regex: (?i)\b(fn-?dsa|falcon)\b
+
+  - id: qci-pqc-hybrid
+    message: Hybrid PQC construction detected
+    severity: INFO
+    languages: [python, java, go, javascript]
+    metadata:
+      family: Hybrid-KEM
+      quantum_status: hybrid
+      role: kem
+    pattern-regex: (?i)(x25519.*ml-?kem|ml-?kem.*x25519|x25519kyber)

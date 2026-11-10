@@ -1,0 +1,14 @@
+{
+  "min_findings": 10,
+  "must_include": [
+    {"family": "rsa", "file": "sample.py", "status": "vulnerable"},
+    {"family": "ecdsa", "file": "sample.py", "status": "vulnerable"},
+    {"family": "md5", "file": "sample.py", "status": "weak"},
+    {"family": "sha1", "file": "sample.py", "status": "weak"},
+    {"family": "ml-kem", "file": "sample.py", "status": "pqc"},
+    {"family": "md5", "file": "CryptoExample.java", "status": "weak"},
+    {"family": "rsa", "file": "go_crypto.go", "status": "vulnerable"},
+    {"family": "md5", "file": "node_crypto.js", "status": "weak"},
+    {"family": "ml-kem", "file": "pqc_ref.py", "status": "pqc"}
+  ]
+}

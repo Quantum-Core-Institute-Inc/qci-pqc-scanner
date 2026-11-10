@@ -1,0 +1,30 @@
+{
+  "min_findings": 28,
+  "must_include": [
+    {"family": "rsa", "file": "sample.py", "status": "vulnerable"},
+    {"family": "ecdsa", "file": "sample.py", "status": "vulnerable"},
+    {"family": "md5", "file": "sample.py", "status": "weak"},
+    {"family": "sha1", "file": "sample.py", "status": "weak"},
+    {"family": "ml-kem", "file": "sample.py", "status": "pqc"},
+    {"family": "rsa", "file": "CryptoExample.java", "status": "vulnerable"},
+    {"family": "md5", "file": "CryptoExample.java", "status": "weak"},
+    {"family": "rsa", "file": "go_crypto.go", "status": "vulnerable"},
+    {"family": "md5", "file": "node_crypto.js", "status": "weak"},
+    {"family": "rsa", "file": "key.pem", "status": "vulnerable"},
+    {"family": "ml-kem", "file": "pqc_ref.py", "status": "pqc"},
+    {"family": "ml-kem", "file": "pqc_algorithms.py", "status": "pqc"},
+    {"family": "ml-dsa", "file": "pqc_algorithms.py", "status": "pqc"},
+    {"family": "slh-dsa", "file": "pqc_algorithms.py", "status": "pqc"},
+    {"family": "ml-kem", "file": "lib_examples.py", "status": "pqc"},
+    {"family": "ml-kem", "file": "realworld_libs.py", "status": "pqc"},
+    {"family": "ml-dsa", "file": "realworld_libs.py", "status": "pqc"},
+    {"family": "rsa", "file": "RealWorldJava.java", "status": "vulnerable"},
+    {"family": "ml-kem", "file": "RealWorldJava.java", "status": "pqc"},
+    {"family": "rsa", "file": "realworld_go.go", "status": "vulnerable"},
+    {"family": "ml-kem", "file": "realworld_go.go", "status": "pqc"},
+    {"family": "tls-classical-cipher", "file": "nginx.conf", "status": "vulnerable"},
+    {"family": "ssh-classical-kex", "file": "sshd_config", "status": "vulnerable"},
+    {"family": "ssh-weak-kex", "file": "sshd_config", "status": "weak"},
+    {"family": "ssh-weak-cipher", "file": "sshd_config", "status": "weak"}
+  ]
+}

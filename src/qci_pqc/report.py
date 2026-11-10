@@ -1,0 +1,310 @@
+"""Report generation: CycloneDX CBOM, SARIF, and self-contained HTML."""
+
+import json
+from datetime import datetime, timezone
+from pathlib import Path
+
+from .models import Inventory, QuantumStatus
+
+
+def to_cyclonedx(inv: Inventory) -> dict:
+    """CycloneDX 1.6 CBOM with cryptographic component properties."""
+    import uuid
+    components = []
+    for f in inv.findings:
+        # Map role to CycloneDX primitive where possible
+        primitive_map = {
+            "kem": "kem",
+            "kex": "key-agree",
+            "sign": "signature",
+            "signature": "signature",
+            "hash": "hash",
+            "encrypt": "ae",
+            "key": "other",
+            "keygen": "other",
+            "cert": "other",
+            "cipher": "other",
+            "mac": "mac",
+            "protocol": "protocol",
+            "config": "other",
+            "hostkey": "other",
+        }
+        primitive = primitive_map.get((f.role or "").lower(), "other")
+
+        # Map role to allowed cryptoFunctions enum
+        func_map = {
+            "kem": "encapsulate",
+            "kex": "keyderive",
+            "sign": "sign",
+            "signature": "sign",
+            "hash": "digest",
+            "encrypt": "encrypt",
+            "keygen": "keygen",
+            "key": "other",
+            "mac": "tag",
+            "cipher": "encrypt",
+        }
+        crypto_func = func_map.get((f.role or "").lower(), "other")
+
+        asset_type = "algorithm"
+        if f.role in ("cert",) or "cert" in f.family.lower():
+            asset_type = "certificate"
+        elif f.role in ("key", "keygen"):
+            asset_type = "related-crypto-material"
+
+        algo_props = {
+            "primitive": primitive,
+            "parameterSetIdentifier": f.parameter_set or f.family,
+            "cryptoFunctions": [crypto_func],
+            "executionEnvironment": "software-plain-ram",
+        }
+        # Quantum resistance hint
+        if f.quantum_status.value == "pqc":
+            algo_props["nistQuantumSecurityLevel"] = 3 if "768" in f.family or "65" in f.family else None
+
+        crypto = {
+            "assetType": asset_type,
+            "algorithmProperties": {k: v for k, v in algo_props.items() if v is not None},
+        }
+        # NIST OIDs where known
+        oid_map = {
+            "ML-KEM": "2.16.840.1.101.3.4.4",
+            "ML-DSA": "2.16.840.1.101.3.4.3",
+            "SLH-DSA": "2.16.840.1.101.3.4.6",
+        }
+        oid = None
+        for k, v in oid_map.items():
+            if k.lower() in f.family.lower():
+                oid = v
+                break
+        if oid:
+            crypto["oid"] = oid
+        if oid:
+            crypto["oid"] = oid
+
+        # Quantum resistance property
+        qr = {
+            "vulnerable": "vulnerable",
+            "pqc": "resistant",
+            "hybrid": "hybrid",
+            "weak": "vulnerable",
+            "safe_symmetric": "resistant",
+        }.get(f.quantum_status.value, "unknown")
+
+        components.append({
+            "type": "cryptographic-asset",
+            "bom-ref": f.id,
+            "name": f.family,
+            "description": f.recommendation or f.notes or f"{f.family} ({f.quantum_status.value})",
+            "cryptoProperties": crypto,
+            "evidence": {
+                "occurrences": [{
+                    "location": f.evidence_path,
+                    "line": f.evidence_line,
+                }]
+            },
+            "properties": [
+                {"name": "qci:quantum_status", "value": f.quantum_status.value},
+                {"name": "qci:quantum_resistance", "value": qr},
+                {"name": "qci:confidence", "value": str(f.confidence)},
+                {"name": "qci:priority_score", "value": str(getattr(f, "priority_score", 0))},
+                {"name": "qci:migration_phase", "value": getattr(f, "migration_phase", "")},
+                {"name": "qci:timeline", "value": "; ".join(getattr(f, "timeline_flags", []))},
+            ],
+        })
+
+    return {
+        "$schema": "http://cyclonedx.org/schema/bom-1.6.schema.json",
+        "bomFormat": "CycloneDX",
+        "specVersion": "1.6",
+        "serialNumber": f"urn:uuid:{uuid.uuid5(uuid.NAMESPACE_URL, inv.project + str(len(inv.findings)))}" if getattr(inv, "reproducible", False) else f"urn:uuid:{uuid.uuid4()}",
+        "version": 1,
+        "metadata": {
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "tools": {
+                "components": [{
+                    "type": "application",
+                    "name": "qci-pqc-scan",
+                    "version": "0.1.0",
+                }]
+            },
+            "component": {
+                "type": "application",
+                "bom-ref": inv.project,
+                "name": inv.project,
+            },
+        },
+        "components": components,
+    }
+
+
+def to_sarif(inv: Inventory) -> dict:
+    """SARIF 2.1.0 output for CI integration."""
+    results = []
+    for f in inv.findings:
+        level = "error" if f.quantum_status == QuantumStatus.VULNERABLE else "warning"
+        results.append({
+            "ruleId": f"qci/{f.family}",
+            "level": level,
+            "message": {"text": f"{f.family} ({f.quantum_status.value}) found"},
+            "locations": [{
+                "physicalLocation": {
+                    "artifactLocation": {"uri": f.evidence_path},
+                    "region": {"startLine": f.evidence_line or 1},
+                }
+            }],
+        })
+
+    return {
+        "$schema": "https://raw.githubusercontent.com/oasis-tcs/sarif-spec/master/Schemata/sarif-schema-2.1.0.json",
+        "version": "2.1.0",
+        "runs": [{
+            "tool": {"driver": {"name": "qci-pqc-scan", "version": "0.1.0"}},
+            "results": results,
+        }],
+    }
+
+
+def to_html(inv: Inventory) -> str:
+    """Self-contained HTML report."""
+    findings_rows = ""
+    for f in inv.findings:
+        status_class = {
+            QuantumStatus.VULNERABLE: "vulnerable",
+            QuantumStatus.WEAK: "weak",
+            QuantumStatus.PQC: "pqc",
+            QuantumStatus.SAFE_SYMMETRIC: "safe",
+        }.get(f.quantum_status, "")
+        findings_rows += f"""
+        <tr class="{status_class}">
+            <td>{f.id}</td>
+            <td>{f.family}</td>
+            <td>{f.quantum_status.value}</td>
+            <td>{f.evidence_path}:{f.evidence_line or '?'}</td>
+            <td><code>{f.evidence_snippet[:120]}</code></td>
+            <td>{f.confidence:.1f}</td>
+        </tr>"""
+
+    coverage_html = ""
+    for axis, score in inv.coverage.items():
+        coverage_html += f"<li><strong>{axis}</strong>: {score.recognised}/{score.total} recognised ({score.recall:.0%})</li>"
+
+    # Priority with reasons
+    priority_html = ""
+    for f in sorted(inv.priority_findings, key=lambda x: -getattr(x, "priority_score", 0))[:10]:
+        reasons = ", ".join(getattr(f, "priority_reasons", [])[:2]) or f.quantum_status.value
+        priority_html += f"<li><strong>{f.family}</strong> in {f.evidence_path}:{f.evidence_line} — {reasons}</li>"
+
+    # Actionable tables
+    compliance_rows = ""
+    timeline_rows = ""
+    rec_rows = ""
+    for f in inv.findings:
+        if getattr(f, "compliance_note", ""):
+            compliance_rows += f"<tr><td>{f.family}</td><td>{f.evidence_path}:{f.evidence_line}</td><td>{f.compliance_note}</td></tr>"
+        if getattr(f, "timeline_flags", []):
+            timeline_rows += f"<tr><td>{f.family}</td><td>{f.evidence_path}:{f.evidence_line}</td><td>{'; '.join(f.timeline_flags)}</td></tr>"
+        if getattr(f, "recommendation", ""):
+            rec_rows += f"<tr><td>{f.family}</td><td>{getattr(f, 'parameter_set', '') or '-'}</td><td>{f.recommendation}</td></tr>"
+
+    compliance_html = f"<table><thead><tr><th>Family</th><th>Location</th><th>Compliance note</th></tr></thead><tbody>{compliance_rows or '<tr><td colspan=3>None</td></tr>'}</tbody></table>" if compliance_rows else "<p>No compliance notes.</p>"
+    timeline_html = f"<table><thead><tr><th>Family</th><th>Location</th><th>Timeline flags</th></tr></thead><tbody>{timeline_rows or '<tr><td colspan=3>None</td></tr>'}</tbody></table>" if timeline_rows else "<p>No timeline flags.</p>"
+    rec_html = f"<table><thead><tr><th>Family</th><th>Parameter set</th><th>Recommendation</th></tr></thead><tbody>{rec_rows or '<tr><td colspan=3>None</td></tr>'}</tbody></table>" if rec_rows else "<p>No specific recommendations.</p>"
+
+    b = inv.readiness_breakdown or {}
+    breakdown_html = f"""
+    <table style="width:auto">
+      <tr><td>Formula</td><td><code>{b.get('formula', '')}</code></td></tr>
+      <tr><td>Shor-vulnerable findings</td><td>{b.get('vulnerable_count', 0)} × 15 = −{b.get('penalty_vulnerable', 0)}</td></tr>
+      <tr><td>Classically weak findings</td><td>{b.get('weak_count', 0)} × 5 = −{b.get('penalty_weak', 0)}</td></tr>
+      <tr><td>PQC findings</td><td>{b.get('pqc_count', 0)} × 2 = +{b.get('bonus_pqc', 0)}</td></tr>
+      <tr><td>Raw → clamped</td><td>{b.get('raw', inv.readiness_score)} → <strong>{inv.readiness_score}</strong></td></tr>
+    </table>
+    """
+
+    return f"""<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>QCI PQC Readiness Report – {inv.project}</title>
+<style>
+body {{ font-family: system-ui, sans-serif; margin: 2rem; background: #f8f9fa; }}
+.container {{ max-width: 1100px; margin: auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }}
+h1 {{ color: #1a1a2e; }}
+.score {{ font-size: 2.5rem; font-weight: bold; color: #0066cc; }}
+table {{ width: 100%; border-collapse: collapse; margin: 1rem 0; }}
+th, td {{ border: 1px solid #ddd; padding: 8px; text-align: left; font-size: 0.9rem; }}
+th {{ background: #f1f3f5; }}
+.vulnerable {{ background: #ffe6e6; }}
+.weak {{ background: #fff3e0; }}
+.pqc {{ background: #e8f5e9; }}
+.safe {{ background: #f0f7ff; }}
+code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
+.footer {{ margin-top: 2rem; font-size: 0.8rem; color: #666; }}
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>Quantum Core Institute – PQC Readiness Report</h1>
+  <p>Project: <strong>{inv.project}</strong></p>
+  <p>Scanners: {', '.join(inv.scanners_used) or 'qci-pattern'}</p>
+  <p>Readiness Score: <span class="score">{inv.readiness_score}</span> / 100</p>
+
+  <h2>Score Breakdown</h2>
+  {breakdown_html}
+
+  <h2>Accuracy Calibration (golden corpus)</h2>
+  <p>Measured against the labeled test corpus. Higher precision = fewer false positives; higher recall = fewer missed findings.</p>
+  <ul>
+    <li>Precision: <strong>{getattr(inv, 'calibration', {}).get('precision', 'n/a')}</strong></li>
+    <li>Recall: <strong>{getattr(inv, 'calibration', {}).get('recall', 'n/a')}</strong></li>
+    <li>True positives: {getattr(inv, 'calibration', {}).get('true_positives', 'n/a')}</li>
+    <li>False positives (negative files): {getattr(inv, 'calibration', {}).get('false_positives', 'n/a')}</li>
+    <li>False negatives: {getattr(inv, 'calibration', {}).get('false_negatives', 'n/a')}</li>
+  </ul>
+  <ul>{coverage_html or '<li>No coverage data</li>'}</ul>
+  <p><em>These numbers reflect recognition of a small embedded form catalogue, not absolute recall of all cryptography.</em></p>
+
+  <h2>Priority Findings (with reasons)</h2>
+  <ul>{priority_html or '<li>None</li>'}</ul>
+
+  <h2>Compliance & Library Notes</h2>
+  <p>Flags pre-standard names (Kyber/Dilithium) vs FIPS 203/204/205.</p>
+  {compliance_html}
+
+  <h2>Timeline Flags (NIST IR 8547 + federal dates)</h2>
+  {timeline_html}
+
+  <h2>Algorithm & Parameter Recommendations</h2>
+  {rec_html}
+
+  <h2>NIST-Aligned Migration Notes</h2>
+  <p>Findings are tagged with a suggested phase. Full guide: <code>docs/NIST-PQC-Migration-Guide.md</code>.</p>
+  <ul>
+    <li><strong>Phase 1</strong> — Inventory (this report + CBOM)</li>
+    <li><strong>Phase 2</strong> — Prioritize (see Priority Findings above)</li>
+    <li><strong>Phase 3</strong> — Select algorithms (ML-KEM-768, ML-DSA-65, SLH-DSA)</li>
+    <li><strong>Phase 4–5</strong> — Design for agility & implement</li>
+    <li><strong>Phase 6–7</strong> — Deploy hybrids then retire classical public-key</li>
+  </ul>
+
+  <h2>All Findings ({len(inv.findings)})</h2>
+  <table>
+    <thead><tr><th>ID</th><th>Family</th><th>Status</th><th>Location</th><th>Snippet</th><th>Conf.</th></tr></thead>
+    <tbody>{findings_rows or '<tr><td colspan="6">No findings</td></tr>'}</tbody>
+  </table>
+
+  <div class="footer">
+    Generated by qci-pqc-scan 0.1.0 · Catalogue scoring inspired by ShorList (CC BY 4.0)<br>
+    This is an MVP. Findings should be reviewed. Not a complete inventory.
+  </div>
+</div>
+</body>
+</html>"""
+
+
+def write_reports(inv: Inventory, out_dir: Path):
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / "cbom.json").write_text(json.dumps(to_cyclonedx(inv), indent=2))
+    (out_dir / "results.sarif").write_text(json.dumps(to_sarif(inv), indent=2))
+    (out_dir / "report.html").write_text(to_html(inv))

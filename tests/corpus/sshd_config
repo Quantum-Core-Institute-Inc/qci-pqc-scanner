@@ -1,0 +1,7 @@
+# sshd_config example
+KexAlgorithms curve25519-sha256,diffie-hellman-group14-sha256,diffie-hellman-group1-sha1
+HostKeyAlgorithms ssh-ed25519,ecdsa-sha2-nistp256,rsa-sha2-512
+Ciphers aes256-gcm@openssh.com,aes128-cbc,3des-cbc
+MACs hmac-sha2-256,hmac-sha1
+# PQC hybrid example
+# KexAlgorithms sntrup761x25519-sha512@openssh.com

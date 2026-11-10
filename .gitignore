@@ -1,0 +1,12 @@
+__pycache__/
+*.pyc
+*.pyo
+.pytest_cache/
+*.egg-info/
+.venv/
+venv/
+qci-pqc-out/
+example-output/
+*.egg
+dist/
+build/
