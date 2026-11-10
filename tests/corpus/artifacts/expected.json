@@ -1,1 +1,18 @@
-{"class": "artifact", "positives": [["Pay.class", "AES"]], "precision_gate": 1.0}
+{
+  "class": "artifact",
+  "positives": [
+    [
+      "Pay.class",
+      "AES"
+    ],
+    [
+      "pay.jar",
+      "AES"
+    ],
+    [
+      "Sign.class",
+      "RSA"
+    ]
+  ],
+  "precision_gate": 1.0
+}
