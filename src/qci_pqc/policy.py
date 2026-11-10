@@ -22,7 +22,7 @@ def load_accepted_risks(path: Path | None) -> dict:
 
 
 def finding_key(f: Finding) -> str:
-    return f"{f.family}|{Path(f.evidence_path).name}|{f.evidence_line or 0}"
+    return f"{f.family}|{Path(f.evidence_path).name}|{f.parameter_set or ''}"
 
 
 def evaluate_policy(findings: list[Finding], policy: dict, accepted: dict) -> dict:
