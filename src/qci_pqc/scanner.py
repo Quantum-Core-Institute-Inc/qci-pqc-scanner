@@ -9,7 +9,7 @@ from typing import Iterator
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
 from .deps import scan_dependencies
-from .resolve import resolve_configs, resolve_calls_and_maps
+from .resolve import resolve_configs, resolve_calls_and_maps, resolve_wiring
 
 # Patterns: (regex, family, quantum_status, classical_weak, role)
 PATTERNS = [
@@ -348,7 +348,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 extra.id = f"QCI-{finding_id:04d}"
                 yield extra
 
-    for extra in resolve_configs(root) + resolve_calls_and_maps(root):
+    for extra in resolve_configs(root) + resolve_calls_and_maps(root) + resolve_wiring(root):
         finding_id += 1
         extra.id = f"QCI-{finding_id:04d}"
         yield extra
