@@ -106,14 +106,13 @@ def to_cyclonedx(inv: Inventory) -> dict:
 
         name = f.family
         if "/" in name or name.endswith("-Cipher") or name.endswith("-Config"):
-            crypto_props_extra = {"qci:riskCategory": name}
+            risk_category = name
             name = f.parameter_set or "unspecified"
         else:
-            crypto_props_extra = {}
+            risk_category = ""
         crypto = {
             "assetType": asset_type,
             "algorithmProperties": {k: v for k, v in algo_props.items() if v is not None},
-            **({"properties": [{"name": k, "value": v} for k, v in crypto_props_extra.items()]} if crypto_props_extra else {}),
         }
         if asset_type == "certificate" and (getattr(f, "subject", "") or getattr(f, "not_after", "")):
             crypto["certificateProperties"] = {
@@ -158,7 +157,6 @@ def to_cyclonedx(inv: Inventory) -> dict:
             "safe_symmetric": "resistant",
         }.get(f.quantum_status.value, "unknown")
 
-        name = f.family
         if f.family in {"HMAC", "PBKDF2"} and param in {"SHA-256", "SHA-1", "SHA-512", "SHA-384"}:
             name = f"{f.family}-{param}"
         components.append({
@@ -174,6 +172,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
                 }]
             },
             "properties": [
+                *([{"name": "qci:riskCategory", "value": risk_category}] if risk_category else []),
                 {"name": "qci:quantum_status", "value": f.quantum_status.value},
                 {"name": "qci:risk_category", "value": getattr(f, "risk_category", "") or ""},
                 {"name": "qci:protocol", "value": f.parameter_set if (f.role or "") == "protocol" else ""},
