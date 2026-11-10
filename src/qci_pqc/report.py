@@ -112,7 +112,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
             crypto["certificateProperties"] = {
                 "subjectName": getattr(f, "subject", "") or None,
                 "issuerName": getattr(f, "issuer", "") or None,
-                "notValidAfter": getattr(f, "not_after", "") or None,
+                "notValidAfter": ((getattr(f, "not_after", "") or "") + ("T00:00:00Z" if getattr(f, "not_after", "") and "T" not in getattr(f, "not_after", "") else "")) or None,
             }
             crypto["certificateProperties"] = {k: v for k, v in crypto["certificateProperties"].items() if v}
         if (f.role or "") == "protocol":
