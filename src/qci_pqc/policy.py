@@ -1,6 +1,7 @@
 """Policy-as-code evaluation and accepted-risk tracking."""
 
 import json
+from datetime import date
 from pathlib import Path
 
 from .models import Finding, QuantumStatus
@@ -37,7 +38,15 @@ def evaluate_policy(findings: list[Finding], policy: dict, accepted: dict) -> di
         status = f.quantum_status.value
 
         if key in accepted:
-            waived.append({"key": key, "family": f.family, "justification": accepted[key].get("justification", "")})
+            item = accepted[key]
+            expires = item.get("expires") or item.get("expiry")
+            if expires and expires < date.today().isoformat():
+                violations.append({"key": key, "family": f.family, "status": status, "path": f.evidence_path, "line": f.evidence_line, "reason": f"Exception expired {expires}"})
+                continue
+            if not item.get("owner") or not item.get("justification"):
+                violations.append({"key": key, "family": f.family, "status": status, "path": f.evidence_path, "line": f.evidence_line, "reason": "Exception needs an owner and a reason"})
+                continue
+            waived.append({"key": key, "family": f.family, "justification": item.get("justification", ""), "owner": item.get("owner", ""), "expires": expires or ""})
             continue
 
         if status in fail_on or status in require_acceptance:
