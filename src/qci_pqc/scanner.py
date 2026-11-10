@@ -104,6 +104,14 @@ PATTERNS = [
     (r"HostKeyAlgorithms\s+.*ecdsa", "ECDSA", QuantumStatus.VULNERABLE, False, "hostkey"),
     (r"ssl_protocols\s+.*TLSv1\.[01]", "TLS1.0/1.1", QuantumStatus.WEAK, True, "protocol"),
     (r"MinProtocol\s*=\s*TLSv1\.[01]", "TLS1.0/1.1", QuantumStatus.WEAK, True, "protocol"),
+
+    # PQC asset configs — name the group on the line
+    (r"ssl_ecdh_curve\s+.*X25519MLKEM768|Groups\s*=\s*.*X25519MLKEM768", "X25519MLKEM768", QuantumStatus.HYBRID, False, "kem"),
+    (r"Groups\s*=\s*.*SecP384r1MLKEM1024", "SecP384r1MLKEM1024", QuantumStatus.HYBRID, False, "kem"),
+    (r"KexAlgorithms\s+.*mlkem768x25519", "X25519MLKEM768", QuantumStatus.HYBRID, False, "kex"),
+    (r"sntrup761x25519", "sntrup761x25519", QuantumStatus.HYBRID, False, "kex"),
+    (r"ssl_protocols\s+.*TLSv1\.3|MinProtocol\s*=\s*TLSv1\.3", "TLS-1.3", QuantumStatus.SAFE_SYMMETRIC, False, "protocol"),
+    (r"Ciphers\s+.*chacha20-poly1305", "ChaCha20-Poly1305", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     # === PQC / Hybrid (NIST FIPS 203/204/205 + others) ===
     # ML-KEM (FIPS 203, formerly Kyber)
     (r"\bml-?kem-?512\b|\bkyber512\b", "ML-KEM-512", QuantumStatus.PQC, False, "kem"),
