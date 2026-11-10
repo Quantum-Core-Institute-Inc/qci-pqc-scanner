@@ -203,6 +203,7 @@ pql-cli trend --score 70 --ticket-ready 61
 |------|---------|
 | `report.html` | Human-readable readiness report. This is the file a reviewer should open. |
 | `cbom.json` | CycloneDX 1.6 CBOM (schema-validated) |
+| `graph.json` | Dependency graph: app, library, finding, path |
 | `results.sarif` | SARIF 2.1.0 for CI / code scanning |
 | `findings.json` | Structured findings |
 | `evidence-manifest.json` | SHA-256 hashes, ruleset hash, scanner version |
