@@ -1,13 +1,24 @@
-# Published calibration results (golden corpus)
+# Published calibration results
 
-| Date | Corpus files | Recall | Precision | FP (negative files) | Notes |
-|------|--------------|--------|-----------|---------------------|-------|
-| 2026-11-10 | tests/corpus (expanded) | 1.0 | ~0.76–0.83 | 0 | Comment stripping enabled |
+Measured on the golden corpus in `tests/corpus`.
 
-Run:
+| Date | Expected positives | True positives | Recall | Precision | FP (negative files) | Total findings |
+|------|--------------------|----------------|--------|-----------|---------------------|----------------|
+| 2026-11-10 | 32 | 32 | **1.0** | **0.744** | **0** | 97 |
+
+## How to reproduce
+
 ```bash
 qci-pqc scan tests/corpus --calibrate
-qci-pqc scan tests/corpus --calibrate --json > calibration.json
+qci-pqc scan tests/corpus --calibrate --json
 ```
 
-These figures are for the included corpus only. See docs/LIMITATIONS.md.
+## Corpus contents
+
+- Positive: Python, Java, Go, JavaScript, PEM, PQC libraries, TLS config
+- Negative: comments, documentation, safe-only files
+- Real-world style: liboqs, CIRCL, BouncyCastle-style, OpenSSL-style names
+
+## Scope
+
+These numbers apply to this corpus only. They do not transfer automatically to arbitrary codebases. See [LIMITATIONS.md](LIMITATIONS.md).
