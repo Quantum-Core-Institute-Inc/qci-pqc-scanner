@@ -193,23 +193,28 @@ PATTERNS = [
 COMPILED = [(re.compile(pat, re.IGNORECASE), fam, status, weak, role) for pat, fam, status, weak, role in PATTERNS]
 
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build", "target"}
+PROJECT_CONSTS: dict[str, str] = {}
 SKIP_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".tar", ".gz", ".so", ".dll", ".exe", ".md", ".rst"}
 
 
 
 def _string_constants(lines: list[str]) -> dict[str, str]:
-    """File-local string constants: KEY_ALG = \"DSA\" or final String KEY_ALG = \"DSA\"."""
+    """File-local string constants, env defaults, and enum constructor values."""
     consts = {}
     pat = re.compile(
         r"(?:(?:public|private|static|final)\s+)*String\s+([A-Z_][A-Z0-9_]*)\s*=\s*[\"']([^\"']+)[\"']"
         r"|([A-Z_][A-Z0-9_]*)\s*=\s*[\"']([^\"']+)[\"']"
+        r"|([A-Z_][A-Z0-9_]*)\s*=\s*os\.environ\.get\(\s*[\"'][^\"']+[\"']\s*,\s*[\"']([^\"']+)[\"']"
     )
+    enum = re.compile(r"([A-Z_][A-Z0-9_]*)\s*\(\s*[\"']([^\"']+)[\"']\s*\)")
     for line in lines:
         for m in pat.finditer(line):
-            name = m.group(1) or m.group(3)
-            val = m.group(2) or m.group(4)
+            name = next((g for g in (m.group(1), m.group(3), m.group(5)) if g), None)
+            val = next((g for g in (m.group(2), m.group(4), m.group(6)) if g), None)
             if name and val:
                 consts[name] = val
+        for m in enum.finditer(line):
+            consts[m.group(1)] = m.group(2)
     return consts
 
 
@@ -222,12 +227,20 @@ def _expand_constants(line: str, consts: dict[str, str]) -> str:
     out = line
     for name, val in consts.items():
         if name in out:
-            out = re.sub(rf"\b{name}\b", f'\"{val}\"', out)
+            out = re.sub(rf"(?:\w+\.)?\b{name}\b(?:\.\w+)*", f'\"{val}\"', out)
     return out
 
 
 def scan_path(root: Path) -> Iterator[Finding]:
     """Scan a directory tree for cryptographic patterns."""
+    global PROJECT_CONSTS
+    PROJECT_CONSTS = {}
+    for path in root.rglob("*"):
+        if path.is_file() and path.suffix.lower() in {".py", ".java", ".kt"} and not any(part in SKIP_DIRS for part in path.parts):
+            try:
+                PROJECT_CONSTS.update(_string_constants(path.read_text(encoding="utf-8", errors="ignore").splitlines()))
+            except Exception:
+                continue
     finding_id = 0
     for path in root.rglob("*"):
         if not path.is_file():
@@ -242,7 +255,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
             continue
 
         lines = text.splitlines()
-        consts = _string_constants(lines)
+        consts = {**PROJECT_CONSTS, **_string_constants(lines)}
         for line_no, line in enumerate(lines, 1):
             stripped = line.strip()
             # Skip pure comments and empty lines to reduce false positives
