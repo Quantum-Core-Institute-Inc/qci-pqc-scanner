@@ -1,0 +1,3 @@
+tls_params:
+  tls_minimum_protocol_version: TLSv1_0
+  cipher_suites: ECDHE-RSA-AES128-GCM-SHA256

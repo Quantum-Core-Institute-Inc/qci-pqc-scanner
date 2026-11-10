@@ -122,6 +122,11 @@ PATTERNS = [
 
     (r"tls\.TLS_AES_(?:128_GCM_SHA256|256_GCM_SHA384|128_CCM)|[\"']TLS_AES_(?:128_GCM_SHA256|256_GCM_SHA384)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"tls\.TLS_CHACHA20_POLY1305_SHA256|[\"']TLS_CHACHA20_POLY1305_SHA256[\"']", "ChaCha20-Poly1305", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+
+    # === Envoy / PostgreSQL ===
+    (r"tls_minimum_protocol_version:\s*TLSv1_0|ssl_min_protocol_version\s*=\s*\"TLSv1\"", "TLS-1.0", QuantumStatus.WEAK, True, "protocol"),
+    (r"cipher_suites:.*AES|ssl_ciphers\s*=", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"tls_certificate_sds|ssl_cert_file", "X509-Cert", QuantumStatus.VULNERABLE, False, "cert"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
