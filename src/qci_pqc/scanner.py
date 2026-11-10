@@ -83,6 +83,17 @@ PATTERNS = [
     (r"Cipher\.getInstance\s*\(\s*\"AES/(ECB|GCM|CBC)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"digestmod\s*=\s*[\"']sha1[\"']", "HMAC", QuantumStatus.WEAK, True, "mac"),
 
+
+    # === C# ===
+    (r"RSA\.Create|RSACryptoServiceProvider", "RSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"ECDsa\.Create|ECDiffieHellman\.Create", "ECDSA", QuantumStatus.VULNERABLE, False, "sign"),
+    (r"Aes\.Create|AesGcm|AesCcm", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"SHA256\.Create|SHA512\.Create", "SHA-256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    # === Rust ===
+    (r"RsaPrivateKey::new|rsa::RsaPrivateKey", "RSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"P256|p256::SecretKey|ecdsa::SigningKey", "ECDSA", QuantumStatus.VULNERABLE, False, "sign"),
+    (r"Aes256Gcm|Aes128Gcm|aes_gcm::", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"ring::signature::Ed25519KeyPair|ed25519_dalek", "Ed25519", QuantumStatus.VULNERABLE, False, "sign"),
     # === Go stdlib ===
     (r"md5\.Sum\b|crypto/md5", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"sha1\.Sum\b|crypto/sha1", "SHA-1", QuantumStatus.WEAK, True, "hash"),
