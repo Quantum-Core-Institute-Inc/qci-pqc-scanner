@@ -9,7 +9,7 @@ authors = [{name = "Quantum Core Institute"}]
 dependencies = ["click>=8.1"]
 
 [project.optional-dependencies]
-dev = ["pytest>=7.0"]
+dev = ["pytest>=7.0", "jsonschema>=4.0"]
 x509 = ["cryptography>=42.0"]
 
 [project.scripts]
