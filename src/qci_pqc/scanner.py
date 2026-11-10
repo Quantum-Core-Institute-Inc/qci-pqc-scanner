@@ -56,7 +56,7 @@ PATTERNS = [
     (r"MessageDigest\.getInstance\s*\(\s*\"SHA-1", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"MessageDigest\.getInstance\s*\(\s*\"SHA-256", "SHA-256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
 
-    (r"hashlib\.sha3_256|MessageDigest\.getInstance\s*\(\s*\"SHA3-256\"", "SHA3-256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"hashlib\.sha3_256|MessageDigest\.getInstance\s*\(\s*\"SHA3-256\"", "SHA-3", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"ssl_protocols\s+.*TLSv1(?:\s|;|$)|ssl_protocols\s+.*TLSv1\.0", "TLS-1.0", QuantumStatus.VULNERABLE, True, "protocol"),
     (r"ssl_protocols\s+.*TLSv1\.1", "TLS-1.1", QuantumStatus.VULNERABLE, True, "protocol"),
     (r"ssl_protocols\s+.*TLSv1\.2", "TLS-1.2", QuantumStatus.SAFE_SYMMETRIC, False, "protocol"),
@@ -375,7 +375,8 @@ def scan_path(root: Path) -> Iterator[Finding]:
                             param = "P-256"
                         elif "384" in param:
                             param = "P-384"
-                    if family in {"AES", "AES-ECB", "AES-GCM", "AES-CBC"}:
+                    if family.startswith("AES"):
+                        family = "AES"
                         ur = re.search(r"urandom\s*\(\s*(\d+)", text)
                         if ur:
                             param = str(int(ur.group(1)) * 8)
