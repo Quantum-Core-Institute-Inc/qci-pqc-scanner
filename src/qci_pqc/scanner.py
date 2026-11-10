@@ -122,6 +122,12 @@ PATTERNS = [
 
     (r"tls\.TLS_AES_(?:128_GCM_SHA256|256_GCM_SHA384|128_CCM)|[\"']TLS_AES_(?:128_GCM_SHA256|256_GCM_SHA384)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"tls\.TLS_CHACHA20_POLY1305_SHA256|[\"']TLS_CHACHA20_POLY1305_SHA256[\"']", "ChaCha20-Poly1305", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+
+    # === Terraform / CloudFormation ===
+    (r"aws_kms_key|kms_key_id|CustomerMasterKeySpec\s*=\s*\"RSA", "RSA", QuantumStatus.VULNERABLE, False, "key"),
+    (r"aws_acm_certificate|AWS::CertificateManager::Certificate", "X509-Cert", QuantumStatus.VULNERABLE, False, "cert"),
+    (r"minimum_protocol_version\s*=\s*\"TLSv1", "TLS-1.0", QuantumStatus.WEAK, True, "protocol"),
+    (r"KeySpec:\s*RSA_2048|KeyAlgorithm:\s*RSA", "RSA", QuantumStatus.VULNERABLE, False, "key"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),

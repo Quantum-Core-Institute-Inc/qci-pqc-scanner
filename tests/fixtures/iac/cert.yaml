@@ -1,0 +1,5 @@
+Resources:
+  Cert:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      KeyAlgorithm: RSA
