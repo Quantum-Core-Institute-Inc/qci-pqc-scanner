@@ -18,6 +18,7 @@ from .compliance import (
 )
 from .calibrate import calibrate as run_calibrate
 from .scoring import compute_readiness, score_scanner
+from .scoresplit import split_scores
 from .policy import evaluate_policy, load_accepted_risks, load_policy
 
 
@@ -97,6 +98,10 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         before = len(all_findings)
         all_findings = deduplicate(all_findings)
         status(f"Deduplicated: {before} → {len(all_findings)} findings")
+    parts = split_scores(all_findings)
+    status(f"Source findings: {parts['source']['count']}")
+    status(f"Artifact findings: {parts['artifact']['count']}")
+    status("Scores are not blended.")
 
     # Calibration-only mode: print metrics and exit
     if calibrate:
