@@ -51,8 +51,11 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
          calibrate: bool, verbose: bool, json_out: bool, reproducible: bool,
          policy: Path, accepted_risks: Path):
     """Scan a directory for cryptographic usage and produce readiness reports."""
+    def status(message):
+        click.echo(message, err=json_out)
+
     adapters = [a.strip() for a in adapter.split(",") if a.strip()]
-    click.echo(f"Scanning {path} with adapter(s): {', '.join(adapters)} ...")
+    status(f"Scanning {path} with adapter(s): {', '.join(adapters)} ...")
 
     all_findings = []
     scanners_used = []
@@ -66,10 +69,10 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
             findings = scanner.scan(path)
             all_findings.extend(findings)
             scanners_used.append(scanner.name)
-            click.echo(f"  {scanner.name}: {len(findings)} raw findings")
+            status(f"  {scanner.name}: {len(findings)} raw findings")
             if verbose:
                 for f in findings:
-                    click.echo(f"    [{f.quantum_status.value:12}] {f.family:16} {f.evidence_path}:{f.evidence_line}")
+                    status(f"    [{f.quantum_status.value:12}] {f.family:16} {f.evidence_path}:{f.evidence_line}")
         except Exception as e:
             click.echo(f"Adapter '{name}' failed: {e}", err=True)
 
@@ -83,7 +86,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
     if not no_dedupe:
         before = len(all_findings)
         all_findings = deduplicate(all_findings)
-        click.echo(f"Deduplicated: {before} → {len(all_findings)} findings")
+        status(f"Deduplicated: {before} → {len(all_findings)} findings")
 
     # Calibration-only mode: print metrics and exit
     if calibrate:
@@ -112,17 +115,17 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
     ignored = []
     if ignore:
         all_findings, ignored = apply_ignore(all_findings, load_ignore(ignore))
-        click.echo(f"Ignored: {len(ignored)} findings")
+        status(f"Ignored: {len(ignored)} findings")
 
     # Baseline diff
     baseline_diff = None
     if baseline:
         baseline_diff = diff_baseline(all_findings, load_baseline(baseline))
-        click.echo(f"Baseline diff: +{len(baseline_diff['new'])} new, -{len(baseline_diff['resolved'])} resolved")
+        status(f"Baseline diff: +{len(baseline_diff['new'])} new, -{len(baseline_diff['resolved'])} resolved")
 
     if save_baseline:
         write_baseline(all_findings, save_baseline)
-        click.echo(f"Baseline saved to {save_baseline}")
+        status(f"Baseline saved to {save_baseline}")
 
     # Optional metadata tagging
     if metadata and metadata.exists():
@@ -172,7 +175,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
 
     if tickets:
         n = export_tickets(all_findings, out_path / "tickets.json")
-        click.echo(f"Exported {n} tickets to {out_path}/tickets.json")
+        status(f"Exported {n} tickets to {out_path}/tickets.json")
 
     summary = {
         "project": inv.project,
