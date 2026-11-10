@@ -51,6 +51,7 @@ PATTERNS = [
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
+    (r'hashlib\.new\s*\(\s*["\']sha1["\']', "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha256\b", "SHA-256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"hashlib\.sha512\b", "SHA-512", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"hashlib\.blake2", "BLAKE2", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
@@ -195,6 +196,36 @@ SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "bu
 SKIP_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".tar", ".gz", ".so", ".dll", ".exe", ".md", ".rst"}
 
 
+
+def _string_constants(lines: list[str]) -> dict[str, str]:
+    """File-local string constants: KEY_ALG = \"DSA\" or final String KEY_ALG = \"DSA\"."""
+    consts = {}
+    pat = re.compile(
+        r"(?:(?:public|private|static|final)\s+)*String\s+([A-Z_][A-Z0-9_]*)\s*=\s*[\"']([^\"']+)[\"']"
+        r"|([A-Z_][A-Z0-9_]*)\s*=\s*[\"']([^\"']+)[\"']"
+    )
+    for line in lines:
+        for m in pat.finditer(line):
+            name = m.group(1) or m.group(3)
+            val = m.group(2) or m.group(4)
+            if name and val:
+                consts[name] = val
+    return consts
+
+
+def _expand_constants(line: str, consts: dict[str, str]) -> str:
+    if not consts:
+        return line
+    # Do not rewrite the definition line itself.
+    if re.search(r"^\s*(?:(?:public|private|static|final)\s+)*String\s+[A-Z_]", line) or re.search(r"^\s*[A-Z_][A-Z0-9_]*\s*=", line):
+        return line
+    out = line
+    for name, val in consts.items():
+        if name in out:
+            out = re.sub(rf"\b{name}\b", f'\"{val}\"', out)
+    return out
+
+
 def scan_path(root: Path) -> Iterator[Finding]:
     """Scan a directory tree for cryptographic patterns."""
     finding_id = 0
@@ -211,6 +242,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
             continue
 
         lines = text.splitlines()
+        consts = _string_constants(lines)
         for line_no, line in enumerate(lines, 1):
             stripped = line.strip()
             # Skip pure comments and empty lines to reduce false positives
@@ -228,7 +260,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 continue
 
             # Remove inline comments before matching (Python/JS style)
-            code_part = line
+            code_part = _expand_constants(line, consts)
             if "#" in code_part and not code_part.strip().startswith("-----"):
                 code_part = code_part.split("#", 1)[0]
             if "//" in code_part:
