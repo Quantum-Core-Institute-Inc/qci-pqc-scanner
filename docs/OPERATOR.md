@@ -66,3 +66,14 @@ Read [LIMITATIONS.md](LIMITATIONS.md) before treating a score as coverage.
 | A new finding in `diff` | Family, file, and parameter were not in the baseline | A line moved |
 
 An exception needs an owner, a reason, and an expiry. An expired exception fails the build even if the finding did not change.
+
+## Source score and artifact score
+
+Do not add them.
+
+| Score | Counts | Does not count |
+|-------|--------|----------------|
+| Source | Source and config findings | JARs, class files, binaries |
+| Artifact | Strings in compiled files | Source recall |
+
+A high source score says nothing about the JAR. A high artifact score says nothing about the source. 2.1 prints both and does not blend them.
