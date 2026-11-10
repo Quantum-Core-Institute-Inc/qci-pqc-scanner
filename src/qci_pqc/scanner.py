@@ -10,6 +10,7 @@ from typing import Iterator
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
 from .deps import scan_dependencies
+from .artifacts import scan_artifacts
 from .resolve import resolve_configs, resolve_calls_and_maps
 
 # Patterns: (regex, family, quantum_status, classical_weak, role)
@@ -572,3 +573,8 @@ def scan_path(root: Path) -> Iterator[Finding]:
         finding_id += 1
         dep.id = f"QCI-{finding_id:04d}"
         yield dep
+
+    for art in scan_artifacts(root):
+        finding_id += 1
+        art.id = f"QCI-{finding_id:04d}"
+        yield art
