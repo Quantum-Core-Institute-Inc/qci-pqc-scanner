@@ -147,6 +147,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         meta = json.loads(metadata.read_text())
         for f in all_findings:
             f.notes = (f.notes + " | " if f.notes else "") + f"owner={meta.get('owner','')} system={meta.get('system','')} lifetime={meta.get('data_lifetime','')}"
+            f.lifetime = meta.get("data_lifetime", "")
 
     inv = Inventory(
         project=path.name,
