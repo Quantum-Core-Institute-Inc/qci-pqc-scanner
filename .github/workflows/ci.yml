@@ -63,6 +63,6 @@ jobs:
       - uses: actions/checkout@v4
       - name: Version consistency
         run: |
-          grep -q 'version = "0.4.0"' pyproject.toml
-          grep -q '__version__ = "0.4.0"' src/qci_pqc/__init__.py
+          grep -q 'version = "0.5.0"' pyproject.toml
+          grep -q '__version__ = "0.5.0"' src/qci_pqc/__init__.py
           echo "Version check: PASS"
