@@ -65,3 +65,13 @@ Seed `20261110`. Adapter copied from this repo.
 | Overfit gap | +2.0 |
 
 Precision and over-claims held. Recall is unchanged from 1.0.
+
+## Artifact corpus (2.0 class)
+
+Separate from the source corpus. Do not add these numbers to source recall.
+
+| Corpus | Expected | Notes |
+|--------|----------|-------|
+| `tests/corpus/artifacts` | AES in Pay.class, AES in pay.jar, RSA in Sign.class | Strings in compiled files |
+
+Precision gate for this corpus is 1.0. A false positive here fails 2.1.
