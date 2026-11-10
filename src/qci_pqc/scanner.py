@@ -378,8 +378,16 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     if family.startswith("AES"):
                         family = "AES"
                         ur = re.search(r"urandom\s*\(\s*(\d+)", text)
-                        if ur:
+                        bits = re.search(r"bit_length\s*=\s*(\d+)", text)
+                        if bits:
+                            param = bits.group(1)
+                        elif ur:
                             param = str(int(ur.group(1)) * 8)
+                    # Size on another line in the same file: kpg.initialize(3072)
+                    if family in {"RSA", "DSA", "DH"} and not param:
+                        init = re.search(r"\.initialize\s*\(\s*(\d{3,5})\s*\)", text)
+                        if init:
+                            param = init.group(1)
                     if family in {"3DES", "DES"} and re.search(r"modes\.CBC|CBC", code_part):
                         param = "CBC"
                     if family in {"HMAC", "PBKDF2"} and re.search(r"sha256|SHA256", code_part, re.I):
