@@ -16,10 +16,14 @@ def to_cyclonedx(inv: Inventory) -> dict:
         # Map role to CycloneDX primitive where possible
         fam_l = f.family.lower()
         role = (f.role or "").lower()
-        if role in ("sign", "signature") or "withrsa" in fam_l or "withecdsa" in fam_l:
+        if role in ("sign", "signature") or "withrsa" in fam_l or "withecdsa" in fam_l or fam_l in {"ecdsa", "ec"}:
             primitive = "signature"
         elif role == "encrypt" and "rsa" in fam_l:
             primitive = "pke"
+        elif role == "keygen" and "rsa" in fam_l:
+            primitive = "pke"
+        elif role == "keygen" and fam_l in {"ecdsa", "ec", "ed25519"}:
+            primitive = "signature"
         elif role in ("kem",):
             primitive = "kem"
         elif role in ("kex",):
