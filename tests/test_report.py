@@ -80,4 +80,4 @@ def test_hmac_hash_uses_parameter_set_identifier():
     )["components"][0]["cryptoProperties"]["algorithmProperties"]
 
     assert algorithm["parameterSetIdentifier"] == "SHA-256"
-    assert "hash" not in algorithm
+    assert algorithm["hash"] == "SHA-256"
