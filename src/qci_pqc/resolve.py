@@ -122,7 +122,11 @@ def resolve_calls_and_maps(root: Path) -> list[Finding]:
                 base = token.split("/")[0].upper()
                 if token.upper() in KNOWN or base in KNOWN:
                     st, role = KNOWN.get(token.upper(), KNOWN.get(base))
-                    out.append(_finding(path, root, i, token, st, role, line.strip()))
+                    name = base if "/" in token else token
+                    mode = "ECB" if "/ECB" in token else ("GCM" if "/GCM" in token else ("CBC" if "/CBC" in token else ""))
+                    bits = re.search(r"\.init\s*\(\s*(\d{2,4})\s*\)", "\n".join(lines))
+                    param = "-".join(x for x in ((bits.group(1) if bits else ""), mode) if x)
+                    out.append(_finding(path, root, i, name, st, role, line.strip(), param))
             for m in sysprop.finditer(line):
                 raw = m.group(1)
                 token = raw.split("/")[0]
