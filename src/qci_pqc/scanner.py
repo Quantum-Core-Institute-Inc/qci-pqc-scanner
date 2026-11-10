@@ -113,6 +113,10 @@ PATTERNS = [
     (r"\"kty\"\s*:\s*\"EC\"", "ECC-P-256", QuantumStatus.VULNERABLE, False, "key"),
     (r"\"crv\"\s*:\s*\"P-256\"", "ECC-P-256", QuantumStatus.VULNERABLE, False, "key"),
     (r"\"crv\"\s*:\s*\"P-384\"", "ECC-P-384", QuantumStatus.VULNERABLE, False, "key"),
+
+    (r"mlkem\.GenerateKey512|mlkem\.NewDecapsulationKey512", "ML-KEM-512", QuantumStatus.PQC, False, "kem"),
+    (r"mlkem\.GenerateKey768|mlkem\.NewDecapsulationKey768", "ML-KEM-768", QuantumStatus.PQC, False, "kem"),
+    (r"mlkem\.GenerateKey1024|mlkem\.NewDecapsulationKey1024", "ML-KEM-1024", QuantumStatus.PQC, False, "kem"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
