@@ -86,14 +86,19 @@ def _json(path: Path, root: Path) -> list[Finding]:
 
 
 def _properties(path: Path, root: Path) -> list[Finding]:
-    found = []
+    lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
     size = ""
-    for i, line in enumerate(path.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
+    for line in lines:
         if "=" not in line or line.strip().startswith("#"):
             continue
         key, val = line.split("=", 1)
         if "size" in key.lower() and val.strip().isdigit():
             size = val.strip()
+    found = []
+    for i, line in enumerate(lines, 1):
+        if "=" not in line or line.strip().startswith("#"):
+            continue
+        key, val = line.split("=", 1)
         token = val.strip().upper()
         if "ALGORITHM" in key.upper() and token in KNOWN:
             st, role = KNOWN[token]
