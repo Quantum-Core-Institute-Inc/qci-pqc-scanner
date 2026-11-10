@@ -7,7 +7,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 0.2.0  
+**Version:** 0.3.0  
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
 

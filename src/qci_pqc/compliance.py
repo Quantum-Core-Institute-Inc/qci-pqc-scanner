@@ -84,7 +84,7 @@ def evidence_manifest(out_dir: Path, inv_summary: dict, reproducible: bool = Fal
             files[name] = {"sha256": h, "size": p.stat().st_size}
     manifest = {
         "generated": None if reproducible else datetime.now(timezone.utc).isoformat(),
-        "scanner_version": "0.2.0",
+        "scanner_version": "0.3.0",
         "ruleset_hash": ruleset_hash(),
         "reproducible": reproducible,
         "summary": inv_summary,
