@@ -62,7 +62,6 @@ PATTERNS = [
     (r"ssl_protocols\s+.*TLSv1\.2", "TLS-1.2", QuantumStatus.SAFE_SYMMETRIC, False, "protocol"),
     (r"ssl_ciphers\s+.*(?:AES128-GCM|ECDHE-RSA-AES128-GCM|AES256-SHA|DES-CBC3)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"ssl_ciphers\s+.*DES-CBC3", "3DES", QuantumStatus.WEAK, True, "cipher"),
-
     (r"hashlib\.sha224|hashes\.SHA224|MessageDigest\.getInstance\s*\(\s*\"SHA-224\"", "SHA-224", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"hashlib\.sha384|hashes\.SHA384|MessageDigest\.getInstance\s*\(\s*\"SHA-384\"", "SHA-384", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"hashlib\.sha3_384|SHA3-384", "SHA3-384", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
@@ -71,6 +70,9 @@ PATTERNS = [
     (r"hashlib\.shake_256|SHAKE256|shake256", "SHAKE256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"ripemd160|RIPEMD-160|RIPEMD160", "RIPEMD-160", QuantumStatus.WEAK, True, "hash"),
     (r"blake3|BLAKE3", "BLAKE3", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"\bSM2\b|sm2\.generate", "SM2", QuantumStatus.VULNERABLE, False, "sign"),
+    (r"\bSM3\b|sm3\.digest|MessageDigest\.getInstance\s*\(\s*\"SM3\"", "SM3", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"\bSM4\b|sm4\.encrypt|Cipher\.getInstance\s*\(\s*\"SM4", "SM4", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
