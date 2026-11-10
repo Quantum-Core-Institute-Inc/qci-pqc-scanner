@@ -1,4 +1,4 @@
-"""CLI entry point for QCI PQC Readiness Scanner."""
+"""CLI entry point for the QCI crypto inventory."""
 
 import json
 import sys
@@ -25,7 +25,7 @@ from .policy import evaluate_policy, load_accepted_risks, load_policy
 @click.group()
 @click.version_option(__version__)
 def cli():
-    """QCI PQC Readiness Scanner – cryptographic inventory and post-quantum assessment."""
+    """QCI crypto inventory. Source, config, and artifacts. Exports a CycloneDX CBOM."""
     pass
 
 
@@ -147,6 +147,9 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         meta = json.loads(metadata.read_text())
         for f in all_findings:
             f.notes = (f.notes + " | " if f.notes else "") + f"owner={meta.get('owner','')} system={meta.get('system','')} lifetime={meta.get('data_lifetime','')}"
+            f.lifetime = meta.get("data_lifetime", "")
+            f.owner = meta.get("owner", "")
+            f.system = meta.get("system", "")
 
     inv = Inventory(
         project=path.name,

@@ -100,3 +100,27 @@ def test_risk_category_is_a_component_property():
     assert component["name"] == "3des-cbc"
     assert {"name": "qci:riskCategory", "value": "SSH-Weak-Cipher"} in component["properties"]
     assert "properties" not in component["cryptoProperties"]
+
+
+def test_provenance_agility_and_metadata_are_component_properties():
+    finding = Finding(
+        id="config-cipher",
+        evidence_path="service.conf",
+        evidence_line=1,
+        evidence_snippet="AES-256-GCM",
+        family="AES-256-GCM",
+        role="encrypt",
+        quantum_status=QuantumStatus.SAFE_SYMMETRIC,
+    )
+    finding.owner = "Platform"
+    finding.system = "payments"
+    finding.lifetime = "10 years"
+
+    component = to_cyclonedx(Inventory(project="test", findings=[finding]))["components"][0]
+    properties = {item["name"]: item["value"] for item in component["properties"]}
+
+    assert properties["qci:provenance"] == "config"
+    assert properties["qci:agility"] == "config"
+    assert properties["qci:owner"] == "Platform"
+    assert properties["qci:system"] == "payments"
+    assert properties["qci:dataLifetime"] == "10 years"
