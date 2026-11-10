@@ -113,7 +113,10 @@ def _from_cert(cert, rel: str) -> list[Finding]:
         confidence=0.95,
         notes=f"{note}; subject={subject}; notAfter={not_after}; signature={sig}",
         recommendation=rec,
-        parameter_set=str(getattr(pub, "key_size", "") or ""),
+        parameter_set=(
+            f"{family}-{getattr(pub, 'key_size', '')}" if getattr(pub, "key_size", None)
+            else (getattr(getattr(pub, "curve", None), "name", "") or family)
+        ),
         subject=subject,
         not_after=not_after,
         curve=getattr(getattr(pub, "curve", None), "name", "") or "",
