@@ -67,7 +67,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
             curve = param if param.upper().startswith("P-") else param
         if param.isdigit() and f.family not in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
             key_size = param
-        elif "-" in param and param.split("-")[-1].isdigit() and not param.upper().startswith("P-"):
+        elif "-" in param and param.split("-")[-1].isdigit() and not param.upper().startswith("P-") and not param.upper().startswith("SHA"):
             key_size = param.split("-")[-1]
         if "ECB" in (param + f.family).upper():
             mode = "ecb"
