@@ -104,7 +104,9 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
     status(f"Artifact findings: {parts['artifact']['count']}")
     status("Scores are not blended.")
     edges = link(all_findings, path)
-    (Path(out) / "graph.json").write_text(json.dumps(edges, indent=2) + "\n")
+    out_path = Path(out)
+    out_path.mkdir(parents=True, exist_ok=True)
+    (out_path / "graph.json").write_text(json.dumps(edges, indent=2) + "\n")
     status(f"Dependency graph: {len(edges)} edges")
 
     # Calibration-only mode: print metrics and exit
@@ -175,7 +177,6 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         acc = load_accepted_risks(accepted_risks)
         inv.policy_result = evaluate_policy(all_findings, pol, acc)
 
-    out_path = Path(out)
     write_reports(inv, out_path)
 
     # Extra compliance artifacts
