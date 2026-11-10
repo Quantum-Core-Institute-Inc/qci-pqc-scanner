@@ -77,3 +77,27 @@ def gate(path: Path, policy: Path, accepted_risks: Path):
 
 if __name__ == "__main__":
     pql()
+
+
+@pql.command("org")
+@click.argument("cboms", nargs=-1, type=click.Path(exists=True, path_type=Path))
+@click.option("--out", default="org-cbom.json")
+def org(cboms, out):
+    """Merge repository CBOMs into one inventory."""
+    from .org import merge_cboms, org_score
+    bom = merge_cboms(list(cboms))
+    Path(out).write_text(json.dumps(bom, indent=2) + "\n")
+    click.echo(json.dumps(org_score(bom)))
+
+
+@pql.command("trend")
+@click.option("--file", "path", default="trend.json", type=click.Path(path_type=Path))
+@click.option("--score", type=float, required=True)
+@click.option("--ticket-ready", type=float, required=True)
+@click.option("--new", "new_n", type=int, default=0)
+@click.option("--resolved", type=int, default=0)
+def trend(path, score, ticket_ready, new_n, resolved):
+    """Append a score point."""
+    from .trend import append, summary
+    append(path, score, ticket_ready, new_n, resolved)
+    click.echo(json.dumps(summary(path)))
