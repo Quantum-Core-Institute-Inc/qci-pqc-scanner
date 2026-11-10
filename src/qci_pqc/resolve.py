@@ -88,3 +88,32 @@ def _properties(path: Path, root: Path) -> list[Finding]:
             st, role = KNOWN[token]
             found.append(_finding(path, root, i, val.strip(), st, role, line.strip()))
     return found
+
+def resolve_calls_and_maps(root: Path) -> list[Finding]:
+    """Literals passed into crypto calls, and algorithm maps."""
+    out = []
+    call = re.compile(r"""(?:getInstance|digest|hashlib\.new)\s*\(\s*['"]([A-Za-z0-9/\-]+)['"]""")
+    sysprop = re.compile(r"""getProperty\s*\(\s*['"][^'"]+['"]\s*,\s*['"]([^'"]+)['"]""")
+    for path in root.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in {".py", ".java", ".kt"}:
+            continue
+        if any(part in {".git", "node_modules"} for part in path.parts):
+            continue
+        lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+        for i, line in enumerate(lines, 1):
+            for m in call.finditer(line):
+                token = m.group(1)
+                base = token.split("/")[0].upper()
+                if token.upper() in KNOWN or base in KNOWN:
+                    st, role = KNOWN.get(token.upper(), KNOWN.get(base))
+                    out.append(_finding(path, root, i, token, st, role, line.strip()))
+            for m in sysprop.finditer(line):
+                token = m.group(1).split("/")[0]
+                if token.upper() in KNOWN:
+                    st, role = KNOWN[token.upper()]
+                    out.append(_finding(path, root, i, token, st, role, line.strip()))
+            for name in ("HmacSHA256", "HmacSHA384", "HmacSHA512"):
+                if name in line:
+                    st, role = KNOWN["HmacSHA256"]
+                    out.append(_finding(path, root, i, name, st, role, line.strip()))
+    return out
