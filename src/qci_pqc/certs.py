@@ -94,6 +94,7 @@ def _from_cert(cert, rel: str) -> Finding:
 
     not_after = cert.not_valid_after_utc.date().isoformat()
     subject = cert.subject.rfc4514_string()
+    issuer = cert.issuer.rfc4514_string()
 
     return Finding(
         id=f"CERT-{rel}",
@@ -111,6 +112,7 @@ def _from_cert(cert, rel: str) -> Finding:
         subject=subject,
         not_after=not_after,
         curve=getattr(getattr(pub, "curve", None), "name", "") or "",
+        issuer=issuer,
     )
 
 
