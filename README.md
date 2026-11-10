@@ -309,6 +309,16 @@ This project is an independent implementation.
 
 ---
 
+
+## Version history
+
+| Version | Summary |
+|---|---|
+| 0.6.0 | Precision 100%, zero false positives, parameter fields, JSON/JWKS resolver |
+| 0.5.0 | Named hybrid groups, certificate and protocol CBOM fields, constant propagation |
+| 0.4.0 | X.509 and PKCS#8 parsing, SSH detection, calibration gate, reproducible evidence |
+| 0.3.0 | Policy-as-code, accepted-risk tracking, release workflow |
+
 ## License
 
 MIT — see [LICENSE](LICENSE).
