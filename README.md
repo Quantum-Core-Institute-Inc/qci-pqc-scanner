@@ -7,7 +7,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 0.5.0  
+**Version:** 0.6.0  
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
 
@@ -246,7 +246,9 @@ qci-pqc scan tests/corpus --calibrate
 PYTHONPATH=src python -m pytest tests/test_calibration.py -q
 ```
 
-These numbers apply to the included corpus only. See [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
+These numbers apply to the included corpus only.
+External check on the CBOM testbench (v0.6.0): precision 100%, 0 false positives, 0 PQC over-claims, parameters 61%, ticket-ready 44%, recall 70.9% in scope.
+ See [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
 ---
 
