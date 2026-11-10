@@ -37,6 +37,7 @@ class Finding:
     subject: str = ""
     not_after: str = ""
     curve: str = ""
+    issuer: str = ""
 
 
 @dataclass

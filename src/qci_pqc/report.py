@@ -14,23 +14,24 @@ def to_cyclonedx(inv: Inventory) -> dict:
     components = []
     for f in inv.findings:
         # Map role to CycloneDX primitive where possible
-        primitive_map = {
-            "kem": "kem",
-            "kex": "key-agree",
-            "sign": "signature",
-            "signature": "signature",
-            "hash": "hash",
-            "encrypt": "ae",
-            "key": "other",
-            "keygen": "other",
-            "cert": "other",
-            "cipher": "other",
-            "mac": "mac",
-            "protocol": "other",
-            "config": "other",
-            "hostkey": "other",
-        }
-        primitive = primitive_map.get((f.role or "").lower(), "other")
+        fam_l = f.family.lower()
+        role = (f.role or "").lower()
+        if role in ("sign", "signature") or "withrsa" in fam_l or "withecdsa" in fam_l:
+            primitive = "signature"
+        elif role == "encrypt" and "rsa" in fam_l:
+            primitive = "pke"
+        elif role in ("kem",):
+            primitive = "kem"
+        elif role in ("kex",):
+            primitive = "key-agree"
+        elif role == "hash":
+            primitive = "hash"
+        elif role == "mac":
+            primitive = "mac"
+        elif role == "encrypt":
+            primitive = "ae"
+        else:
+            primitive = "other"
 
         # Map role to allowed cryptoFunctions enum
         func_map = {
@@ -53,12 +54,22 @@ def to_cyclonedx(inv: Inventory) -> dict:
         elif f.role in ("key", "keygen"):
             asset_type = "related-crypto-material"
 
+        param = f.parameter_set or ""
+        curve = getattr(f, "curve", "") or ""
+        if param and param.isdigit():
+            param_id = f"{f.family}-{param}"
+        elif curve:
+            param_id = curve
+        else:
+            param_id = f.family
         algo_props = {
             "primitive": primitive,
-            "parameterSetIdentifier": f.parameter_set or f.family,
+            "parameterSetIdentifier": param_id,
             "cryptoFunctions": [crypto_func],
             "executionEnvironment": "software-plain-ram",
         }
+        if curve:
+            algo_props["curve"] = curve
         # Quantum resistance hint
         fam = f.family.upper()
         if "512" in fam or "44" in fam:
@@ -72,6 +83,13 @@ def to_cyclonedx(inv: Inventory) -> dict:
             "assetType": asset_type,
             "algorithmProperties": {k: v for k, v in algo_props.items() if v is not None},
         }
+        if asset_type == "certificate" and (getattr(f, "subject", "") or getattr(f, "not_after", "")):
+            crypto["certificateProperties"] = {
+                "subjectName": getattr(f, "subject", "") or None,
+                "issuerName": getattr(f, "issuer", "") or None,
+                "notValidAfter": getattr(f, "not_after", "") or None,
+            }
+            crypto["certificateProperties"] = {k: v for k, v in crypto["certificateProperties"].items() if v}
         # NIST OIDs where known
         oid_map = {
             "ML-KEM-512": "2.16.840.1.101.3.4.4.1",
