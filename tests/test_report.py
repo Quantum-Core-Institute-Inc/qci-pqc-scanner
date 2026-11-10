@@ -63,7 +63,7 @@ def test_cipher_mode_uses_cyclonedx_enum_value():
     )
 
 
-def test_hmac_hash_uses_parameter_set_identifier():
+def test_hmac_hash_uses_valid_parameter_set_identifier():
     finding = Finding(
         id="hmac-sha256",
         evidence_path="hash.py",
