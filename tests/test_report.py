@@ -19,3 +19,22 @@ def test_protocol_finding_uses_valid_cyclonedx_primitive():
         cbom["components"][0]["cryptoProperties"]["algorithmProperties"]["primitive"]
         == "other"
     )
+
+
+def test_cipher_mode_uses_cyclonedx_enum_value():
+    finding = Finding(
+        id="aes-gcm",
+        evidence_path="cipher.py",
+        evidence_line=1,
+        evidence_snippet="AES-256-GCM",
+        family="AES-256-GCM",
+        role="encrypt",
+        quantum_status=QuantumStatus.SAFE_SYMMETRIC,
+    )
+
+    cbom = to_cyclonedx(Inventory(project="test", findings=[finding]))
+
+    assert (
+        cbom["components"][0]["cryptoProperties"]["algorithmProperties"]["mode"]
+        == "gcm"
+    )

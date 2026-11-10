@@ -64,11 +64,11 @@ def to_cyclonedx(inv: Inventory) -> dict:
         elif "-" in param and param.split("-")[-1].isdigit():
             key_size = param.split("-")[-1]
         if "ECB" in (param + f.family).upper():
-            mode = "ECB"
+            mode = "ecb"
         elif "GCM" in (param + f.family).upper():
-            mode = "GCM"
+            mode = "gcm"
         elif "CBC" in (param + f.family).upper():
-            mode = "CBC"
+            mode = "cbc"
         param_id = key_size or curve or f.family
         algo_props = {
             "primitive": primitive,
