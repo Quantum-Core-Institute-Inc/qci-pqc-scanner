@@ -112,6 +112,11 @@ PATTERNS = [
     (r"sntrup761x25519", "sntrup761x25519", QuantumStatus.HYBRID, False, "kex"),
     (r"ssl_protocols\s+.*TLSv1\.3|MinProtocol\s*=\s*TLSv1\.3", "TLS-1.3", QuantumStatus.SAFE_SYMMETRIC, False, "protocol"),
     (r"Ciphers\s+.*chacha20-poly1305", "ChaCha20-Poly1305", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+
+    # Classical companions on the same hybrid/config line
+    (r"ssl_ecdh_curve\s+.*(?:^|[:\s])X25519(?:[:\s]|$)", "X25519", QuantumStatus.VULNERABLE, False, "kex"),
+    (r"ssl_ecdh_curve\s+.*prime256v1|Groups\s*=\s*.*prime256v1|secp256r1", "ECC-P-256", QuantumStatus.VULNERABLE, False, "kex"),
+    (r"Groups\s*=\s*.*secp384r1|ssl_ecdh_curve\s+.*secp384r1", "ECC-P-384", QuantumStatus.VULNERABLE, False, "kex"),
     # === PQC / Hybrid (NIST FIPS 203/204/205 + others) ===
     # ML-KEM (FIPS 203, formerly Kyber)
     (r"\bml-?kem-?512\b|\bkyber512\b", "ML-KEM-512", QuantumStatus.PQC, False, "kem"),
