@@ -77,3 +77,23 @@ Do not add them.
 | Artifact | Strings in compiled files | Source recall |
 
 A high source score says nothing about the JAR. A high artifact score says nothing about the source. 2.1 prints both and does not blend them.
+
+
+## What the file is
+
+The product is a crypto inventory. `cbom.json` is a CycloneDX file. It is not a complete bill of materials: it does not say what breaks when you change an algorithm.
+
+## Dependency graph
+
+`report.html` has a Dependency graph section. `graph.json` has the same edges: app, library, finding, path.
+
+## Fields from metadata
+
+| Field | From |
+|-------|------|
+| `qci:owner` | metadata `owner` |
+| `qci:system` | metadata `system` |
+| `qci:dataLifetime` | metadata `data_lifetime` |
+| `qci:agility` | `config` if the finding came from config, otherwise `code` |
+
+A purl is recorded on a dependency when a version was found. A KMS or HSM label in a file is recorded. The scanner does not call the KMS or the HSM.
