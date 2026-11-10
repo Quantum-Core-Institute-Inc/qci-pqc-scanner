@@ -327,6 +327,17 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         param = family
                     if family == "TLS-1.3":
                         param = "TLSv1.3"
+                    # Classical parameters from the same line.
+                    m = re.search(r"(?:key_size|KEY_BITS|keyBits|initialize)\s*[=(]\s*(\d{3,5})", code_part)
+                    if m and family in {"RSA", "DSA", "ECDSA"}:
+                        param = f"{family}-{m.group(1)}"
+                    curve = re.search(r"(secp256r1|secp384r1|secp521r1|prime256v1)", code_part, re.I)
+                    if curve and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
+                        param = curve.group(1)
+                    if family.startswith("AES") and re.search(r"\b128\b", code_part):
+                        param = family if "-" in family else "AES-128"
+                    if family.startswith("AES") and re.search(r"\b256\b", code_part):
+                        param = family if "-" in family else "AES-256"
                     yield Finding(
                         id=f"QCI-{finding_id:04d}",
                         evidence_path=str(path.relative_to(root)),
