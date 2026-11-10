@@ -2,6 +2,7 @@
 Covers common APIs in Python, JavaScript, Java, Go, and config files.
 """
 
+import hashlib
 import re
 from pathlib import Path
 from typing import Iterator
@@ -9,7 +10,8 @@ from typing import Iterator
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
 from .deps import scan_dependencies
-from .resolve import resolve_configs, resolve_calls_and_maps
+from .resolve import hashlib
+import resolve_configs, resolve_calls_and_maps
 
 # Patterns: (regex, family, quantum_status, classical_weak, role)
 PATTERNS = [
@@ -512,7 +514,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     if family == "HMAC" and re.search(r"digestmod\s*=\s*[\"']sha1[\"']|hmac-sha1", text, re.I):
                         param = "SHA-1"
                     yield Finding(
-                        id=f"QCI-{finding_id:04d}",
+                        id="QCI-" + hashlib.sha256(f"{family}|{path.name}|{param}".encode()).hexdigest()[:12],
                         evidence_path=str(path.relative_to(root)),
                         evidence_line=line_no,
                         evidence_snippet=snippet,
