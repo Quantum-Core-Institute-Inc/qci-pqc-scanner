@@ -63,9 +63,11 @@ def to_cyclonedx(inv: Inventory) -> dict:
         # Scorer wants a numeric key size and a separate curve/mode, not "RSA-2048".
         key_size = ""
         mode = ""
-        if param.isdigit():
+        if param.upper().startswith("P-") or param.lower().startswith("secp"):
+            curve = param if param.upper().startswith("P-") else param
+        if param.isdigit() and f.family not in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
             key_size = param
-        elif "-" in param and param.split("-")[-1].isdigit():
+        elif "-" in param and param.split("-")[-1].isdigit() and not param.upper().startswith("P-"):
             key_size = param.split("-")[-1]
         if "ECB" in (param + f.family).upper():
             mode = "ecb"
