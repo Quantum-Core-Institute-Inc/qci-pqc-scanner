@@ -199,12 +199,13 @@ PATTERNS = [
 COMPILED = [(re.compile(pat, re.IGNORECASE), fam, status, weak, role) for pat, fam, status, weak, role in PATTERNS]
 
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build", "target"}
+PROJECT_CONSTS: dict[str, str] = {}
 SKIP_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".tar", ".gz", ".so", ".dll", ".exe", ".md", ".rst"}
 
 
 
 def _string_constants(lines: list[str]) -> dict[str, str]:
-    """Find file-local string constants and supported default values."""
+    """Find string constants, supported defaults, and enum constructor values."""
     consts = {}
     assign = re.compile(
         r"(?:(?:public|private|static|final)\s+)*String\s+([A-Z_][A-Z0-9_]*)\s*=\s*[\"']([^\"']+)[\"']"
@@ -233,7 +234,7 @@ def _expand_constants(line: str, consts: dict[str, str]) -> str:
     out = line
     for name, val in consts.items():
         if name in out:
-            out = re.sub(rf"\b{name}\b", f'"{val}"', out)
+            out = re.sub(rf"(?:\w+\.)?\b{name}\b(?:\.\w+)*", f'\"{val}\"', out)
     # Collapse "A" + "/" + "B" into "A/B" so DESede/CBC matches.
     out = re.sub(r'"([^"]+)"\s*\+\s*"/"\s*\+\s*"([^"]+)"(?:\s*\+\s*"/"\s*\+\s*"([^"]+)")?',
                  lambda m: '"' + "/".join(p for p in m.groups() if p) + '"', out)
@@ -251,6 +252,14 @@ def _alias_map(lines: list[str]) -> dict[str, str]:
 
 def scan_path(root: Path) -> Iterator[Finding]:
     """Scan a directory tree for cryptographic patterns."""
+    global PROJECT_CONSTS
+    PROJECT_CONSTS = {}
+    for path in root.rglob("*"):
+        if path.is_file() and path.suffix.lower() in {".py", ".java", ".kt"} and not any(part in SKIP_DIRS for part in path.parts):
+            try:
+                PROJECT_CONSTS.update(_string_constants(path.read_text(encoding="utf-8", errors="ignore").splitlines()))
+            except Exception:
+                continue
     finding_id = 0
     for path in root.rglob("*"):
         if not path.is_file():
@@ -265,7 +274,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
             continue
 
         lines = text.splitlines()
-        consts = _string_constants(lines)
+        consts = {**PROJECT_CONSTS, **_string_constants(lines)}
         aliases = _alias_map(lines)
         for line_no, line in enumerate(lines, 1):
             stripped = line.strip()
