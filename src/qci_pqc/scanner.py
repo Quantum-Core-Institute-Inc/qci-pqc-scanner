@@ -379,12 +379,23 @@ def scan_path(root: Path) -> Iterator[Finding]:
                             param = "P-384"
                     if family.startswith("AES"):
                         family = "AES"
-                        ur = re.search(r"urandom\s*\(\s*(\d+)", text)
+                        size = ""
                         bits = re.search(r"bit_length\s*=\s*(\d+)", text)
+                        ur = re.search(r"urandom\s*\(\s*(\d+)", text)
                         if bits:
-                            param = bits.group(1)
+                            size = bits.group(1)
                         elif ur:
-                            param = str(int(ur.group(1)) * 8)
+                            size = str(int(ur.group(1)) * 8)
+                        elif param.isdigit():
+                            size = param
+                        mode = ""
+                        if re.search(r"modes\.ECB|AES/ECB", text):
+                            mode = "ECB"
+                        elif re.search(r"AESGCM|modes\.GCM|AES/GCM", text):
+                            mode = "GCM"
+                        elif re.search(r"modes\.CBC|AES/CBC", text):
+                            mode = "CBC"
+                        param = "-".join(x for x in (size, mode) if x) or param
                     # Size on another line in the same file: kpg.initialize(3072)
                     if family in {"RSA", "DSA", "DH"} and not param:
                         init = re.search(r"\.initialize\s*\(\s*(\d{3,5})\s*\)", text)
@@ -394,10 +405,6 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         param = "CBC"
                     if family in {"HMAC", "PBKDF2"} and re.search(r"sha256|SHA256", text, re.I):
                         param = "SHA-256"
-                    if family.startswith("AES") and re.search(r"\b128\b", code_part):
-                        param = family if "-" in family else "AES-128"
-                    if family.startswith("AES") and re.search(r"\b256\b", code_part):
-                        param = family if "-" in family else "AES-256"
                     yield Finding(
                         id=f"QCI-{finding_id:04d}",
                         evidence_path=str(path.relative_to(root)),
