@@ -138,6 +138,12 @@ PATTERNS = [
     (r"EVP_PKEY_EC", "ECDSA", QuantumStatus.VULNERABLE, False, "key"),
     (r"EVP_sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"EVP_md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
+    (r"EVP_sha256\b", "SHA-256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"EVP_sha3_256\b", "SHA-3", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"EVP_aes_128_ecb|EVP_aes_128_cbc", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"EVP_des_ede3|DES_ede3", "3DES", QuantumStatus.WEAK, True, "cipher"),
+    (r"EVP_chacha20_poly1305|EVP_PKEY_X25519|EVP_PKEY_ED25519", "X25519", QuantumStatus.VULNERABLE, False, "kex"),
+
     (r"EVP_aes_256_gcm", "AES-GCM", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
     (r"RSA_generate_key", "RSA", QuantumStatus.VULNERABLE, False, "keygen"),
     # === Config / PEM / SSH / TLS ===
