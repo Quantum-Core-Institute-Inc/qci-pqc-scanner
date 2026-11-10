@@ -29,6 +29,16 @@ def cli():
 
 
 @cli.command()
+@click.option("--host", default="127.0.0.1", help="Bind address (default localhost)")
+@click.option("--port", default=8080, type=int, help="Port")
+@click.option("--out", default="qci-pqc-web-out", help="Output directory for web scans")
+def serve(host: str, port: int, out: str):
+    """Start the local web UI (same engine as the CLI)."""
+    from .web import serve as run_serve
+    run_serve(host=host, port=port, out=out)
+
+
+@cli.command()
 @click.argument("path", type=click.Path(exists=True, file_okay=False, path_type=Path))
 @click.option("--out", "-o", default="qci-pqc-out", help="Output directory")
 @click.option("--adapter", "-a", default="internal", help="Scanner adapter (internal, cryptoscan, qscan, semgrep, or comma-separated list)")
