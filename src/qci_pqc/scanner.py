@@ -9,7 +9,7 @@ from typing import Iterator
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
 from .deps import scan_dependencies
-from .resolve import resolve_configs, resolve_calls_and_maps, resolve_wiring
+from .resolve import resolve_configs, resolve_calls_and_maps
 
 # Patterns: (regex, family, quantum_status, classical_weak, role)
 PATTERNS = [
@@ -403,6 +403,12 @@ def scan_path(root: Path) -> Iterator[Finding]:
             for regex, family, status, weak, role in COMPILED:
                 if regex.search(code_part):
                     # Drop PQC names in comments and string catalogs; keep calls, assignments, imports, configs.
+                    # Bare names in a prose string do not count. Assignments and constructors do.
+                    if family in {"DSA", "DH", "HMAC", "SHA-1", "PBKDF2"}:
+                        in_string = re.search(r"[\"'][^\"']*(?:DSA|DH|HMAC|SHA-?1|PBKDF2)", code_part, re.I)
+                        is_use = re.search(r"getInstance|generate_|hmac\.new|hashlib|Mac\.|pbkdf2|createHmac|EVP_|New\(|LEGACY\(|CURRENT\(|KEY_ALG\s*=", code_part, re.I)
+                        if in_string and not is_use:
+                            continue
                     if status in (QuantumStatus.PQC, QuantumStatus.HYBRID):
                         low = code_part.lower().strip()
                         if low.startswith(("#", "//", "/*", "*")):
@@ -512,7 +518,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 extra.id = f"QCI-{finding_id:04d}"
                 yield extra
 
-    for extra in resolve_configs(root) + resolve_calls_and_maps(root) + resolve_wiring(root):
+    for extra in resolve_configs(root) + resolve_calls_and_maps(root):
         finding_id += 1
         extra.id = f"QCI-{finding_id:04d}"
         yield extra
