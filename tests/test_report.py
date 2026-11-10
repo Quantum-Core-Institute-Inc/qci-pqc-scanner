@@ -1,5 +1,28 @@
+import pytest
+
 from qci_pqc.models import Finding, Inventory, QuantumStatus
 from qci_pqc.report import to_cyclonedx
+
+
+@pytest.mark.parametrize("mode", ["ECB", "GCM", "CBC"])
+def test_cipher_mode_uses_cyclonedx_enum_case(mode):
+    finding = Finding(
+        id="cipher",
+        evidence_path="cipher.py",
+        evidence_line=1,
+        evidence_snippet="AES",
+        family=f"AES-256-{mode}",
+        role="encrypt",
+        parameter_set="256",
+        quantum_status=QuantumStatus.SAFE_SYMMETRIC,
+    )
+
+    cbom = to_cyclonedx(Inventory(project="test", findings=[finding]))
+
+    assert (
+        cbom["components"][0]["cryptoProperties"]["algorithmProperties"]["mode"]
+        == mode.lower()
+    )
 
 
 def test_protocol_finding_uses_valid_cyclonedx_primitive():
@@ -18,4 +41,23 @@ def test_protocol_finding_uses_valid_cyclonedx_primitive():
     assert (
         cbom["components"][0]["cryptoProperties"]["algorithmProperties"]["primitive"]
         == "other"
+    )
+
+
+def test_cipher_mode_uses_cyclonedx_enum_value():
+    finding = Finding(
+        id="aes-gcm",
+        evidence_path="cipher.py",
+        evidence_line=1,
+        evidence_snippet="AES-256-GCM",
+        family="AES-256-GCM",
+        role="encrypt",
+        quantum_status=QuantumStatus.SAFE_SYMMETRIC,
+    )
+
+    cbom = to_cyclonedx(Inventory(project="test", findings=[finding]))
+
+    assert (
+        cbom["components"][0]["cryptoProperties"]["algorithmProperties"]["mode"]
+        == "gcm"
     )
