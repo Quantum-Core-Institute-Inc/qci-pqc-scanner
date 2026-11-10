@@ -13,4 +13,4 @@ def test_curve_constant(tmp_path):
     f.write_text('CURVE = "secp384r1"\\nec.generate_private_key(ec.SECP384R1())\\n')
     findings = list(scan_path(tmp_path))
     ec = [x for x in findings if x.family == "ECDSA"]
-    assert ec and ec[0].parameter_set == "secp384r1"
+    assert ec and ec[0].parameter_set == "P-384"
