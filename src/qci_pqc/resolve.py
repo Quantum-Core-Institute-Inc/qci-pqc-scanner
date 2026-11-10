@@ -86,15 +86,23 @@ def _json(path: Path, root: Path) -> list[Finding]:
 
 
 def _properties(path: Path, root: Path) -> list[Finding]:
+    lines = path.read_text(encoding="utf-8", errors="ignore").splitlines()
+    size = ""
+    for line in lines:
+        if "=" not in line or line.strip().startswith("#"):
+            continue
+        key, val = line.split("=", 1)
+        if "size" in key.lower() and val.strip().isdigit():
+            size = val.strip()
     found = []
-    for i, line in enumerate(path.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
+    for i, line in enumerate(lines, 1):
         if "=" not in line or line.strip().startswith("#"):
             continue
         key, val = line.split("=", 1)
         token = val.strip().upper()
         if "ALGORITHM" in key.upper() and token in KNOWN:
             st, role = KNOWN[token]
-            found.append(_finding(path, root, i, val.strip(), st, role, line.strip()))
+            found.append(_finding(path, root, i, val.strip(), st, role, line.strip(), size))
     return found
 
 def resolve_calls_and_maps(root: Path) -> list[Finding]:
@@ -116,10 +124,14 @@ def resolve_calls_and_maps(root: Path) -> list[Finding]:
                     st, role = KNOWN.get(token.upper(), KNOWN.get(base))
                     out.append(_finding(path, root, i, token, st, role, line.strip()))
             for m in sysprop.finditer(line):
-                token = m.group(1).split("/")[0]
+                raw = m.group(1)
+                token = raw.split("/")[0]
                 if token.upper() in KNOWN:
                     st, role = KNOWN[token.upper()]
-                    out.append(_finding(path, root, i, token, st, role, line.strip()))
+                    mode = "ECB" if "/ECB" in raw else ("GCM" if "/GCM" in raw else ("CBC" if "/CBC" in raw else ""))
+                    bits = re.search(r"getInteger\s*\([^,]+,\s*(\d+)", "\n".join(lines))
+                    param = "-".join(x for x in ((bits.group(1) if bits else ""), mode) if x)
+                    out.append(_finding(path, root, i, token, st, role, line.strip(), param))
             for name in ("HmacSHA256", "HmacSHA384", "HmacSHA512"):
                 if name in line:
                     st, role = KNOWN["HmacSHA256"]

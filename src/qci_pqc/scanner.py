@@ -327,6 +327,8 @@ def scan_path(root: Path) -> Iterator[Finding]:
             ):
                 continue
 
+            if line.strip().startswith("import ") or line.strip().startswith("from "):
+                continue
             # String catalogs ("sha1": "SHA-1 (deprecated)") are labels, not usage.
             if re.search(r"""^\s*['"][a-z0-9_-]+['"]\s*:""", line):
                 continue
