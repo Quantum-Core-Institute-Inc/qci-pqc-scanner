@@ -303,6 +303,13 @@ def scan_path(root: Path) -> Iterator[Finding]:
             ):
                 continue
 
+            # String catalogs ("sha1": "SHA-1 (deprecated)") are labels, not usage.
+            if re.search(r"""^\s*['"][a-z0-9_-]+['"]\s*:""", line):
+                continue
+            if re.search(r"log\.(warning|info|debug)|logger\.", line):
+                continue
+            if re.search(r"""==\s*['"]sha1['"]|==\s*['"]md5['"]|==\s*['"]dsa['"]""", line, re.I):
+                continue
             # Remove inline comments before matching (Python/JS style)
             code_part = _expand_constants(line, consts)
             for alias, real in aliases.items():
