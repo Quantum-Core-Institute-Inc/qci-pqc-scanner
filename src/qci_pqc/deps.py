@@ -12,17 +12,23 @@ from .models import Finding, QuantumStatus
 # library pattern -> (family, status, note, min_pqc_version or None)
 LIBRARY_MAP = [
     (r"cryptography\s*[=<>~!]*\s*([\d.]+)?", "Python-cryptography", QuantumStatus.VULNERABLE,
-     "Supports RSA, ECDSA, Ed25519, AES. No native ML-KEM/ML-DSA yet.", None),
+     "ML-KEM and ML-DSA from 48.0.0 with OpenSSL 3.5.", "48.0"),
     (r"pyopenssl|pyOpenSSL", "pyOpenSSL", QuantumStatus.VULNERABLE,
      "Wraps OpenSSL. PQC depends on the linked OpenSSL version.", None),
     (r"oqs(?:-python)?|liboqs", "liboqs", QuantumStatus.PQC,
      "Provides ML-KEM, ML-DSA, SLH-DSA and hybrids.", None),
     (r"circl", "Go-CIRCL", QuantumStatus.PQC,
      "Cloudflare CIRCL: ML-KEM, ML-DSA, Kyber, Dilithium.", None),
-    (r"bouncycastle", "BouncyCastle", QuantumStatus.VULNERABLE,
-     "Classical + PQC (ML-KEM/ML-DSA) in recent releases. Check version.", "1.78"),
+    (r"bouncycastle[^\d]*([\d.]+)?", "BouncyCastle", QuantumStatus.VULNERABLE,
+     "Final ML-KEM, ML-DSA, and SLH-DSA from 1.79.", "1.79"),
     (r"(?<!py)openssl\s*[=<>~]*\s*([\d.]+)?", "OpenSSL", QuantumStatus.VULNERABLE,
      "ML-KEM/ML-DSA available from OpenSSL 3.5+. Earlier versions are classical only.", "3.5"),
+
+    (r"jsonwebtoken|crypto-js|node-forge|bcryptjs|@noble/post-quantum", "npm-crypto", QuantumStatus.VULNERABLE, "npm crypto package. Check maintenance and PQC support.", None),
+    (r"PyCryptodome|pycryptodome", "PyCryptodome", QuantumStatus.VULNERABLE, "Classical ciphers and hashes.", None),
+
+    (r"jsonwebtoken|crypto-js|node-forge|bcryptjs|@noble/post-quantum", "npm-crypto", QuantumStatus.VULNERABLE, "npm crypto package. Check maintenance and PQC support.", None),
+    (r"PyCryptodome|pycryptodome", "PyCryptodome", QuantumStatus.VULNERABLE, "Classical ciphers and hashes.", None),
     (r'"node"\s*:\s*"([^"]+)"|node\s*>=?\s*([\d.]+)', "Node.js", QuantumStatus.VULNERABLE,
      "WebCrypto / crypto module: RSA, ECDSA, Ed25519. No native PQC.", None),
 ]
@@ -31,6 +37,7 @@ DEP_FILES = {
     "requirements.txt", "requirements-dev.txt", "pyproject.toml", "Pipfile",
     "package.json", "package-lock.json", "go.mod", "go.sum",
     "pom.xml", "build.gradle", "build.gradle.kts", "Cargo.toml",
+    "conanfile.txt", "CMakeLists.txt", "vcpkg.json",
 }
 
 
