@@ -418,11 +418,10 @@ def scan_path(root: Path) -> Iterator[Finding]:
             for regex, family, status, weak, role in COMPILED:
                 if regex.search(code_part):
                     # Drop PQC names in comments and string catalogs; keep calls, assignments, imports, configs.
-                    # Bare names in a prose string do not count. Assignments and constructors do.
-                    if family in {"DSA", "DH", "HMAC", "SHA-1", "PBKDF2"}:
-                        in_string = re.search(r"[\"'][^\"']*(?:DSA|DH|HMAC|SHA-?1|PBKDF2)", code_part, re.I)
-                        is_use = re.search(r"getInstance|generate_|hmac\.new|hashlib|Mac\.|pbkdf2|createHmac|EVP_|New\(|LEGACY\(|CURRENT\(|KEY_ALG\s*=", code_part, re.I)
-                        if in_string and not is_use:
+                    # A name inside a string is not usage, unless the line is a call or an assignment.
+                    if re.search(r"[\"'][^\"']*(?:DSA|DH|HMAC|SHA-?1|PBKDF2|ML-KEM|ML-DSA)", code_part, re.I):
+                        is_use = re.search(r"getInstance|generate_|hmac\.new|hashlib|Mac\.|pbkdf2|createHmac|EVP_|New\(|LEGACY\(|CURRENT\(|KEY_ALG\s*=|mlkem\.", code_part, re.I)
+                        if not is_use:
                             continue
                     if status in (QuantumStatus.PQC, QuantumStatus.HYBRID):
                         low = code_part.lower().strip()
