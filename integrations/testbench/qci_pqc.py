@@ -28,7 +28,9 @@ BUILT_FOR = "qci-pqc-scan 0.3.0"
 # QCI family name -> testbench algorithm name (scored strictly).
 EXACT = {
     "RSA": "RSA", "ECDSA": "ECDSA", "ECDH": "ECDH", "Ed25519": "Ed25519", "X25519": "X25519",
-    "SHA-1": "SHA-1", "MD5": "MD5", "SHA-256": "SHA-256", "SHA-512": "SHA-512",
+    "SHA-1": "SHA-1", "MD5": "MD5", "SHA-256": "SHA-256", "SHA-384": "SHA-384", "SHA-512": "SHA-512",
+    "SHA256": "SHA-256", "SHA384": "SHA-384", "SHA512": "SHA-512",
+    "HmacSHA256": "HMAC-SHA-256", "HmacSHA384": "HMAC-SHA-384", "HmacSHA512": "HMAC-SHA-512",
     "AES": "AES", "AES-ECB": "AES-ECB", "AES-GCM": "AES-GCM", "ChaCha20-Poly1305": "ChaCha20-Poly1305",
     "DES": "DES", "3DES": "3DES",
     "ML-KEM": "ML-KEM", "ML-KEM-512": "ML-KEM-512", "ML-KEM-768": "ML-KEM-768", "ML-KEM-1024": "ML-KEM-1024",
