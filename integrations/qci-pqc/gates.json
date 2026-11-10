@@ -1,0 +1,16 @@
+{
+  "name": "qci-pqc regression ratchet",
+  "corpus": "cbom-testbench v12",
+  "measured": "2026-11-10",
+  "note": "v0.7 baselines. params and ticket-ready locked at the v12 numbers.",
+  "gates": {
+    "recall": {"min": 69.2},
+    "primary_site_recall": {"min": 67.0},
+    "params_accuracy": {"min": 71.2},
+    "precision": {"min": 100.0},
+    "negative_control_fps": {"max": 0},
+    "pqc_overclaims": {"max": 0},
+    "ticket_ready_pct": {"min": 61.4},
+    "deadline_weighted_recall": {"min": 67.7}
+  }
+}
