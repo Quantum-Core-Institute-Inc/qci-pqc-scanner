@@ -45,3 +45,11 @@ Out of scope, by design:
 - Values that exist only in an environment at deploy time, with no default in the repo
 
 A static scanner cannot know a choice that is not written down.
+
+## v1.1 does not change this page
+
+1.1 adds customer-shaped cases, finishes parameters inside the existing scope, and credits names 1.0 already detects. It does not add a detection class.
+
+- Tier 5, compiled code, and obfuscation stay out of scope.
+- Recall is still the published corpus number. A higher number on a new corpus is not a higher claim.
+- Precision 100% and zero PQC over-claims remain the gates. If either moves, 1.1 is not done.
