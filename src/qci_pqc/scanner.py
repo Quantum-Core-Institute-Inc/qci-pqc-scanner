@@ -285,7 +285,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
             continue
 
         lines = text.splitlines()
-        consts = {**PROJECT_CONSTS, **_string_constants(lines)}
+        consts = {**PROJECT_CONSTS, **_string_constants(lines), **_int_constants(lines)}
         aliases = _alias_map(lines)
         for line_no, line in enumerate(lines, 1):
             stripped = line.strip()
