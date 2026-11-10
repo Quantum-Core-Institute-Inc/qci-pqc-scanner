@@ -24,6 +24,17 @@ PATTERNS = [
     (r"AES\.new\s*\([^)]*MODE_ECB", "AES-ECB", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
     (r"AES\.new\s*\([^)]*MODE_GCM", "AES-GCM", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
     (r"ChaCha20Poly1305", "ChaCha20-Poly1305", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
+
+    # === Missed common APIs (testbench batch 1) ===
+    (r"Ed25519PrivateKey\.generate\(", "Ed25519", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"algorithms\.AES\b|AESGCM\b|aead\.AESGCM", "AES-GCM", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
+    (r"algorithms\.AES\([^)]*ECB|MODE_ECB", "AES-ECB", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
+    (r"\bDSA\b|dsa\.generate_private_key|KeyPairGenerator\.getInstance\(\s*\"DSA", "DSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"\bDH\b|dh\.generate_parameters|KeyAgreement\.getInstance\(\s*\"DH", "DH", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"HMAC\b|hmac\.new\b|Mac\.getInstance\(\s*\"Hmac", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
+    (r"PBKDF2|pbkdf2_hmac|PBEKeySpec", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
+    (r"hashlib\.sha3_|SHA3-|SHA-3|hashes\.SHA3_", "SHA-3", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"X25519MLKEM768|X25519Kyber768Draft00|x25519_mlkem768", "X25519MLKEM768", QuantumStatus.HYBRID, False, "kem"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
@@ -34,7 +45,7 @@ PATTERNS = [
     (r'Cipher\.getInstance\s*\(\s*"AES/ECB', "AES-ECB", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
     (r'Cipher\.getInstance\s*\(\s*"AES/GCM', "AES-GCM", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
     (r'Cipher\.getInstance\s*\(\s*"RSA', "RSA", QuantumStatus.VULNERABLE, False, "encrypt"),
-    (r'Cipher\.getInstance\s*\(\s*"DES', "DES", QuantumStatus.WEAK, True, "encrypt"),
+    (r'Cipher\.getInstance\s*\(\s*"DES(?!ede)', "DES", QuantumStatus.WEAK, True, "encrypt"),
     (r'Cipher\.getInstance\s*\(\s*"DESede', "3DES", QuantumStatus.WEAK, True, "encrypt"),
     (r'Signature\.getInstance\s*\(\s*"SHA256withRSA', "RSA", QuantumStatus.VULNERABLE, False, "sign"),
     (r'Signature\.getInstance\s*\(\s*"SHA1withRSA', "RSA", QuantumStatus.VULNERABLE, False, "sign"),
@@ -152,7 +163,7 @@ PATTERNS = [
 COMPILED = [(re.compile(pat, re.IGNORECASE), fam, status, weak, role) for pat, fam, status, weak, role in PATTERNS]
 
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build", "target"}
-SKIP_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".tar", ".gz", ".so", ".dll", ".exe"}
+SKIP_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".tar", ".gz", ".so", ".dll", ".exe", ".md", ".rst"}
 
 
 def scan_path(root: Path) -> Iterator[Finding]:
