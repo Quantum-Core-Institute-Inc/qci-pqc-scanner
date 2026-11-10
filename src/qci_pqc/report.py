@@ -171,7 +171,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
             "name": name,
             "description": f.recommendation or f.notes or f"{f.family} ({f.quantum_status.value})",
             "cryptoProperties": crypto,
-                "properties": [{"name": "qci:provenance", "value": origin}],
+                "properties": [{"name": "qci:provenance", "value": origin}, {"name": "qci:agility", "value": "config" if origin == "config" else "code"}],
             "evidence": {
                 "occurrences": [{
                     "location": f.evidence_path,
