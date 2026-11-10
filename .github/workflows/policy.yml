@@ -13,7 +13,18 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - run: pip install -e ".[x509]"
+      - name: Install package
+        run: |
+          for attempt in 1 2 3; do
+            if python -m pip install --retries 5 --timeout 60 -e ".[x509]"; then
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then
+              echo "Package installation failed (attempt $attempt/3); retrying in 10 seconds"
+              sleep 10
+            fi
+          done
+          exit 1
       - name: Fail on vulnerable findings without an acceptance
         run: |
           cat > /tmp/policy.json << 'POL'

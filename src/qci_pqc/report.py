@@ -103,6 +103,8 @@ def to_cyclonedx(inv: Inventory) -> dict:
             algo_props["nistQuantumSecurityLevel"] = 3
         elif "1024" in fam or "87" in fam:
             algo_props["nistQuantumSecurityLevel"] = 5
+        elif f.quantum_status.value in ("vulnerable", "weak"):
+            algo_props["nistQuantumSecurityLevel"] = 0
 
         crypto = {
             "assetType": asset_type,
@@ -115,6 +117,8 @@ def to_cyclonedx(inv: Inventory) -> dict:
                 "notValidAfter": ((getattr(f, "not_after", "") or "") + ("T00:00:00Z" if getattr(f, "not_after", "") and "T" not in getattr(f, "not_after", "") else "")) or None,
             }
             crypto["certificateProperties"] = {k: v for k, v in crypto["certificateProperties"].items() if v}
+        if asset_type == "related-crypto-material":
+            crypto["relatedCryptoMaterialProperties"] = {"type": "private-key" if "PRIVATE" in (f.evidence_snippet or "") else "public-key"}
         if (f.role or "") == "protocol":
             crypto["protocolProperties"] = {"type": "tls", "version": f.parameter_set or f.family}
         # NIST OIDs where known
@@ -125,10 +129,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
             "ML-DSA-44": "2.16.840.1.101.3.4.3.17",
             "ML-DSA-65": "2.16.840.1.101.3.4.3.18",
             "ML-DSA-87": "2.16.840.1.101.3.4.3.19",
-            "ML-KEM": "2.16.840.1.101.3.4.4",
-            "ML-DSA": "2.16.840.1.101.3.4.3",
-            "SLH-DSA": "2.16.840.1.101.3.4.6",
-            "RSA": "1.2.840.113549.1.1.1",
+                        "RSA": "1.2.840.113549.1.1.1",
             "ECDSA": "1.2.840.10045.2.1",
             "Ed25519": "1.3.101.112",
         }
