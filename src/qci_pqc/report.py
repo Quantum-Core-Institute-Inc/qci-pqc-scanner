@@ -171,12 +171,6 @@ def to_cyclonedx(inv: Inventory) -> dict:
             "name": name,
             "description": f.recommendation or f.notes or f"{f.family} ({f.quantum_status.value})",
             "cryptoProperties": crypto,
-                "properties": [
-                    {"name": "qci:provenance", "value": origin},
-                    {"name": "qci:owner", "value": getattr(f, "owner", "") or ""},
-                    {"name": "qci:system", "value": getattr(f, "system", "") or ""},
-                    {"name": "qci:dataLifetime", "value": getattr(f, "lifetime", "") or ""},
-                ],
             "evidence": {
                 "occurrences": [{
                     "location": f.evidence_path,
@@ -184,6 +178,11 @@ def to_cyclonedx(inv: Inventory) -> dict:
                 }]
             },
             "properties": [
+                {"name": "qci:provenance", "value": origin},
+                {"name": "qci:agility", "value": "config" if origin == "config" else "code"},
+                {"name": "qci:owner", "value": getattr(f, "owner", "") or ""},
+                {"name": "qci:system", "value": getattr(f, "system", "") or ""},
+                {"name": "qci:dataLifetime", "value": getattr(f, "lifetime", "") or ""},
                 *([{"name": "qci:riskCategory", "value": risk_category}] if risk_category else []),
                 {"name": "qci:quantum_status", "value": f.quantum_status.value},
                 {"name": "qci:risk_category", "value": getattr(f, "risk_category", "") or ""},
