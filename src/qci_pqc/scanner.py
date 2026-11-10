@@ -161,6 +161,13 @@ PATTERNS = [
     (r"b64decode\(\s*\"bWQ1\"|Base64.*\"TUQ1\"", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"\[\"s\",\s*\"ha\",\s*\"1\"\]", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"chr\(65,\s*69,\s*83\)|map\(chr,\s*\(65,\s*69,\s*83\)\)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+
+    (r"subtle\.generateKey[\s\S]{0,80}RSA-PSS|name:\s*[\"']RSA-PSS", "RSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"subtle\.digest\s*\(\s*[\"']SHA-1", "SHA-1", QuantumStatus.WEAK, True, "hash"),
+    (r"createCipheriv\s*\(\s*[\"']chacha20-poly1305", "ChaCha20-Poly1305", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"createHmac\s*\(\s*[\"']sha256", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
+    (r"pbkdf2Sync\s*\(", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
+    (r"node:crypto", "Node-crypto", QuantumStatus.VULNERABLE, False, "dependency"),
     # === C / OpenSSL ===
     (r"EVP_PKEY_RSA", "RSA", QuantumStatus.VULNERABLE, False, "key"),
     (r"EVP_PKEY_EC", "ECDSA", QuantumStatus.VULNERABLE, False, "key"),
