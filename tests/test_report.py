@@ -61,3 +61,23 @@ def test_cipher_mode_uses_cyclonedx_enum_value():
         cbom["components"][0]["cryptoProperties"]["algorithmProperties"]["mode"]
         == "gcm"
     )
+
+
+def test_hmac_hash_uses_parameter_set_identifier():
+    finding = Finding(
+        id="hmac-sha256",
+        evidence_path="hash.py",
+        evidence_line=1,
+        evidence_snippet="hmac.new(key, data, hashlib.sha256)",
+        family="HMAC",
+        role="mac",
+        parameter_set="SHA-256",
+        quantum_status=QuantumStatus.SAFE_SYMMETRIC,
+    )
+
+    algorithm = to_cyclonedx(
+        Inventory(project="test", findings=[finding])
+    )["components"][0]["cryptoProperties"]["algorithmProperties"]
+
+    assert algorithm["parameterSetIdentifier"] == "SHA-256"
+    assert "hash" not in algorithm
