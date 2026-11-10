@@ -114,7 +114,7 @@ PATTERNS = [
     (r"Ciphers\s+.*chacha20-poly1305", "ChaCha20-Poly1305", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
 
     # Classical companions on the same hybrid/config line
-    (r"ssl_ecdh_curve\s+.*(?:^|[:\s])X25519(?:[:\s]|$)", "X25519", QuantumStatus.VULNERABLE, False, "kex"),
+    (r"ssl_ecdh_curve\s+.*[:\s]X25519(?:[:\s;]|$)", "X25519", QuantumStatus.VULNERABLE, False, "kex"),
     (r"ssl_ecdh_curve\s+.*prime256v1|Groups\s*=\s*.*prime256v1|secp256r1", "ECC-P-256", QuantumStatus.VULNERABLE, False, "kex"),
     (r"Groups\s*=\s*.*secp384r1|ssl_ecdh_curve\s+.*secp384r1", "ECC-P-384", QuantumStatus.VULNERABLE, False, "kex"),
     # === PQC / Hybrid (NIST FIPS 203/204/205 + others) ===
