@@ -83,6 +83,7 @@ def scan_dependencies(root: Path) -> list[Finding]:
                     source_scanner="qci-deps",
                     confidence=0.8,
                     notes=note + extra,
+                    parameter_set=ver or "",
                     recommendation="Confirm the linked crypto library version supports your target algorithms.",
                 ))
     return findings
