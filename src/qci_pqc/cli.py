@@ -19,6 +19,7 @@ from .compliance import (
 from .calibrate import calibrate as run_calibrate
 from .scoring import compute_readiness, score_scanner
 from .scoresplit import split_scores
+from .graph import link
 from .policy import evaluate_policy, load_accepted_risks, load_policy
 
 
@@ -102,6 +103,9 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
     status(f"Source findings: {parts['source']['count']}")
     status(f"Artifact findings: {parts['artifact']['count']}")
     status("Scores are not blended.")
+    edges = link(all_findings, path)
+    (Path(out) / "graph.json").write_text(json.dumps(edges, indent=2) + "\n")
+    status(f"Dependency graph: {len(edges)} edges")
 
     # Calibration-only mode: print metrics and exit
     if calibrate:
