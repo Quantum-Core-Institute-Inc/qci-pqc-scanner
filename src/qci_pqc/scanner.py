@@ -10,8 +10,7 @@ from typing import Iterator
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
 from .deps import scan_dependencies
-from .resolve import hashlib
-import resolve_configs, resolve_calls_and_maps
+from .resolve import resolve_configs, resolve_calls_and_maps
 
 # Patterns: (regex, family, quantum_status, classical_weak, role)
 PATTERNS = [
