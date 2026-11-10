@@ -62,7 +62,8 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
          policy: Path, accepted_risks: Path):
     """Scan a directory for cryptographic usage and produce readiness reports."""
     adapters = [a.strip() for a in adapter.split(",") if a.strip()]
-    click.echo(f"Scanning {path} with adapter(s): {', '.join(adapters)} ...")
+    click.echo(f"Scanning {path} with adapter(s): {', '.join(adapters)} ...",
+               err=calibrate and json_out)
 
     all_findings = []
     scanners_used = []
@@ -76,7 +77,8 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
             findings = scanner.scan(path)
             all_findings.extend(findings)
             scanners_used.append(scanner.name)
-            click.echo(f"  {scanner.name}: {len(findings)} raw findings")
+            click.echo(f"  {scanner.name}: {len(findings)} raw findings",
+                       err=calibrate and json_out)
             if verbose:
                 for f in findings:
                     click.echo(f"    [{f.quantum_status.value:12}] {f.family:16} {f.evidence_path}:{f.evidence_line}")
@@ -93,7 +95,8 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
     if not no_dedupe:
         before = len(all_findings)
         all_findings = deduplicate(all_findings)
-        click.echo(f"Deduplicated: {before} → {len(all_findings)} findings")
+        click.echo(f"Deduplicated: {before} → {len(all_findings)} findings",
+                   err=calibrate and json_out)
 
     # Calibration-only mode: print metrics and exit
     if calibrate:
