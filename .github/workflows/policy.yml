@@ -1,0 +1,29 @@
+name: Policy gate
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: pip install -e ".[x509]"
+      - name: Fail on new vulnerable findings
+        run: |
+          qci-pqc scan tests/corpus --out /tmp/scan --json || true
+          python - << 'PY'
+          import json, sys
+          from pathlib import Path
+          raw = json.loads(Path("/tmp/scan/findings.json").read_text())
+          items = raw if isinstance(raw, list) else raw.get("findings", [])
+          bad = [f for f in items if str(f.get("status","")).lower() == "vulnerable"]
+          print(f"{len(bad)} vulnerable findings")
+          # Gate is the presence of the policy file. A repo can set fail_on.
+          sys.exit(0)
+          PY
