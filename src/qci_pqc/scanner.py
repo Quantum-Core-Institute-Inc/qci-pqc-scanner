@@ -88,7 +88,7 @@ PATTERNS = [
     (r"sha3\.|crypto/sha3", "SHA-3", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"aes\.NewCipher|crypto/aes", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"rsa\.GenerateKey|crypto/rsa", "RSA", QuantumStatus.VULNERABLE, False, "keygen"),
-    (r"ecdsa\.GenerateKey|elliptic\.P256|crypto/ecdsa", "ECDSA", QuantumStatus.VULNERABLE, False, "sign"),
+    (r"ec\bdsa\.GenerateKey|elliptic\.P256|crypto/ecdsa", "ECDSA", QuantumStatus.VULNERABLE, False, "sign"),
     (r"ed25519\.GenerateKey|crypto/ed25519", "Ed25519", QuantumStatus.VULNERABLE, False, "sign"),
     (r"ecdh\.X25519|crypto/ecdh", "X25519", QuantumStatus.VULNERABLE, False, "kex"),
     (r"des\.NewTripleDESCipher|crypto/des", "3DES", QuantumStatus.WEAK, True, "cipher"),
@@ -98,7 +98,7 @@ PATTERNS = [
     (r"hmac\.New|createHmac|HMAC_Init|EVP_MAC", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
     (r"pbkdf2\.|pbkdf2Sync|PKCS5_PBKDF2|EVP_PKEY_CTX_set_pbkdf2", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
     (r"des\.NewCipher|DES_set_key|EVP_des_cbc", "DES", QuantumStatus.WEAK, True, "cipher"),
-    (r"dsa\.GenerateKey|DSA_generate_key", "DSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"\bdsa\.GenerateKey|DSA_generate_key", "DSA", QuantumStatus.VULNERABLE, False, "keygen"),
     (r"dh\.GenerateParameters|DH_generate_parameters|createDiffieHellman", "DH", QuantumStatus.VULNERABLE, False, "kex"),
     (r"chacha20poly1305|EVP_chacha20_poly1305|chacha20-poly1305", "ChaCha20-Poly1305", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"ed25519\.GenerateKey|EVP_PKEY_ED25519|generateKeyPairSync\s*\(\s*[\"']ed25519", "Ed25519", QuantumStatus.VULNERABLE, False, "sign"),
@@ -129,7 +129,7 @@ PATTERNS = [
     (r'KeyPairGenerator\.getInstance\s*\(\s*"EC', "ECDSA", QuantumStatus.VULNERABLE, False, "keygen"),
     # === Go ===
     (r"rsa\.GenerateKey", "RSA", QuantumStatus.VULNERABLE, False, "keygen"),
-    (r"ecdsa\.GenerateKey", "ECDSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"ec\bdsa\.GenerateKey", "ECDSA", QuantumStatus.VULNERABLE, False, "keygen"),
     (r"ed25519\.GenerateKey", "Ed25519", QuantumStatus.VULNERABLE, False, "keygen"),
     (r"sha1\.New\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"md5\.New\b", "MD5", QuantumStatus.WEAK, True, "hash"),
@@ -170,7 +170,7 @@ PATTERNS = [
     (r"EVP_sha3_256\b", "SHA-3", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"EVP_aes_128_ecb|EVP_aes_128_cbc", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"EVP_des_ede3|DES_ede3", "3DES", QuantumStatus.WEAK, True, "cipher"),
-    (r"EVP_chacha20_poly1305|EVP_PKEY_X25519|EVP_PKEY_ED25519", "X25519", QuantumStatus.VULNERABLE, False, "kex"),
+    (r"EVP_PKEY_X25519|EVP_PKEY_ED25519", "X25519", QuantumStatus.VULNERABLE, False, "kex"),
 
     (r"EVP_aes_256_gcm", "AES-GCM", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
     (r"RSA_generate_key", "RSA", QuantumStatus.VULNERABLE, False, "keygen"),
@@ -380,6 +380,10 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 continue
             # String catalogs ("sha1": "SHA-1 (deprecated)") are labels, not usage.
             if re.search(r"""^\s*['"][a-z0-9_-]+['"]\s*:""", line):
+                continue
+            if re.search(r"=\s*[\[{]\s*[\"']", line) and re.search(r"MD5|SHA-1|sha1|EVP_md5", line, re.I):
+                continue
+            if re.search(r"console\.log|printf", line) and re.search(r"sha1|md5", line, re.I):
                 continue
             if re.search(r"log\.(warning|info|debug)|logger\.", line):
                 continue
