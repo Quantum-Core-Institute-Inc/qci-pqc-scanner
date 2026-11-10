@@ -81,3 +81,22 @@ def test_hmac_hash_uses_valid_parameter_set_identifier():
 
     assert algorithm["parameterSetIdentifier"] == "SHA-256"
     assert "hash" not in algorithm
+
+
+def test_risk_category_is_a_component_property():
+    finding = Finding(
+        id="ssh-cipher",
+        evidence_path="sshd_config",
+        evidence_line=1,
+        evidence_snippet="Ciphers 3des-cbc",
+        family="SSH-Weak-Cipher",
+        role="cipher",
+        parameter_set="3des-cbc",
+        quantum_status=QuantumStatus.WEAK,
+    )
+
+    component = to_cyclonedx(Inventory(project="test", findings=[finding]))["components"][0]
+
+    assert component["name"] == "3des-cbc"
+    assert {"name": "qci:riskCategory", "value": "SSH-Weak-Cipher"} in component["properties"]
+    assert "properties" not in component["cryptoProperties"]
