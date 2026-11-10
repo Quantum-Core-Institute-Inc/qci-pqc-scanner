@@ -57,6 +57,7 @@ PATTERNS = [
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
+    (r'hashlib\.new\s*\(\s*["\']sha1["\']', "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha256\b", "SHA-256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"hashlib\.sha512\b", "SHA-512", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"hashlib\.blake2", "BLAKE2", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
@@ -203,6 +204,7 @@ SKIP_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".tar", ".gz", ".s
 
 
 def _string_constants(lines: list[str]) -> dict[str, str]:
+    """Find file-local string constants and supported default values."""
     consts = {}
     assign = re.compile(
         r"(?:(?:public|private|static|final)\s+)*String\s+([A-Z_][A-Z0-9_]*)\s*=\s*[\"']([^\"']+)[\"']"
@@ -225,6 +227,7 @@ def _string_constants(lines: list[str]) -> dict[str, str]:
 def _expand_constants(line: str, consts: dict[str, str]) -> str:
     if not consts:
         return line
+    # Do not rewrite the definition line itself.
     if re.search(r"^\s*(?:(?:public|private|static|final)\s+)*String\s+[A-Z_]", line) or re.search(r"^\s*[A-Z_][A-Z0-9_]*\s*=", line):
         return line
     out = line
