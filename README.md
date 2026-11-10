@@ -7,7 +7,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 0.7.0  
+**Version:** 0.9.0  
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
 
@@ -164,6 +164,20 @@ MD5|CryptoExample.java
 
 ---
 
+## pql-cli
+
+The v0.9 operator CLI. `qci-pqc` remains the full scanner.
+
+```bash
+pql-cli scan . --out reports --save-baseline baseline.json
+pql-cli diff . --baseline baseline.json
+pql-cli gate . --policy policy.json --accepted-risks accepted.json
+pql-cli org repo-a/cbom.json repo-b/cbom.json --out org-cbom.json
+pql-cli trend --score 70 --ticket-ready 61
+```
+
+`diff` exits 1 on a new finding. `gate` exits 1 if the policy fails. An accepted risk needs an owner, a reason, and an expiry.
+
 ## CLI reference
 
 | Flag | Description |
@@ -316,6 +330,8 @@ This project is an independent implementation.
 
 | Version | Summary |
 |---|---|
+| 0.9.0 | pql-cli. Scheduled scans, org inventory, exceptions with expiry, regression gate, stable IDs, score trend. |
+| 0.8.0 | Calibration published, signed releases, baseline diff, policy gate, dependencies in the CBOM, operator guide. |
 | 0.7.0 | Complete. Precision 100%, parameters 71.2%, ticket-ready 61.4% on v12. Gates locked. TLS and hybrid names credited. nginx, OpenSSL, and JWKS asset lines. |
 | 0.6.0 | Precision 100%, zero false positives, parameter fields, JSON/JWKS resolver |
 | 0.5.0 | Named hybrid groups, certificate and protocol CBOM fields, constant propagation |
