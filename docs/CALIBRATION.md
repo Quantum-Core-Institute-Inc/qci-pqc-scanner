@@ -22,3 +22,25 @@ qci-pqc scan tests/corpus --calibrate --json
 ## Scope
 
 These numbers apply to this corpus only. They do not transfer automatically to arbitrary codebases. See [LIMITATIONS.md](LIMITATIONS.md).
+
+
+## External corpus (testbench v12)
+
+| Metric | Value |
+|--------|------:|
+| Recall | 69.2% |
+| Precision | 100% |
+| Parameters | 71.2% |
+| Ticket-ready | 61.4% |
+| False positives | 0 |
+| PQC over-claims | 0 |
+| Holdout recall | 84.8% |
+| Overfit gap | +0.5 |
+
+Reproduce with `CBOM_HOLDOUT_SEED` set:
+
+```bash
+CBOM_HOLDOUT_SEED=20261110 python3 tools/run_qci_pqc.py --qci-bin qci-pqc --no-gate
+```
+
+The golden corpus is `tests/corpus`. The external corpus is the CBOM testbench.
