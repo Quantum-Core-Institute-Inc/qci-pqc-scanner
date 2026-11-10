@@ -27,7 +27,7 @@ KNOWN = {
     "DESEDE": (QuantumStatus.WEAK, "encrypt"),
 }
 
-def _finding(path: Path, root: Path, line: int, family: str, status, role: str, snippet: str) -> Finding:
+def _finding(path: Path, root: Path, line: int, family: str, status, role: str, snippet: str, parameter_set: str = "") -> Finding:
     return Finding(
         id="RESOLVE",
         evidence_path=str(path.relative_to(root)),
@@ -38,7 +38,7 @@ def _finding(path: Path, root: Path, line: int, family: str, status, role: str, 
         role=role,
         source_scanner="qci-resolve",
         confidence=0.8,
-        parameter_set=family,
+        parameter_set=parameter_set or family,
     )
 
 
