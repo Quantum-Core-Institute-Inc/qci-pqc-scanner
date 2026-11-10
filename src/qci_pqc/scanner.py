@@ -180,6 +180,11 @@ PATTERNS = [
     (r"createHmac\s*\(\s*[\"']sha256", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
     (r"pbkdf2Sync\s*\(", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
     (r"node:crypto", "Node-crypto", QuantumStatus.VULNERABLE, False, "dependency"),
+
+    (r"createCipheriv\s*\(\s*[\"'](?:des-ede3|aes-256-cbc|aes-128-gcm)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"getDiffieHellman\s*\(", "DH", QuantumStatus.VULNERABLE, False, "kex"),
+    (r"generateKeyPairSync\s*\(\s*[\"']ed25519", "Ed25519", QuantumStatus.VULNERABLE, False, "sign"),
+    (r"subtle\.importKey|subtle\.sign\s*\(", "WebCrypto", QuantumStatus.VULNERABLE, False, "sign"),
     # === C / OpenSSL ===
     (r"EVP_PKEY_RSA", "RSA", QuantumStatus.VULNERABLE, False, "key"),
     (r"EVP_PKEY_EC", "ECDSA", QuantumStatus.VULNERABLE, False, "key"),
