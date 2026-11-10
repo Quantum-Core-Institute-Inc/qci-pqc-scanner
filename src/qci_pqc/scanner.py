@@ -10,6 +10,7 @@ from typing import Iterator
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
 from .deps import scan_dependencies
+from .crossmod import collect_constants
 from .resolve import resolve_configs, resolve_calls_and_maps
 
 # Patterns: (regex, family, quantum_status, classical_weak, role)
@@ -568,6 +569,32 @@ def scan_path(root: Path) -> Iterator[Finding]:
         yield extra
 
     # Dependency → crypto capability mapping
+
+    constants = collect_constants(root)
+    for path in root.rglob("*"):
+        if path.suffix not in {".py", ".java", ".go"}:
+            continue
+        try:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+        except Exception:
+            continue
+        for name, value in constants.items():
+            if name in text and value in {"AES/GCM", "AES/CBC", "RSA", "SHA-256"}:
+                finding_id += 1
+                yield Finding(
+                    id=f"QCI-{finding_id:04d}",
+                    evidence_path=str(path.relative_to(root)),
+                    evidence_line=1,
+                    evidence_snippet=f"{name} = {value}",
+                    family=value.split("/")[0],
+                    quantum_status=QuantumStatus.SAFE_SYMMETRIC if value.startswith("AES") else QuantumStatus.VULNERABLE,
+                    role="cipher",
+                    source_scanner="qci-crossmod",
+                    confidence=0.7,
+                    notes="Resolved from a constant in another file.",
+                )
+                break
+
     for dep in scan_dependencies(root):
         finding_id += 1
         dep.id = f"QCI-{finding_id:04d}"
