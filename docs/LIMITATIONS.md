@@ -31,3 +31,17 @@ These numbers do **not** transfer automatically to arbitrary codebases.
 - Use `--ignore` and baselines to track accepted risk.
 - Re-run with `--reproducible` when evidence must be repeatable.
 - Keep the ruleset hash (`evidence-manifest.json`) with any archived report.
+
+## Tier 2/3 indirection
+
+In scope:
+- JSON and `.properties` configs that name an algorithm
+- Literal arguments to crypto calls (`digest("MD5")`, `getInstance("AES/ECB")`)
+- File-local and cross-file string constants
+
+Out of scope, by design:
+- Dependency injection where the algorithm is chosen only at runtime
+- Strategy factories whose choice is not a literal in the scanned tree
+- Values that exist only in an environment at deploy time, with no default in the repo
+
+A static scanner cannot know a choice that is not written down.
