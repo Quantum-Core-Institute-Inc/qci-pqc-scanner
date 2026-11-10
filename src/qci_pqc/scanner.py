@@ -254,6 +254,11 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         category = "DH/ECDH"
                     elif family in {"RSA", "ECDSA"} and role == "hostkey":
                         category = "RSA/ECDSA"
+                    param = ""
+                    if role in ("kem", "kex", "cipher", "protocol") or status == QuantumStatus.HYBRID:
+                        param = family
+                    if family == "TLS-1.3":
+                        param = "TLSv1.3"
                     yield Finding(
                         id=f"QCI-{finding_id:04d}",
                         evidence_path=str(path.relative_to(root)),
@@ -266,6 +271,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         source_scanner="qci-pattern",
                         confidence=0.85 if status in (QuantumStatus.VULNERABLE, QuantumStatus.PQC) else 0.7,
                         risk_category=category,
+                        parameter_set=param,
                     )
         # Additional structured inspection for certificates / keys
         if path.suffix.lower() in {".pem", ".crt", ".cer", ".key"} or "BEGIN CERTIFICATE" in text or "PRIVATE KEY" in text:
