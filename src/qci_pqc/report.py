@@ -248,6 +248,33 @@ def to_html(inv: Inventory) -> str:
     else:
         policy_html = ""
 
+    # Dependency → crypto capability section
+    dep_findings = [
+        f for f in inv.findings
+        if getattr(f, "source_scanner", "") == "qci-deps" or (f.role or "") == "dependency"
+    ]
+    if dep_findings:
+        dep_rows = "".join(
+            f"<tr class='{f.quantum_status.value}'><td>{f.family}</td>"
+            f"<td>{f.quantum_status.value}</td><td>{f.evidence_path}</td>"
+            f"<td><code>{(f.evidence_snippet or '')[:80]}</code></td>"
+            f"<td>{f.notes or ''}</td></tr>"
+            for f in dep_findings
+        )
+        deps_html = f"""
+  <h2>Dependency → Crypto Capabilities</h2>
+  <p>Known libraries mapped to cryptographic capability. Confirm versions before relying on PQC support.</p>
+  <table>
+    <thead><tr><th>Library</th><th>Status</th><th>Manifest</th><th>Match</th><th>Capability</th></tr></thead>
+    <tbody>{dep_rows}</tbody>
+  </table>
+"""
+    else:
+        deps_html = """
+  <h2>Dependency → Crypto Capabilities</h2>
+  <p>No known dependency manifests matched (requirements.txt, package.json, go.mod, pom.xml, …).</p>
+"""
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -280,6 +307,8 @@ code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
   {breakdown_html}
 
   {policy_html}
+
+  {deps_html}
 
   <h2>Accuracy Calibration (golden corpus)</h2>
   <p>Measured against the labeled test corpus. Higher precision = fewer false positives; higher recall = fewer missed findings.</p>

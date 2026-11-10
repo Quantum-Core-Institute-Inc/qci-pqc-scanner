@@ -31,8 +31,10 @@ def test_calibration_json_cli_output():
             "--json",
         ],
         capture_output=True,
+        text=True,
         check=True,
         env=env,
-        text=True,
     )
+
     assert json.loads(result.stdout)["recall"] >= 0.9
+    assert "Scanning" in result.stderr
