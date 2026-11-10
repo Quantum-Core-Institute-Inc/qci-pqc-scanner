@@ -8,6 +8,7 @@ from typing import Iterator
 
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
+from .deps import scan_dependencies
 
 # Patterns: (regex, family, quantum_status, classical_weak, role)
 PATTERNS = [
@@ -217,3 +218,9 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 finding_id += 1
                 extra.id = f"QCI-{finding_id:04d}"
                 yield extra
+
+    # Dependency → crypto capability mapping
+    for dep in scan_dependencies(root):
+        finding_id += 1
+        dep.id = f"QCI-{finding_id:04d}"
+        yield dep
