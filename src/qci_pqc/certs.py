@@ -32,6 +32,10 @@ def inspect_pem(path: Path, root: Path) -> list[Finding]:
         findings.append(_key_finding(rel, "RSA", "PEM contains RSA key"))
     if "BEGIN EC PRIVATE KEY" in text or "BEGIN EC PUBLIC KEY" in text:
         findings.append(_key_finding(rel, "ECDSA", "PEM contains EC key"))
+    if HAS_CRYPTO and ("BEGIN PRIVATE KEY" in text or "BEGIN PUBLIC KEY" in text):
+        parsed = _parse_pkcs8(data, rel)
+        if parsed:
+            findings.append(parsed)
 
     return findings
 
@@ -144,4 +148,48 @@ def _key_finding(rel: str, family: str, note: str) -> Finding:
         source_scanner="qci-cert",
         confidence=0.95,
         notes=note,
+    )
+
+
+def _parse_pkcs8(data: bytes, rel: str):
+    from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
+    key = None
+    try:
+        key = load_pem_private_key(data, password=None)
+    except Exception:
+        try:
+            key = load_pem_public_key(data)
+        except Exception:
+            return None
+    name = type(key).__name__.upper()
+    if "MLDSA44" in name or "ML-DSA-44" in name:
+        family, status = "ML-DSA-44", QuantumStatus.PQC
+    elif "MLDSA65" in name:
+        family, status = "ML-DSA-65", QuantumStatus.PQC
+    elif "MLDSA87" in name:
+        family, status = "ML-DSA-87", QuantumStatus.PQC
+    elif "MLKEM512" in name:
+        family, status = "ML-KEM-512", QuantumStatus.PQC
+    elif "MLKEM768" in name:
+        family, status = "ML-KEM-768", QuantumStatus.PQC
+    elif "MLKEM1024" in name:
+        family, status = "ML-KEM-1024", QuantumStatus.PQC
+    elif "RSA" in name:
+        family, status = "RSA", QuantumStatus.VULNERABLE
+    elif "EC" in name or "ELLIPTIC" in name:
+        family, status = "ECDSA", QuantumStatus.VULNERABLE
+    else:
+        family, status = "PKCS8", QuantumStatus.UNKNOWN
+    return Finding(
+        id=f"KEY-{rel}-{family}",
+        evidence_path=rel,
+        evidence_line=1,
+        evidence_snippet=f"{family} PKCS#8",
+        family=family,
+        quantum_status=status,
+        role="key",
+        source_scanner="qci-x509",
+        confidence=0.95,
+        notes=f"Parsed PKCS#8/SPKI key type {name}",
+        parameter_set=str(getattr(key, "key_size", "") or ""),
     )
