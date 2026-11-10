@@ -133,6 +133,15 @@ PATTERNS = [
     (r"subtle\.generateKey\s*\(\s*\{\s*name:\s*['\"]RSA-", "RSA", QuantumStatus.VULNERABLE, False, "keygen"),
     (r"subtle\.generateKey\s*\(\s*\{\s*name:\s*['\"]ECDSA", "ECDSA", QuantumStatus.VULNERABLE, False, "keygen"),
     (r"subtle\.generateKey\s*\(\s*\{\s*name:\s*['\"]ECDH", "ECDH", QuantumStatus.VULNERABLE, False, "keygen"),
+
+    (r"generateKeyPairSync\s*\(\s*[\"']rsa[\"']", "RSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"generateKeyPairSync\s*\(\s*[\"']ec[\"']", "ECDSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"createCipheriv\s*\(\s*[\"']aes-128-cbc", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"createCipheriv\s*\(\s*[\"']aes-256-gcm", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"createHash\s*\(\s*[\"']sha256[\"']", "SHA-256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"createHash\s*\(\s*[\"']sha3-256[\"']", "SHA-3", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"createHmac\s*\(\s*[\"']sha256[\"']", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
+    (r"pbkdf2Sync|pbkdf2\s*\(", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
     # === C / OpenSSL ===
     (r"EVP_PKEY_RSA", "RSA", QuantumStatus.VULNERABLE, False, "key"),
     (r"EVP_PKEY_EC", "ECDSA", QuantumStatus.VULNERABLE, False, "key"),
