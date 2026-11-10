@@ -44,18 +44,18 @@ def _parse_certs(data: bytes, rel: str) -> list[Finding]:
     findings = []
     try:
         for cert in x509.load_pem_x509_certificates(data):
-            findings.append(_from_cert(cert, rel))
+            findings.extend(_from_cert(cert, rel))
     except Exception:
         # Fallback: try single cert
         try:
             cert = x509.load_pem_x509_certificate(data)
-            findings.append(_from_cert(cert, rel))
+            findings.extend(_from_cert(cert, rel))
         except Exception:
             findings.append(_basic_cert(rel))
     return findings
 
 
-def _from_cert(cert, rel: str) -> Finding:
+def _from_cert(cert, rel: str) -> list[Finding]:
     pub = cert.public_key()
     sig_oid = cert.signature_algorithm_oid.dotted_string
     sig_name = cert.signature_hash_algorithm.name if cert.signature_hash_algorithm else "unknown"
@@ -99,8 +99,9 @@ def _from_cert(cert, rel: str) -> Finding:
     not_after = cert.not_valid_after_utc.date().isoformat()
     subject = cert.subject.rfc4514_string()
     issuer = cert.issuer.rfc4514_string()
+    sig = cert.signature_algorithm_oid._name if hasattr(cert.signature_algorithm_oid, "_name") else sig_name
 
-    return Finding(
+    key = Finding(
         id=f"CERT-{rel}",
         evidence_path=rel,
         evidence_line=1,
@@ -110,7 +111,7 @@ def _from_cert(cert, rel: str) -> Finding:
         role="cert",
         source_scanner="qci-x509",
         confidence=0.95,
-        notes=f"{note}; subject={subject}; notAfter={not_after}",
+        notes=f"{note}; subject={subject}; notAfter={not_after}; signature={sig}",
         recommendation=rec,
         parameter_set=str(getattr(pub, "key_size", "") or ""),
         subject=subject,
@@ -118,6 +119,22 @@ def _from_cert(cert, rel: str) -> Finding:
         curve=getattr(getattr(pub, "curve", None), "name", "") or "",
         issuer=issuer,
     )
+    sig_fam = sig or sig_name
+    sig_status = QuantumStatus.PQC if "ML-DSA" in sig_fam or "MLDSA" in sig_fam else QuantumStatus.VULNERABLE
+    signature = Finding(
+        id=f"CERTSIG-{rel}",
+        evidence_path=rel,
+        evidence_line=1,
+        evidence_snippet=f"signature {sig_fam}",
+        family=sig_fam,
+        quantum_status=sig_status,
+        role="sign",
+        source_scanner="qci-x509",
+        confidence=0.9,
+        notes=f"Certificate signature algorithm {sig_fam}",
+        parameter_set=sig_fam,
+    )
+    return [key, signature]
 
 
 def _basic_cert(rel: str) -> Finding:
