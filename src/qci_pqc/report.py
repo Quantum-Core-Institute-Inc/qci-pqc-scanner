@@ -60,6 +60,8 @@ def to_cyclonedx(inv: Inventory) -> dict:
             param_id = f"{f.family}-{param}"
         elif curve:
             param_id = curve
+        elif f.parameter_set:
+            param_id = f.parameter_set
         else:
             param_id = f.family
         algo_props = {
@@ -90,6 +92,8 @@ def to_cyclonedx(inv: Inventory) -> dict:
                 "notValidAfter": getattr(f, "not_after", "") or None,
             }
             crypto["certificateProperties"] = {k: v for k, v in crypto["certificateProperties"].items() if v}
+        if (f.role or "") == "protocol":
+            crypto["protocolProperties"] = {"type": "tls", "version": f.parameter_set or f.family}
         # NIST OIDs where known
         oid_map = {
             "ML-KEM-512": "2.16.840.1.101.3.4.4.1",
@@ -139,6 +143,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
             "properties": [
                 {"name": "qci:quantum_status", "value": f.quantum_status.value},
                 {"name": "qci:risk_category", "value": getattr(f, "risk_category", "") or ""},
+                {"name": "qci:protocol", "value": f.parameter_set if (f.role or "") == "protocol" else ""},
                 {"name": "qci:key_size", "value": str(f.parameter_set or "")},
                 {"name": "qci:curve", "value": getattr(f, "curve", "") or ""},
                 {"name": "qci:subject", "value": getattr(f, "subject", "") or ""},
