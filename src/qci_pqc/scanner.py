@@ -371,9 +371,6 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         param = "CBC"
                     if family in {"HMAC", "PBKDF2"} and re.search(r"sha256|SHA256", code_part, re.I):
                         param = "SHA-256"
-                    curve = re.search(r"(secp256r1|secp384r1|secp521r1|prime256v1)", code_part, re.I)
-                    if curve and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
-                        param = curve.group(1)
                     if family.startswith("AES") and re.search(r"\b128\b", code_part):
                         param = family if "-" in family else "AES-128"
                     if family.startswith("AES") and re.search(r"\b256\b", code_part):
