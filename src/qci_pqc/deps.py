@@ -89,8 +89,9 @@ def scan_dependencies(root: Path) -> list[Finding]:
                     role="dependency",
                     source_scanner="qci-deps",
                     confidence=0.8,
-                    notes=note + extra,
+                    notes=note + extra + (f" purl=pkg:generic/{family.lower()}@{ver}" if ver else ""),
                     parameter_set=ver or "",
+                    notes=note + extra + (f" purl=pkg:generic/{family}@{ver}" if ver else ""),
                     recommendation="Confirm the linked crypto library version supports your target algorithms.",
                 ))
     return findings
