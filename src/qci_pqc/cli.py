@@ -18,6 +18,7 @@ from .compliance import (
 )
 from .calibrate import calibrate as run_calibrate
 from .scoring import compute_readiness, score_scanner
+from .policy import evaluate_policy, load_accepted_risks, load_policy
 
 
 @click.group()
@@ -43,9 +44,12 @@ def cli():
 @click.option("--verbose", "-v", is_flag=True, help="Print each finding and extra details")
 @click.option("--json", "json_out", is_flag=True, help="Print summary as JSON to stdout")
 @click.option("--reproducible", is_flag=True, help="Stable output: no timestamps, sorted findings, content-addressed IDs")
+@click.option("--policy", type=click.Path(path_type=Path), help="Policy JSON (fail_on, require_acceptance_for)")
+@click.option("--accepted-risks", type=click.Path(path_type=Path), help="Accepted-risk JSON with justifications")
 def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
          ignore: Path, baseline: Path, save_baseline: Path, tickets: bool, metadata: Path,
-         calibrate: bool, verbose: bool, json_out: bool, reproducible: bool):
+         calibrate: bool, verbose: bool, json_out: bool, reproducible: bool,
+         policy: Path, accepted_risks: Path):
     """Scan a directory for cryptographic usage and produce readiness reports."""
     adapters = [a.strip() for a in adapter.split(",") if a.strip()]
     click.echo(f"Scanning {path} with adapter(s): {', '.join(adapters)} ...")
@@ -204,7 +208,17 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         click.echo(f"  - {out_path}/findings.json")
         click.echo(f"  - {out_path}/evidence-manifest.json")
 
-    if fail_on == "vulnerable" and any(f.quantum_status.value == "vulnerable" for f in all_findings):
+    # Policy evaluation
+    policy_result = None
+    if policy or accepted_risks:
+        pol = load_policy(policy)
+        acc = load_accepted_risks(accepted_risks)
+        policy_result = evaluate_policy(all_findings, pol, acc)
+        (out_path / "policy-result.json").write_text(json.dumps(policy_result, indent=2))
+        if not policy_result["passed"]:
+            click.echo(f"Policy violations: {len(policy_result['violations'])}", err=True)
+            if fail_on != "none":
+                sys.exit(1)
         click.echo("Failing due to Shor-vulnerable findings.", err=True)
         sys.exit(1)
     if fail_on == "weak" and any(f.classical_weak or f.quantum_status.value == "weak" for f in all_findings):

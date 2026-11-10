@@ -1,0 +1,10 @@
+{
+  "accepted": [
+    {
+      "key": "RSA|legacy.py|10",
+      "justification": "Legacy payment gateway; migration scheduled Q2 2027",
+      "expires": "2027-06-30",
+      "owner": "payments-team"
+    }
+  ]
+}

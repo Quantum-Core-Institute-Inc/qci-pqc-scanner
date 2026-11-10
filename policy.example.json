@@ -1,0 +1,5 @@
+{
+  "fail_on": ["vulnerable"],
+  "require_acceptance_for": ["vulnerable", "weak"],
+  "description": "Fail if any Shor-vulnerable finding lacks an accepted-risk entry"
+}
