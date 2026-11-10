@@ -87,7 +87,7 @@ PATTERNS = [
     (r"hashlib\.sha512\b", "SHA-512", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"hashlib\.blake2", "BLAKE2", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     # === Java / Kotlin ===
-    (r'Cipher\.getInstance\s*\(\s*"AES/ECB', "AES-ECB", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
+    (r'Cipher\.getInstance\s*\(\s*"AES/ECB', "AES", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
     (r'Cipher\.getInstance\s*\(\s*"AES/GCM', "AES-GCM", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
     (r'Cipher\.getInstance\s*\(\s*"RSA', "RSA", QuantumStatus.VULNERABLE, False, "encrypt"),
     (r'Cipher\.getInstance\s*\(\s*"DES(?!ede)', "DES", QuantumStatus.WEAK, True, "encrypt"),
