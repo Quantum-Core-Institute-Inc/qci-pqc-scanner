@@ -1,5 +1,11 @@
 # Testbench adapter
 
-Copy `qci_pqc.py` to `tools/adapters/qci_pqc.py` in the CBOM testbench.
+`qci_pqc.py` is the adapter the CBOM testbench uses to credit names.
 
-It maps `HMAC-SHA-256`, `HMAC-SHA-1`, `HMAC-SHA-512`, `PBKDF2-SHA-256`, and `PBKDF2-SHA-1` through, so the hash in the component name is scored instead of dropped.
+After any change here, copy it into the testbench before scoring:
+
+```bash
+cp integrations/testbench/qci_pqc.py /path/to/cbom-testbench/tools/adapters/qci_pqc.py
+```
+
+A detection that is not in this map is dropped, even if the scanner found it.
