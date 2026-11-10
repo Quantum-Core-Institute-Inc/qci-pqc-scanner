@@ -7,7 +7,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 0.9.0  
+**Version:** 1.0.0  
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
 
@@ -330,6 +330,7 @@ This project is an independent implementation.
 
 | Version | Summary |
 |---|---|
+| 1.0.0 | First gate release. pql-cli, policy, regression gate, scheduled scans. Recall 72.9%, precision 100% on v12. |
 | 0.9.0 | pql-cli. Scheduled scans, org inventory, exceptions with expiry, regression gate, stable IDs, score trend. |
 | 0.8.0 | Calibration published, signed releases, baseline diff, policy gate, dependencies in the CBOM, operator guide. |
 | 0.7.0 | Complete. Precision 100%, parameters 71.2%, ticket-ready 61.4% on v12. Gates locked. TLS and hybrid names credited. nginx, OpenSSL, and JWKS asset lines. |
