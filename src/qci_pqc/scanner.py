@@ -77,6 +77,7 @@ PATTERNS = [
     (r"hashlib\.new\s*\(\s*[\"']sha256[\"']|MessageDigest\.getInstance\s*\(\s*\"SHA256\"", "SHA-256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"hashlib\.new\s*\(\s*[\"']sha512[\"']|MessageDigest\.getInstance\s*\(\s*\"SHA-?512\"", "SHA-512", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"sha512\.New\b|crypto\.createHash\s*\(\s*['\"]sha512['\"]", "SHA-512", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
+    (r"Cipher\.getInstance\s*\(\s*\"AES/(ECB|GCM|CBC)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
@@ -396,9 +397,15 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         family = "AES"
                         size = ""
                         bits = re.search(r"bit_length\s*=\s*(\d+)", text)
+                        init = re.search(r"\.init\s*\(\s*(\d{2,4})\s*\)", text)
                         ur = re.search(r"urandom\s*\(\s*(\d+)", text)
+                        default_bits = re.search(r"getInteger\s*\([^,]+,\s*(\d{2,4})\s*\)", text)
                         if bits:
                             size = bits.group(1)
+                        elif init:
+                            size = init.group(1)
+                        elif default_bits:
+                            size = default_bits.group(1)
                         elif ur:
                             size = str(int(ur.group(1)) * 8)
                         elif param.isdigit():
