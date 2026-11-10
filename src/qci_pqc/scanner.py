@@ -308,6 +308,8 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 continue
             if re.search(r"log\.(warning|info|debug)|logger\.", line):
                 continue
+            if re.search(r"""==\s*['"]sha1['"]|==\s*['"]md5['"]|==\s*['"]dsa['"]""", line, re.I):
+                continue
             # Remove inline comments before matching (Python/JS style)
             code_part = _expand_constants(line, consts)
             for alias, real in aliases.items():
