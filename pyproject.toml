@@ -14,6 +14,7 @@ x509 = ["cryptography>=42.0"]
 
 [project.scripts]
 qci-pqc = "qci_pqc.cli:cli"
+pql-cli = "qci_pqc.pql:pql"
 
 [tool.setuptools.packages.find]
 where = ["src"]
