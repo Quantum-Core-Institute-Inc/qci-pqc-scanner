@@ -379,6 +379,12 @@ def scan_path(root: Path) -> Iterator[Finding]:
                             param = "P-384"
                     if family.startswith("AES"):
                         family = "AES"
+                        if re.search(r"modes\.ECB|AES/ECB", text):
+                            param = (param + "-ECB") if param and param.isdigit() else "ECB"
+                        elif re.search(r"AESGCM|modes\.GCM|AES/GCM", text):
+                            param = (param + "-GCM") if param and param.isdigit() else "GCM"
+                        elif re.search(r"modes\.CBC|AES/CBC", text):
+                            param = (param + "-CBC") if param and param.isdigit() else "CBC"
                         ur = re.search(r"urandom\s*\(\s*(\d+)", text)
                         bits = re.search(r"bit_length\s*=\s*(\d+)", text)
                         if bits:

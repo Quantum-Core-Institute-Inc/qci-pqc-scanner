@@ -144,13 +144,10 @@ def to_cyclonedx(inv: Inventory) -> dict:
             "safe_symmetric": "resistant",
         }.get(f.quantum_status.value, "unknown")
 
-        name = f.family
-        if f.family in {"HMAC", "PBKDF2"} and param in {"SHA-256", "SHA-1", "SHA-512", "SHA-384"}:
-            name = f"{f.family}-{param}"
         components.append({
             "type": "cryptographic-asset",
             "bom-ref": f.id,
-            "name": name,
+            "name": f.family,
             "description": f.recommendation or f.notes or f"{f.family} ({f.quantum_status.value})",
             "cryptoProperties": crypto,
             "evidence": {
