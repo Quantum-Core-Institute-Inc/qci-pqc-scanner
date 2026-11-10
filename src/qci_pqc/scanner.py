@@ -400,10 +400,6 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         param = "CBC"
                     if family in {"HMAC", "PBKDF2"} and re.search(r"sha256|SHA256", text, re.I):
                         param = "SHA-256"
-                    if family.startswith("AES") and re.search(r"\b128\b", code_part):
-                        param = family if "-" in family else "AES-128"
-                    if family.startswith("AES") and re.search(r"\b256\b", code_part):
-                        param = family if "-" in family else "AES-256"
                     yield Finding(
                         id=f"QCI-{finding_id:04d}",
                         evidence_path=str(path.relative_to(root)),
