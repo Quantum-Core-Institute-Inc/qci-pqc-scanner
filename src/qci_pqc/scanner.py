@@ -94,6 +94,17 @@ PATTERNS = [
     (r"des\.NewTripleDESCipher|crypto/des", "3DES", QuantumStatus.WEAK, True, "cipher"),
     (r"rc4\.NewCipher|crypto/rc4", "RC4", QuantumStatus.WEAK, True, "cipher"),
     (r"hmac\.New\b|crypto/hmac", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
+
+    (r"hmac\.New|createHmac|HMAC_Init|EVP_MAC", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
+    (r"pbkdf2\.|pbkdf2Sync|PKCS5_PBKDF2|EVP_PKEY_CTX_set_pbkdf2", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
+    (r"des\.NewCipher|DES_set_key|EVP_des_cbc", "DES", QuantumStatus.WEAK, True, "cipher"),
+    (r"dsa\.GenerateKey|DSA_generate_key", "DSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"dh\.GenerateParameters|DH_generate_parameters|createDiffieHellman", "DH", QuantumStatus.VULNERABLE, False, "kex"),
+    (r"chacha20poly1305|EVP_chacha20_poly1305|chacha20-poly1305", "ChaCha20-Poly1305", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"ed25519\.GenerateKey|EVP_PKEY_ED25519|generateKeyPairSync\s*\(\s*[\"']ed25519", "Ed25519", QuantumStatus.VULNERABLE, False, "sign"),
+    (r"ecdh\.X25519|EVP_PKEY_X25519|generateKeyPairSync\s*\(\s*[\"']x25519", "X25519", QuantumStatus.VULNERABLE, False, "kex"),
+    (r"TLS_RSA_WITH_|tls\.Config|SSL_CTX_set_cipher_list", "TLS", QuantumStatus.WEAK, True, "protocol"),
+    (r"subtle\.digest\s*\(\s*[\"']SHA-1|subtle\.generateKey", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
