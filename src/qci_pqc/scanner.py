@@ -355,9 +355,14 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     if m and family in {"RSA", "DSA", "ECDSA", "DH"}:
                         param = f"{family}-{m.group(1)}"
                     curve = re.search(r"SECP(256|384|521)R1|prime256v1|secp256r1", code_part, re.I)
-                    if curve and family in {"ECDSA", "ECDH"}:
-                        bits = "256" if "256" in curve.group(0) else ("384" if "384" in curve.group(0) else "521")
+                    if curve and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
+                        bits = "256" if "256" in curve.group(0).upper() else ("384" if "384" in curve.group(0) else "521")
                         param = f"P-{bits}"
+                    if param.upper().startswith("SECP") or param.upper().startswith("PRIME"):
+                        if "256" in param:
+                            param = "P-256"
+                        elif "384" in param:
+                            param = "P-384"
                     if family in {"AES", "AES-ECB", "AES-GCM", "AES-CBC"}:
                         ur = re.search(r"urandom\s*\(\s*(\d+)", text)
                         if ur:
