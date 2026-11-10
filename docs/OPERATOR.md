@@ -54,3 +54,15 @@ The readiness score is a summary of what the scanner found in the files it can r
 Tier 5 (string assembly, reflection, hand-rolled algorithms) is out of scope. A miss there is expected.
 
 Read [LIMITATIONS.md](LIMITATIONS.md) before treating a score as coverage.
+
+## Fields operators misread
+
+| Field | Means | Does not mean |
+|-------|-------|----------------|
+| `parameterSetIdentifier` | The size, curve, or mode on that line | A size guessed from elsewhere in the file |
+| `nistQuantumSecurityLevel` 0 | Quantum-vulnerable | Broken or weak classically |
+| `qci:riskCategory` | A dashboard label such as DH/ECDH | The algorithm name |
+| Recall | Share of the published corpus that was found | Coverage of your repository |
+| A new finding in `diff` | Family, file, and parameter were not in the baseline | A line moved |
+
+An exception needs an owner, a reason, and an expiry. An expired exception fails the build even if the finding did not change.
