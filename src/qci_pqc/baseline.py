@@ -18,6 +18,9 @@ def load_baseline(path: Path) -> set[str]:
 
 
 def diff(findings: list[Finding], baseline: set[str]) -> dict:
+    """1.x baselines still load. Artifact findings are new, not regressions."""
+    findings = [f for f in findings if f.source_scanner != "qci-artifact"]
+
     current = {key(f) for f in findings}
     return {
         "new": sorted(current - baseline),
