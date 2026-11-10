@@ -104,9 +104,16 @@ def to_cyclonedx(inv: Inventory) -> dict:
         elif "1024" in fam or "87" in fam:
             algo_props["nistQuantumSecurityLevel"] = 5
 
+        name = f.family
+        if "/" in name or name.endswith("-Cipher") or name.endswith("-Config"):
+            crypto_props_extra = {"qci:riskCategory": name}
+            name = f.parameter_set or "unspecified"
+        else:
+            crypto_props_extra = {}
         crypto = {
             "assetType": asset_type,
             "algorithmProperties": {k: v for k, v in algo_props.items() if v is not None},
+            **({"properties": [{"name": k, "value": v} for k, v in crypto_props_extra.items()]} if crypto_props_extra else {}),
         }
         if asset_type == "certificate" and (getattr(f, "subject", "") or getattr(f, "not_after", "")):
             crypto["certificateProperties"] = {
