@@ -84,6 +84,8 @@ def to_cyclonedx(inv: Inventory) -> dict:
             algo_props["curve"] = curve
         if mode:
             algo_props["mode"] = mode
+        if param in {"SHA-256", "SHA-1", "SHA-512"}:
+            algo_props["hash"] = param
         # Quantum resistance hint
         fam = f.family.upper()
         if "512" in fam or "44" in fam:
