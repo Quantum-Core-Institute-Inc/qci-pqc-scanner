@@ -187,7 +187,7 @@ MD5|CryptoExample.java
 
 | File | Purpose |
 |------|---------|
-| `report.html` | Human-readable readiness report |
+| `report.html` | Human-readable readiness report. This is the file a reviewer should open. |
 | `cbom.json` | CycloneDX 1.6 CBOM (schema-validated) |
 | `results.sarif` | SARIF 2.1.0 for CI / code scanning |
 | `findings.json` | Structured findings |
@@ -246,9 +246,11 @@ qci-pqc scan tests/corpus --calibrate
 PYTHONPATH=src python -m pytest tests/test_calibration.py -q
 ```
 
-These numbers apply to the included corpus only.
+These numbers apply to the included corpus only. They are not a claim of complete coverage.
+
 External check on the CBOM testbench (v0.7.0): precision 100%, 0 false positives, 0 PQC over-claims, parameters 83.2%, ticket-ready 68.3%, recall 71.6% in scope.
- See [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
+
+What the scanner does not cover is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
 ---
 
