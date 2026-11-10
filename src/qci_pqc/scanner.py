@@ -356,6 +356,9 @@ def scan_path(root: Path) -> Iterator[Finding]:
                             continue
                         if "list.of" in low or low.startswith(('"', "'")):
                             continue
+                        # Display strings: char notes[] = {"ML-KEM ..."} or ["ML-KEM-768"]
+                        if re.search(r"=\s*[\[{]\s*[\"']", code_part):
+                            continue
                         if not any(tok in low for tok in ("import", "=", "(", "groups", "kexalgorithms", "ssl_ecdh")):
                             continue
                         # Prefer the concrete level when the file names one.
