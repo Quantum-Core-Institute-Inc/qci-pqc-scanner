@@ -29,6 +29,16 @@ def cli():
 
 
 @cli.command()
+@click.option("--host", default="127.0.0.1", help="Bind address (default localhost)")
+@click.option("--port", default=8080, type=int, help="Port")
+@click.option("--out", default="qci-pqc-web-out", help="Output directory for web scans")
+def serve(host: str, port: int, out: str):
+    """Start the local web UI (same engine as the CLI)."""
+    from .web import serve as run_serve
+    run_serve(host=host, port=port, out=out)
+
+
+@cli.command()
 @click.argument("path", type=click.Path(exists=True, file_okay=False, path_type=Path))
 @click.option("--out", "-o", default="qci-pqc-out", help="Output directory")
 @click.option("--adapter", "-a", default="internal", help="Scanner adapter (internal, cryptoscan, qscan, semgrep, or comma-separated list)")
@@ -52,7 +62,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
          policy: Path, accepted_risks: Path):
     """Scan a directory for cryptographic usage and produce readiness reports."""
     adapters = [a.strip() for a in adapter.split(",") if a.strip()]
-    click.echo(f"Scanning {path} with adapter(s): {', '.join(adapters)} ...", err=json_out)
+    click.echo(f"Scanning {path} with adapter(s): {', '.join(adapters)} ...")
 
     all_findings = []
     scanners_used = []
@@ -66,10 +76,10 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
             findings = scanner.scan(path)
             all_findings.extend(findings)
             scanners_used.append(scanner.name)
-            click.echo(f"  {scanner.name}: {len(findings)} raw findings", err=json_out)
+            click.echo(f"  {scanner.name}: {len(findings)} raw findings")
             if verbose:
                 for f in findings:
-                    click.echo(f"    [{f.quantum_status.value:12}] {f.family:16} {f.evidence_path}:{f.evidence_line}", err=json_out)
+                    click.echo(f"    [{f.quantum_status.value:12}] {f.family:16} {f.evidence_path}:{f.evidence_line}")
         except Exception as e:
             click.echo(f"Adapter '{name}' failed: {e}", err=True)
 
@@ -83,7 +93,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
     if not no_dedupe:
         before = len(all_findings)
         all_findings = deduplicate(all_findings)
-        click.echo(f"Deduplicated: {before} → {len(all_findings)} findings", err=json_out)
+        click.echo(f"Deduplicated: {before} → {len(all_findings)} findings")
 
     # Calibration-only mode: print metrics and exit
     if calibrate:
