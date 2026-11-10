@@ -138,6 +138,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
             },
             "properties": [
                 {"name": "qci:quantum_status", "value": f.quantum_status.value},
+                {"name": "qci:risk_category", "value": getattr(f, "risk_category", "") or ""},
                 {"name": "qci:key_size", "value": str(f.parameter_set or "")},
                 {"name": "qci:curve", "value": getattr(f, "curve", "") or ""},
                 {"name": "qci:subject", "value": getattr(f, "subject", "") or ""},

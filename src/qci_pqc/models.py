@@ -38,6 +38,7 @@ class Finding:
     not_after: str = ""
     curve: str = ""
     issuer: str = ""
+    risk_category: str = ""
 
 
 @dataclass

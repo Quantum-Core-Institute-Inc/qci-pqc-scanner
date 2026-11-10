@@ -97,8 +97,11 @@ PATTERNS = [
     (r"-----BEGIN RSA PRIVATE KEY-----", "RSA", QuantumStatus.VULNERABLE, False, "key"),
     (r"-----BEGIN EC PRIVATE KEY-----", "ECDSA", QuantumStatus.VULNERABLE, False, "key"),
     (r"-----BEGIN PRIVATE KEY-----", "PKCS8", QuantumStatus.UNKNOWN, False, "key"),
-    (r"KexAlgorithms\s+.*(?:diffie-hellman|ecdh|curve25519)", "DH/ECDH", QuantumStatus.VULNERABLE, False, "kex"),
-    (r"HostKeyAlgorithms\s+.*(?:ssh-rsa|ecdsa)", "RSA/ECDSA", QuantumStatus.VULNERABLE, False, "hostkey"),
+    (r"KexAlgorithms\s+.*curve25519", "X25519", QuantumStatus.VULNERABLE, False, "kex"),
+    (r"KexAlgorithms\s+.*diffie-hellman", "DH", QuantumStatus.VULNERABLE, False, "kex"),
+    (r"KexAlgorithms\s+.*ecdh", "ECDH", QuantumStatus.VULNERABLE, False, "kex"),
+    (r"HostKeyAlgorithms\s+.*ssh-rsa", "RSA", QuantumStatus.VULNERABLE, False, "hostkey"),
+    (r"HostKeyAlgorithms\s+.*ecdsa", "ECDSA", QuantumStatus.VULNERABLE, False, "hostkey"),
     (r"ssl_protocols\s+.*TLSv1\.[01]", "TLS1.0/1.1", QuantumStatus.WEAK, True, "protocol"),
     (r"MinProtocol\s*=\s*TLSv1\.[01]", "TLS1.0/1.1", QuantumStatus.WEAK, True, "protocol"),
     # === PQC / Hybrid (NIST FIPS 203/204/205 + others) ===
@@ -121,7 +124,7 @@ PATTERNS = [
     (r"\bclassic\s*mceliece\b|\bmceliece\b", "Classic-McEliece", QuantumStatus.PQC, False, "kem"),
     (r"\bbike\b", "BIKE", QuantumStatus.PQC, False, "kem"),
     # Hybrids
-    (r"x25519.*ml-?kem|ml-?kem.*x25519|x25519kyber|mlkem768x25519", "Hybrid-KEM", QuantumStatus.HYBRID, False, "kem"),
+    (r"X25519MLKEM768|x25519.*ml-?kem|mlkem768x25519", "X25519MLKEM768", QuantumStatus.HYBRID, False, "kem"),
     (r"secp256r1.*ml-?dsa|ml-?dsa.*secp256r1", "Hybrid-Sign", QuantumStatus.HYBRID, False, "sign"),
     # === More library / API patterns ===
     # OpenSSL / libcrypto style
@@ -224,6 +227,11 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 if regex.search(code_part):
                     finding_id += 1
                     snippet = line.strip()[:200]
+                    category = ""
+                    if family in {"X25519", "DH", "ECDH"} and role == "kex":
+                        category = "DH/ECDH"
+                    elif family in {"RSA", "ECDSA"} and role == "hostkey":
+                        category = "RSA/ECDSA"
                     yield Finding(
                         id=f"QCI-{finding_id:04d}",
                         evidence_path=str(path.relative_to(root)),
@@ -235,6 +243,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         role=role,
                         source_scanner="qci-pattern",
                         confidence=0.85 if status in (QuantumStatus.VULNERABLE, QuantumStatus.PQC) else 0.7,
+                        risk_category=category,
                     )
         # Additional structured inspection for certificates / keys
         if path.suffix.lower() in {".pem", ".crt", ".cer", ".key"} or "BEGIN CERTIFICATE" in text or "PRIVATE KEY" in text:
