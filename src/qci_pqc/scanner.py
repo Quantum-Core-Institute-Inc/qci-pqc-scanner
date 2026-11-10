@@ -142,6 +142,10 @@ PATTERNS = [
     (r"createHash\s*\(\s*[\"']sha3-256[\"']", "SHA-3", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
     (r"createHmac\s*\(\s*[\"']sha256[\"']", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
     (r"pbkdf2Sync|pbkdf2\s*\(", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
+
+    (r"LEGACY\(\s*\"SHA-1\"\)|CURRENT\(\s*\"SHA-256\"\)", "SHA-1", QuantumStatus.WEAK, True, "hash"),
+    (r"\"algorithm\"\s*:\s*\"AES\"", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"digestmod\s*=\s*[\"']sha1[\"']", "HMAC", QuantumStatus.WEAK, True, "mac"),
     # === C / OpenSSL ===
     (r"EVP_PKEY_RSA", "RSA", QuantumStatus.VULNERABLE, False, "key"),
     (r"EVP_PKEY_EC", "ECDSA", QuantumStatus.VULNERABLE, False, "key"),
@@ -299,7 +303,7 @@ def _expand_constants(line: str, consts: dict[str, str]) -> str:
     out = line
     for name, val in consts.items():
         if name in out:
-            out = re.sub(rf"(?:\w+\.)?\b{name}\b(?:\.\w+)*", f'\"{val}\"', out)
+            out = re.sub(rf"(?:\w+\.)?\b{name}\b(?!\s*\()(?:\.\w+)*", f'\"{val}\"', out)
     # Collapse "A" + "/" + "B" into "A/B" so DESede/CBC matches.
     out = re.sub(r'"([^"]+)"\s*\+\s*"/"\s*\+\s*"([^"]+)"(?:\s*\+\s*"/"\s*\+\s*"([^"]+)")?',
                  lambda m: '"' + "/".join(p for p in m.groups() if p) + '"', out)
