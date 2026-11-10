@@ -7,7 +7,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 1.1.0  
+**Version:** 2.0.0  
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
 
@@ -330,6 +330,7 @@ This project is an independent implementation.
 
 | Version | Summary |
 |---|---|
+| 2.0.0 | Artifact scan, cross-module constants, separate scores, CBOM provenance. |
 | 1.1.0 | Customer corpus, same-line parameters, adapter credit, stable exception keys. Precision 100%, over-claims 0. |
 | 1.0.0 | First gate release. pql-cli, policy, regression gate, scheduled scans. Recall 72.9%, precision 100% on v12. |
 | 0.9.0 | pql-cli. Scheduled scans, org inventory, exceptions with expiry, regression gate, stable IDs, score trend. |
