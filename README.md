@@ -277,6 +277,9 @@ Plus classical public-key (RSA, ECDSA, Ed25519, DH/ECDH), weak hashes (MD5, SHA-
 
 ## Development
 
+CI must pass before merge to `main`. See [docs/CONTRIBUTING.md](docs/CONTRIBUTING.md).
+
+
 ```bash
 # Run tests
 PYTHONPATH=src python -m pytest tests/ -q
