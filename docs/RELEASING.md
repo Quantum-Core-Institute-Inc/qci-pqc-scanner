@@ -7,8 +7,8 @@
 
 ## Tag and release
 ```bash
-git tag -a v0.7.0 -m "Release v0.7.0"
-git push origin v0.7.0
+git tag -a v0.9.0 -m "Release v0.9.0"
+git push origin v0.9.0
 ```
 
 The release workflow:
