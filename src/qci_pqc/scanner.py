@@ -484,9 +484,15 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     expanded = code_part
                     for name, val in ints.items():
                         expanded = re.sub(rf"\b{name}\b", val, expanded)
-                    m = re.search(r"(?:key_size|KEY_BITS|keyBits|initialize)\s*[=(]\s*(\d{3,5})", expanded)
-                    if m and family in {"RSA", "DSA", "ECDSA", "DH"} and "RS256" not in code_part:
+                    m = re.search(r"(?:key_size|KEY_BITS|keyBits|initialize|bit_length)\s*[=(]\s*(\d{3,5})", expanded)
+                    if m and family in {"RSA", "DSA", "ECDSA", "DH", "AES"} and "RS256" not in code_part:
                         param = m.group(1)
+                    hmac = re.search(r"hmac\.new\([^)]*hashlib\.(sha256|sha1|sha512)|createHmac\(\s*[\"'](sha256|sha1|sha512)|Hmac(SHA256|SHA1|SHA512)", expanded, re.I)
+                    if hmac and family == "HMAC":
+                        param = (hmac.group(1) or hmac.group(2) or hmac.group(3) or "").upper().replace("SHA", "SHA-")
+                    curve_m = re.search(r"SECP(256|384|521)R1|secp(256|384|521)r1|prime256v1", expanded, re.I)
+                    if curve_m and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
+                        param = "P-256" if "256" in curve_m.group(0) else ("P-384" if "384" in curve_m.group(0) else "P-521")
                     curve = re.search(r"SECP(256|384|521)R1|prime256v1|secp256r1|secp384r1", text, re.I)
                     if curve and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
                         bits = "256" if "256" in curve.group(0).upper() else ("384" if "384" in curve.group(0) else "521")
