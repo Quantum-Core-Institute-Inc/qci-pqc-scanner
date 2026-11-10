@@ -462,7 +462,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     for name, val in ints.items():
                         expanded = re.sub(rf"\b{name}\b", val, expanded)
                     m = re.search(r"(?:key_size|KEY_BITS|keyBits|initialize)\s*[=(]\s*(\d{3,5})", expanded)
-                    if m and family in {"RSA", "DSA", "ECDSA", "DH"}:
+                    if m and family in {"RSA", "DSA", "ECDSA", "DH"} and "RS256" not in code_part:
                         param = m.group(1)
                     curve = re.search(r"SECP(256|384|521)R1|prime256v1|secp256r1|secp384r1", text, re.I)
                     if curve and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
@@ -491,11 +491,11 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         elif param.isdigit():
                             size = param
                         mode = ""
-                        if re.search(r"modes\.ECB|AES/ECB", text):
+                        if re.search(r"modes\.ECB|AES/ECB", code_part):
                             mode = "ECB"
-                        elif re.search(r"AESGCM|modes\.GCM|AES/GCM", text):
+                        elif re.search(r"AESGCM|modes\.GCM|AES/GCM", code_part):
                             mode = "GCM"
-                        elif re.search(r"modes\.CBC|AES/CBC", text):
+                        elif re.search(r"modes\.CBC|AES/CBC", code_part):
                             mode = "CBC"
                         param = "-".join(x for x in (size, mode) if x) or param
                     # Size on another line in the same file: kpg.initialize(3072)
