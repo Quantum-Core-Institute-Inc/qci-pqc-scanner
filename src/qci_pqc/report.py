@@ -75,7 +75,9 @@ def to_cyclonedx(inv: Inventory) -> dict:
             mode = "gcm"
         elif "CBC" in (param + f.family).upper():
             mode = "cbc"
-        param_id = key_size or curve or f.family
+        param_id = key_size or curve or (
+            param if param in {"SHA-256", "SHA-1", "SHA-512"} else f.family
+        )
         algo_props = {
             "primitive": primitive,
             "parameterSetIdentifier": param_id,
@@ -86,8 +88,6 @@ def to_cyclonedx(inv: Inventory) -> dict:
             algo_props["curve"] = curve
         if mode:
             algo_props["mode"] = mode
-        if param in {"SHA-256", "SHA-1", "SHA-512"}:
-            algo_props["hash"] = param
         # Quantum resistance hint
         fam = f.family.upper()
         if "512" in fam or "44" in fam:
