@@ -1,0 +1,51 @@
+name: Run scanner
+
+on:
+  workflow_dispatch:
+    inputs:
+      path:
+        description: Directory to scan
+        default: "."
+        required: false
+      fail_on:
+        description: Fail the job on this severity
+        type: choice
+        options: ["none", "vulnerable", "weak"]
+        default: "vulnerable"
+  pull_request:
+  push:
+    branches: [main]
+
+jobs:
+  scan:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Install
+        run: pip install -e ".[x509]"
+
+      - name: Run qci-pqc
+        run: |
+          mkdir -p reports
+          TARGET="${{ github.event.inputs.path || '.' }}"
+          FAIL="${{ github.event.inputs.fail_on || 'none' }}"
+          qci-pqc scan "$TARGET" --out reports --reproducible --fail-on "$FAIL" --json | tee reports/summary.json
+
+      - name: Upload CBOM, report, and SARIF
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: qci-pqc-scan
+          path: |
+            reports/cbom.json
+            reports/report.html
+            reports/results.sarif
+            reports/findings.json
+            reports/summary.json
