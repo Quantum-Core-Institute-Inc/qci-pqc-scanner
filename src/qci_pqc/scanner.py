@@ -419,9 +419,18 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 if regex.search(code_part):
                     # Drop PQC names in comments and string catalogs; keep calls, assignments, imports, configs.
                     # A name inside a string is not usage, unless the line is a call or an assignment.
+                    algorithm_return = re.search(
+                        r"\breturn\s+[\"'](?:ML-KEM(?:-(?:512|768|1024))?|ML-DSA(?:-(?:44|65|87))?)[\"']\s*$",
+                        code_part,
+                        re.I,
+                    )
                     if re.search(r"[\"'][^\"']*(?:DSA|DH|HMAC|SHA-?1|PBKDF2|ML-KEM|ML-DSA)", code_part, re.I):
-                        is_use = re.search(r"getInstance|generate_|hmac\.new|hashlib|Mac\.|pbkdf2|createHmac|EVP_|New\(|LEGACY\(|CURRENT\(|KEY_ALG\s*=|mlkem\.", code_part, re.I)
-                        if not is_use:
+                        is_use = re.search(
+                            r"getInstance|generate_|hmac\.new|hashlib|Mac\.|pbkdf2|createHmac|EVP_|New\(|LEGACY\(|CURRENT\(|\b[A-Za-z_]\w*\s*=|mlkem\.|KeyEncapsulation\s*\(|Signature\s*\(",
+                            code_part,
+                            re.I,
+                        )
+                        if not is_use and not algorithm_return:
                             continue
                     if status in (QuantumStatus.PQC, QuantumStatus.HYBRID):
                         low = code_part.lower().strip()
@@ -432,7 +441,9 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         # Display strings: char notes[] = {"ML-KEM ..."} or ["ML-KEM-768"]
                         if re.search(r"=\s*[\[{]\s*[\"']", code_part):
                             continue
-                        if not any(tok in low for tok in ("import", "=", "(", "groups", "kexalgorithms", "ssl_ecdh")):
+                        if not algorithm_return and not any(
+                            tok in low for tok in ("import", "=", "(", "groups", "kexalgorithms", "ssl_ecdh")
+                        ):
                             continue
                         # Prefer the concrete level when the file names one.
                         if family == "ML-KEM":
