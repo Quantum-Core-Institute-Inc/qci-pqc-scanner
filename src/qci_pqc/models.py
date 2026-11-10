@@ -58,3 +58,4 @@ class Inventory:
     priority_findings: list[Finding] = field(default_factory=list)
     calibration: dict = field(default_factory=dict)
     reproducible: bool = False
+    policy_result: dict = field(default_factory=dict)

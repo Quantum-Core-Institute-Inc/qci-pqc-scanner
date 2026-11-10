@@ -223,13 +223,14 @@ src/qci_pqc/
 
 ## Accuracy
 
-Measured on the golden corpus (`tests/corpus`):
+Measured on the golden corpus (`tests/corpus`) — see [docs/CALIBRATION.md](docs/CALIBRATION.md):
 
 | Metric | Value |
 |--------|-------|
-| Recall | 1.0 |
-| Precision | ~0.76–0.83 |
-| False positives on negative files | 0 |
+| Recall | **1.0** |
+| Precision | **0.744** |
+| True positives | 32 / 32 |
+| False positives (negative files) | **0** |
 
 ```bash
 qci-pqc scan tests/corpus --calibrate

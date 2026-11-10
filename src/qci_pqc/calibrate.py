@@ -29,6 +29,11 @@ def calibrate(corpus_dir: Path) -> dict:
         ("md5", "calib_extra_positive.py"),
         ("ml-kem", "calib_extra_positive.py"),
         ("ml-dsa", "calib_extra_positive.py"),
+        ("ecdsa", "calib_expand_positive.py"),
+        ("sha1", "calib_expand_positive.py"),
+        ("ml-dsa", "calib_expand_positive.py"),
+        ("rsa", "realworld_go.go"),
+        ("ml-kem", "realworld_go.go"),
     }
 
     detected = set()

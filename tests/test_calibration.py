@@ -1,5 +1,6 @@
 """Accuracy calibration test."""
 import json
+import os
 from pathlib import Path
 import subprocess
 import sys
@@ -15,15 +16,25 @@ def test_calibration_metrics():
     assert "false_positives" in result
 
 
-def test_calibration_json_stdout_is_parseable():
-    corpus = Path(__file__).parent / "corpus"
+def test_calibration_json_cli_output():
+    repo_root = Path(__file__).parent.parent
+    env = os.environ.copy()
+    env["PYTHONPATH"] = str(repo_root / "src")
     result = subprocess.run(
-        [sys.executable, "-m", "qci_pqc.cli", "scan", str(corpus), "--calibrate", "--json"],
+        [
+            sys.executable,
+            "-m",
+            "qci_pqc.cli",
+            "scan",
+            str(Path(__file__).parent / "corpus"),
+            "--calibrate",
+            "--json",
+        ],
         capture_output=True,
         text=True,
         check=True,
+        env=env,
     )
 
-    metrics = json.loads(result.stdout)
-    assert metrics["recall"] >= 0.9
+    assert json.loads(result.stdout)["recall"] >= 0.9
     assert "Scanning" in result.stderr
