@@ -117,6 +117,9 @@ PATTERNS = [
     (r"mlkem\.GenerateKey512|mlkem\.NewDecapsulationKey512", "ML-KEM-512", QuantumStatus.PQC, False, "kem"),
     (r"mlkem\.GenerateKey768|mlkem\.NewDecapsulationKey768", "ML-KEM-768", QuantumStatus.PQC, False, "kem"),
     (r"mlkem\.GenerateKey1024|mlkem\.NewDecapsulationKey1024", "ML-KEM-1024", QuantumStatus.PQC, False, "kem"),
+
+    (r"TLS_AES_128_GCM_SHA256|TLS_AES_256_GCM_SHA384|TLS_AES_128_CCM", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
+    (r"TLS_CHACHA20_POLY1305_SHA256", "ChaCha20-Poly1305", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     # === Python stdlib ===
     (r"hashlib\.md5\b", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"hashlib\.sha1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
