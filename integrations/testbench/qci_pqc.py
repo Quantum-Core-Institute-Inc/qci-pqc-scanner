@@ -29,6 +29,11 @@ BUILT_FOR = "qci-pqc-scan 0.3.0"
 EXACT = {
     "RSA": "RSA", "ECDSA": "ECDSA", "ECDH": "ECDH", "Ed25519": "Ed25519", "X25519": "X25519",
     "TLS-1.0": "TLS-1.0", "TLS-1.1": "TLS-1.1", "TLS-1.2": "TLS-1.2", "TLS-1.3": "TLS-1.3",
+
+    "HMAC-SHA256": "HMAC-SHA-256", "HmacSHA256": "HMAC-SHA-256",
+    "AES-GCM": "AES", "AES-CBC": "AES", "AESGCM": "AES",
+    "ChaCha20-Poly1305": "ChaCha20-Poly1305",
+    "TLS_AES_128_GCM_SHA256": "AES", "TLS_AES_256_GCM_SHA384": "AES",
     "SHA-1": "SHA-1", "MD5": "MD5", "SHA-256": "SHA-256", "SHA-384": "SHA-384", "SHA-512": "SHA-512",
     "SHA-3": "SHA3-256", "SHA3-256": "SHA3-256",
     "HMAC-SHA-256": "HMAC-SHA-256", "HMAC": "HMAC",
