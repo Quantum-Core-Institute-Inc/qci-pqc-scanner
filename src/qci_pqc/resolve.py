@@ -71,6 +71,9 @@ def _json(path: Path, root: Path) -> list[Finding]:
                     fam = f"AES-{bits}-{mode}" if mode else f"AES-{bits}"
                 st, role = KNOWN[algo.upper()]
                 found.append(_finding(path, root, 1, fam, st, role, f"{algo}/{mode}/{bits}" if bits else f"{algo}/{mode}"))
+            kty = str(node.get("kty", ""))
+            if kty.upper() in {"RSA", "EC"}:
+                found.append(_finding(path, root, 1, kty.upper() if kty.upper()!="EC" else "ECC-P-256", KNOWN.get(kty.upper(), (QuantumStatus.VULNERABLE, "key"))[0], "key", f"kty={kty}"))
             for v in node.values():
                 walk(v)
         elif isinstance(node, list):
