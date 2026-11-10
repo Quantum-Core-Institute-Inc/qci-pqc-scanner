@@ -30,7 +30,7 @@ PATTERNS = [
     (r"Ed25519PrivateKey\.generate\(", "Ed25519", QuantumStatus.VULNERABLE, False, "keygen"),
     (r"algorithms\.AES\b|AESGCM\b|aead\.AESGCM", "AES-GCM", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
     (r"algorithms\.AES\([^)]*ECB|MODE_ECB", "AES-ECB", QuantumStatus.SAFE_SYMMETRIC, False, "encrypt"),
-    (r"\bDSA\b|dsa\.generate_private_key|KeyPairGenerator\.getInstance\(\s*\"DSA", "DSA", QuantumStatus.VULNERABLE, False, "keygen"),
+    (r"(?<!ML-)\bDSA\b|dsa\.generate_private_key|KeyPairGenerator\.getInstance\(\s*\"DSA", "DSA", QuantumStatus.VULNERABLE, False, "keygen"),
     (r"\bDH\b|dh\.generate_parameters|KeyAgreement\.getInstance\(\s*\"DH", "DH", QuantumStatus.VULNERABLE, False, "keygen"),
     (r"HMAC\b|hmac\.new\b|Mac\.getInstance\(\s*\"Hmac", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
     (r"PBKDF2|pbkdf2_hmac|PBEKeySpec", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
