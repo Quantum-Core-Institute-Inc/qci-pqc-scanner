@@ -238,6 +238,14 @@ def scan_path(root: Path) -> Iterator[Finding]:
 
             for regex, family, status, weak, role in COMPILED:
                 if regex.search(code_part):
+                    # PQC names in prose/strings are over-claims unless the line is an API or config use.
+                    if status == QuantumStatus.PQC or status == QuantumStatus.HYBRID:
+                        ctx = ("import", "keypairgenerator", "parameterspec", "oqs.", "mlkem.", "mldsa.",
+                               "evp_pkey", "scheme(", "groups", "kexalgorithms", "ssl_ecdh", "circl/",
+                               "generate_key", "keyencapsulation")
+                        low = code_part.lower()
+                        if not any(tok in low for tok in ctx):
+                            continue
                     finding_id += 1
                     snippet = line.strip()[:200]
                     category = ""
