@@ -56,14 +56,20 @@ def to_cyclonedx(inv: Inventory) -> dict:
 
         param = f.parameter_set or ""
         curve = getattr(f, "curve", "") or ""
-        if param and param.isdigit():
-            param_id = f"{f.family}-{param}"
-        elif curve:
-            param_id = curve
-        elif f.parameter_set:
-            param_id = f.parameter_set
-        else:
-            param_id = f.family
+        # Scorer wants a numeric key size and a separate curve/mode, not "RSA-2048".
+        key_size = ""
+        mode = ""
+        if param.isdigit():
+            key_size = param
+        elif "-" in param and param.split("-")[-1].isdigit():
+            key_size = param.split("-")[-1]
+        if "ECB" in (param + f.family).upper():
+            mode = "ECB"
+        elif "GCM" in (param + f.family).upper():
+            mode = "GCM"
+        elif "CBC" in (param + f.family).upper():
+            mode = "CBC"
+        param_id = key_size or curve or f.family
         algo_props = {
             "primitive": primitive,
             "parameterSetIdentifier": param_id,
@@ -72,6 +78,8 @@ def to_cyclonedx(inv: Inventory) -> dict:
         }
         if curve:
             algo_props["curve"] = curve
+        if mode:
+            algo_props["mode"] = mode
         # Quantum resistance hint
         fam = f.family.upper()
         if "512" in fam or "44" in fam:
