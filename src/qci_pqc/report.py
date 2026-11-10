@@ -222,6 +222,32 @@ def to_html(inv: Inventory) -> str:
     </table>
     """
 
+    # Policy / accepted-risk section
+    pr = getattr(inv, "policy_result", None) or {}
+    if pr:
+        viol_rows = "".join(
+            f"<tr class='vulnerable'><td>{v.get('family','')}</td><td>{v.get('status','')}</td>"
+            f"<td>{v.get('path','')}:{v.get('line','')}</td><td>{v.get('reason','')}</td></tr>"
+            for v in pr.get("violations", [])
+        ) or "<tr><td colspan=4>None</td></tr>"
+        waived_rows = "".join(
+            f"<tr><td>{w.get('family','')}</td><td>{w.get('key','')}</td><td>{w.get('justification','')}</td></tr>"
+            for w in pr.get("waived", [])
+        ) or "<tr><td colspan=3>None</td></tr>"
+        status = "PASS" if pr.get("passed") else "FAIL"
+        policy_html = f"""
+  <h2>Policy & Accepted Risk</h2>
+  <p>Result: <strong>{status}</strong> — {len(pr.get('violations', []))} violations, {len(pr.get('waived', []))} waived</p>
+  <h3>Violations</h3>
+  <table><thead><tr><th>Family</th><th>Status</th><th>Location</th><th>Reason</th></tr></thead>
+  <tbody>{viol_rows}</tbody></table>
+  <h3>Waived (accepted risk)</h3>
+  <table><thead><tr><th>Family</th><th>Key</th><th>Justification</th></tr></thead>
+  <tbody>{waived_rows}</tbody></table>
+"""
+    else:
+        policy_html = ""
+
     return f"""<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -252,6 +278,8 @@ code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
 
   <h2>Score Breakdown</h2>
   {breakdown_html}
+
+  {policy_html}
 
   <h2>Accuracy Calibration (golden corpus)</h2>
   <p>Measured against the labeled test corpus. Higher precision = fewer false positives; higher recall = fewer missed findings.</p>

@@ -144,6 +144,12 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
     except Exception:
         inv.calibration = {}
 
+    # Policy evaluation (before reports so HTML can show it)
+    if policy or accepted_risks:
+        pol = load_policy(policy)
+        acc = load_accepted_risks(accepted_risks)
+        inv.policy_result = evaluate_policy(all_findings, pol, acc)
+
     out_path = Path(out)
     write_reports(inv, out_path)
 
@@ -208,17 +214,18 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         click.echo(f"  - {out_path}/findings.json")
         click.echo(f"  - {out_path}/evidence-manifest.json")
 
-    # Policy evaluation
-    policy_result = None
-    if policy or accepted_risks:
-        pol = load_policy(policy)
-        acc = load_accepted_risks(accepted_risks)
-        policy_result = evaluate_policy(all_findings, pol, acc)
-        (out_path / "policy-result.json").write_text(json.dumps(policy_result, indent=2))
-        if not policy_result["passed"]:
-            click.echo(f"Policy violations: {len(policy_result['violations'])}", err=True)
+    # Policy artifacts and gate
+    if inv.policy_result:
+        (out_path / "policy-result.json").write_text(json.dumps(inv.policy_result, indent=2))
+        n_viol = len(inv.policy_result.get("violations", []))
+        n_waived = len(inv.policy_result.get("waived", []))
+        click.echo(f"Policy: {n_viol} violations, {n_waived} waived")
+        if not inv.policy_result.get("passed", True):
+            click.echo(f"Policy violations: {n_viol}", err=True)
             if fail_on != "none":
                 sys.exit(1)
+
+    if fail_on == "vulnerable" and any(f.quantum_status.value == "vulnerable" for f in all_findings):
         click.echo("Failing due to Shor-vulnerable findings.", err=True)
         sys.exit(1)
     if fail_on == "weak" and any(f.classical_weak or f.quantum_status.value == "weak" for f in all_findings):
