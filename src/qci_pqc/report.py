@@ -175,6 +175,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
                     {"name": "qci:provenance", "value": origin},
                     {"name": "qci:owner", "value": getattr(f, "owner", "") or ""},
                     {"name": "qci:system", "value": getattr(f, "system", "") or ""},
+                    {"name": "qci:dataLifetime", "value": getattr(f, "lifetime", "") or ""},
                 ],
             "evidence": {
                 "occurrences": [{
