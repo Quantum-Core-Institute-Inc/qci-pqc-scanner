@@ -46,7 +46,7 @@ NATIVE = (".so", ".dll", ".dylib")
 
 def _native(name: str) -> Finding | None:
     low = name.lower()
-    if not (low.endswith(NATIVE) or ".so." in low or ".dll." in low):
+    if low.endswith(".txt") or not (low.endswith(NATIVE) or ".so." in low or ".dll." in low):
         return None
     base = Path(name).name
     ver = ""
@@ -255,7 +255,7 @@ def scan_artifacts(root: Path) -> list[Finding]:
     findings = []
     for path in root.rglob("*"):
         low_name = path.name.lower()
-        is_native = low_name.endswith(NATIVE) or ".so." in low_name or ".dll." in low_name
+        is_native = not low_name.endswith(".txt") and (low_name.endswith(NATIVE) or ".so." in low_name or ".dll." in low_name)
         if not path.is_file() or (path.suffix.lower() not in ARTIFACT_SUFFIXES and not is_native):
             continue
         rel = str(path.relative_to(root))
@@ -273,7 +273,7 @@ def scan_artifacts(root: Path) -> list[Finding]:
                     for name in names:
                         if name.endswith(".class"):
                             findings.extend(_findings(zf.read(name), rel, jar=path.name))
-                        elif name.lower().endswith(NATIVE) or ".so." in name.lower() or ".dll." in name.lower():
+                        elif not name.lower().endswith(".txt") and (name.lower().endswith(NATIVE) or ".so." in name.lower() or ".dll." in name.lower()):
                             lib = _native(name)
                             if lib:
                                 lib.evidence_path = rel
