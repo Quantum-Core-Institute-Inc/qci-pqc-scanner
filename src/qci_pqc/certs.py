@@ -2,6 +2,7 @@
 
 from pathlib import Path
 
+from .coverage import skip
 from .models import Finding, QuantumStatus
 
 try:
@@ -22,6 +23,8 @@ def inspect_pem(path: Path, root: Path) -> list[Finding]:
         return findings
 
     rel = str(path.relative_to(root))
+    if not HAS_CRYPTO and "BEGIN CERTIFICATE" in text:
+        skip(rel, "cryptography not installed; certificate not parsed")
 
     if HAS_CRYPTO and b"-----BEGIN CERTIFICATE-----" in data:
         findings.extend(_parse_certs(data, rel))

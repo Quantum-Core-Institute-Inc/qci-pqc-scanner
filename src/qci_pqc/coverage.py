@@ -31,6 +31,6 @@ def summary() -> dict:
     return {
         "files_read": _files,
         "parsers": sorted(_parsers),
-        "skipped": list(_skipped),
+        "skipped": list(dict.fromkeys(_skipped)),
         "partial": bool(_skipped),
     }
