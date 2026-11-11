@@ -38,6 +38,39 @@ STRINGS = [
 ]
 
 
+
+NATIVE = (".so", ".dll", ".dylib")
+
+
+def _native(name: str) -> Finding | None:
+    low = name.lower()
+    if not (low.endswith(NATIVE) or ".so." in low or ".dll." in low):
+        return None
+    base = Path(name).name
+    ver = ""
+    m = re.search(r"(\d+\.\d+(?:\.\d+)?)", base)
+    if m:
+        ver = m.group(1)
+    fam = "OpenSSL" if "crypto" in low or "ssl" in low else ("BouncyCastle" if "bcprov" in low else "Native")
+    return Finding(
+        id=f"ART-LIB-{base}",
+        evidence_path="",
+        evidence_line=0,
+        evidence_snippet=base,
+        family=fam,
+        quantum_status=QuantumStatus.VULNERABLE,
+        role="library",
+        source_scanner="qci-artifact",
+        confidence=0.7,
+        parameter_set=ver,
+        notes=f"Native library {base}" + (f" {ver}" if ver else ""),
+    )
+
+
+def _manifest(text: str) -> str:
+    m = re.search(r"Implementation-Version:\s*(\S+)", text)
+    return m.group(1) if m else ""
+
 def _pool(data: bytes) -> tuple[list[str], str]:
     """Return Utf8 strings and the this_class name. Empty on a bad file."""
     if len(data) < 10 or data[:4] != b"\xca\xfe\xba\xbe":
@@ -125,9 +158,32 @@ def scan_artifacts(root: Path) -> list[Finding]:
         try:
             if path.suffix.lower() in {".jar", ".war", ".ear"} and zipfile.is_zipfile(path):
                 with zipfile.ZipFile(path) as zf:
-                    for name in zf.namelist():
+                    names = zf.namelist()
+                    for name in names:
                         if name.endswith(".class"):
                             findings.extend(_findings(zf.read(name), rel, jar=path.name))
+                        elif name.lower().endswith(NATIVE) or ".so." in name.lower() or ".dll." in name.lower():
+                            lib = _native(name)
+                            if lib:
+                                lib.evidence_path = rel
+                                lib.evidence_snippet = f"{path.name}!{lib.evidence_snippet}"
+                                findings.append(lib)
+                    if "META-INF/MANIFEST.MF" in names:
+                        ver = _manifest(zf.read("META-INF/MANIFEST.MF").decode("utf-8", errors="ignore"))
+                        if ver:
+                            findings.append(Finding(
+                                id=f"ART-MF-{path.name}",
+                                evidence_path=rel,
+                                evidence_line=0,
+                                evidence_snippet=f"{path.name} manifest {ver}",
+                                family="JAR",
+                                quantum_status=QuantumStatus.VULNERABLE,
+                                role="library",
+                                source_scanner="qci-artifact",
+                                confidence=0.5,
+                                parameter_set=ver,
+                                notes="Implementation-Version from the JAR manifest.",
+                            ))
                 continue
             findings.extend(_findings(path.read_bytes(), rel))
         except Exception:
