@@ -445,10 +445,10 @@ def scan_path(root: Path) -> Iterator[Finding]:
 
                     # One rule: a name inside a string does not count unless that
                     # string is a crypto API argument, or the whole argument.
-                    quoted = re.search(r'[\'"`]([^\'"`]*(?:ML-KEM|ML-DSA|PBKDF2|ChaCha20|HMAC|SHA-?1|DSA|DH|X25519)[^\'"`]*)[\'"`]', code_part, re.I)
+                    quoted = re.search(r'[\'"`]([^\'"`]*(?:ML-KEM|ML-DSA|PBKDF2|ChaCha20|HMAC|SHA-?1|MD5|DSA|DH|X25519)[^\'"`]*)[\'"`]', code_part, re.I)
                     if quoted:
                         arg = quoted.group(1).strip()
-                        api = re.search(r"getInstance|generate_|hmac\.new|hashlib|Cipher|createCipher|createHash|createHmac|EVP_|mlkem\.|Mac\.|pbkdf2|Aes\.|RSA\.", code_part)
+                        api = re.search(r"getInstance\s*\(|generate_\w*\s*\(|hmac\.new\s*\(|hashlib\.\w+|Cipher\.\w+|createCipher\w*\s*\(|createHash\s*\(|createHmac\s*\(|EVP_\w+\s*\(|mlkem\.\w+|Mac\.getInstance|pbkdf2\w*\s*\(|Aes\.Create|RSA\.Create", code_part)
                         bare = re.fullmatch(r"[A-Za-z0-9_+-]{2,40}", arg)
                         if not api and not bare:
                             continue
