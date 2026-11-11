@@ -32,3 +32,10 @@ def test_ssl_substring_is_not_openssl():
     assert _native("lib/libsslfoo.so").family == "Native"
     assert _native("lib/libssl.so").family == "OpenSSL"
     assert _native("lib/bcprov-jdk18on-1.80.so").family == "BouncyCastle"
+
+def test_loose_native():
+    hits = scan_artifacts(Path("tests/fixtures/artifacts"))
+    ssl = [f for f in hits if f.evidence_snippet == "libssl.so"]
+    assert ssl and ssl[0].family == "OpenSSL"
+    foo = [f for f in hits if f.evidence_snippet == "libsslfoo.so"]
+    assert foo and foo[0].family == "Native"
