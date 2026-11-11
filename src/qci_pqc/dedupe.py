@@ -58,10 +58,13 @@ def _normalize_path(path: str) -> str:
 
 def _key(f: Finding, window: int) -> tuple:
     line_bucket = (f.evidence_line or 0) // (window * 2 + 1)
+    # Artifacts have no line. The snippet names the class and method.
+    site = f.evidence_snippet if (f.evidence_line or 0) == 0 else ""
     return (
         _normalize_family(f.family),
         _normalize_path(f.evidence_path),
         line_bucket,
+        site,
     )
 
 
