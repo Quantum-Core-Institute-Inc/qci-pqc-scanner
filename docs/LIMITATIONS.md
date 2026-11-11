@@ -4,7 +4,7 @@ The 1.0 page is retired. This is the ceiling.
 
 ## In scope
 - Source and configuration, as in 1.x
-- Compiled artifacts: JARs, `.class`, selected binaries, by strings
+- Compiled artifacts: `.class` constant pool, JARs, WARs, wheels, image tarballs, ELF `DT_NEEDED`, PE imports, native libraries by name
 - A constant defined in another file of the same tree
 
 ## Out of scope
