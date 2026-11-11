@@ -19,7 +19,7 @@ jobs:
 
       - name: Golden corpus
         run: |
-          PYTHONPATH=src python -m pytest tests/test_corpus.py::test_internal_corpus tests/test_calibration.py -q
+          PYTHONPATH=src python -m pytest tests/test_corpus.py::test_internal_corpus tests/test_calibration.py tests/test_artifact_corpus.py -q
           # Semgrep is optional; do not fail CI if the binary is absent
           PYTHONPATH=src python -m pytest tests/test_corpus.py::test_semgrep_corpus -q || echo "Semgrep adapter skipped or unavailable"
 
