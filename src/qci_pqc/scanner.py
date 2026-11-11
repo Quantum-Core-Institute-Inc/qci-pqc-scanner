@@ -488,7 +488,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     )
                     if re.search(r"[\"'][^\"']*(?:DSA|DH|HMAC|SHA-?1|PBKDF2|ML-KEM|ML-DSA)", code_part, re.I):
                         is_use = re.search(
-                            r"getInstance|generate_|hmac\.new|hashlib|Mac\.|pbkdf2|createHmac|EVP_|mlkem.|KeyEncapsulation\s*\(|Signature\s*\(",
+                            r"getInstance|generate_|hmac\.new|hashlib|Mac\.|pbkdf2|createHash|createHmac|EVP_|mlkem.|KeyEncapsulation\s*\(|Signature\s*\(",
                             code_part,
                             re.I,
                         )
@@ -523,7 +523,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         category = "DH/ECDH"
                     elif family in {"RSA", "ECDSA"} and role == "hostkey":
                         category = "RSA/ECDSA"
-                    param = ""
+                    param = family if role == "hash" else ""
                     if role in ("kem", "kex", "cipher", "protocol") or status == QuantumStatus.HYBRID:
                         param = family
                     if family == "TLS-1.3":
