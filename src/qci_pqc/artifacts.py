@@ -409,7 +409,7 @@ def scan_artifacts(root: Path) -> list[Finding]:
                                         if inner_name.endswith(".class"):
                                             findings.extend(_findings(inner.read(inner_name), rel, jar=f"{path.name}!{Path(name).name}"))
                             except Exception:
-                                skip(rel, "corrupt nested archive")
+                                skip(f"{rel}!{name}", "corrupt nested archive")
                         elif not name.lower().endswith(".txt") and (name.lower().endswith(NATIVE) or ".so." in name.lower() or ".dll." in name.lower()):
                             lib = _native(name)
                             if lib:
