@@ -152,7 +152,7 @@ def resolve_calls_and_maps(root: Path) -> list[Finding]:
     calls = []
     for f in out:
         for name, sites in defs.items():
-            if any(s[0] == Path(root, f.evidence_path) and s[1] == f.evidence_line for s in sites):
+            if any(s[0] == Path(root, f.evidence_path) and s[1] <= f.evidence_line for s in sites):
                 for path in root.rglob("*"):
                     if not path.is_file() or path.suffix.lower() not in {".py", ".java"}:
                         continue
