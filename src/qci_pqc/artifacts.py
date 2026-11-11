@@ -385,7 +385,10 @@ def scan_artifacts(root: Path) -> list[Finding]:
                     lib.evidence_snippet = path.name
                     findings.append(lib)
                 continue
-            if path.suffix.lower() in {".jar", ".war", ".ear", ".whl"} and zipfile.is_zipfile(path):
+            if path.suffix.lower() in {".jar", ".war", ".ear", ".whl"}:
+                if not zipfile.is_zipfile(path):
+                    skip(rel, "truncated archive")
+                    continue
                 with zipfile.ZipFile(path) as zf:
                     all_names = zf.namelist()
                     if len(all_names) > MAX_ARCHIVE_FILES:
@@ -492,6 +495,7 @@ def scan_images(root: Path) -> list[Finding]:
                 dest = Path(tmp)
                 with tarfile.open(path) as tf:
                     if sum(m.size for m in tf.getmembers()) > MAX_ARCHIVE_BYTES or any(m.size > MAX_ARCHIVE_BYTES for m in tf.getmembers()):
+                        skip(str(path.relative_to(root)), "archive over 50 MB")
                         continue
                     tf.extractall(dest, filter="data")
                 # Docker save: layers are nested tars.
