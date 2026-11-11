@@ -552,7 +552,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     # Size on another line in the same file: kpg.initialize(3072)
                     if family in {"RSA", "DSA", "DH"} and not param:
                         init = re.search(r"\.initialize\s*\(\s*(\d{3,5})\s*\)", expanded)
-                        bits = re.search(r"KEY_BITS\s*=\s*(\d{3,5})", expanded)
+                        bits = re.search(r"KEY_BITS\s*=\s*(\d{3,5})", text)
                         if init:
                             param = init.group(1)
                         elif bits:
