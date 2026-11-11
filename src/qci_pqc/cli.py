@@ -209,7 +209,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
     revision = ""
     try:
         import subprocess
-        revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=path, text=True, stderr=subprocess.DEVNULL).strip()
+        revision = subprocess.check_output(["git", "-c", "core.fsmonitor=", "-c", "core.hooksPath=/dev/null", "rev-parse", "HEAD"], cwd=path, text=True, stderr=subprocess.DEVNULL, env={"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null", "PATH": "/usr/bin:/bin"}).strip()
     except Exception:
         revision = ""
     evidence_manifest(out_path, summary, reproducible=reproducible, policy=inv.policy_result, revision=revision)

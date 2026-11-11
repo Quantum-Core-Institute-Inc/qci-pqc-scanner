@@ -294,7 +294,7 @@ def to_html(inv: Inventory) -> str:
     priority_html = ""
     for f in sorted(inv.priority_findings, key=lambda x: -getattr(x, "priority_score", 0))[:10]:
         reasons = ", ".join(getattr(f, "priority_reasons", [])[:2]) or f.quantum_status.value
-        priority_html += f"<li><strong>{f.family}</strong> in {f.evidence_path}:{f.evidence_line} — {reasons}</li>"
+        priority_html += f"<li><strong>{html.escape(str(f.family))}</strong> in {html.escape(str(f.evidence_path))}:{f.evidence_line} — {html.escape(str(reasons))}</li>"
 
     # Actionable tables
     compliance_rows = ""
@@ -302,11 +302,11 @@ def to_html(inv: Inventory) -> str:
     rec_rows = ""
     for f in inv.findings:
         if getattr(f, "compliance_note", ""):
-            compliance_rows += f"<tr><td>{html.escape(str(f.family))}</td><td>{f.evidence_path}:{f.evidence_line}</td><td>{f.compliance_note}</td></tr>"
+            compliance_rows += f"<tr><td>{html.escape(str(f.family))}</td><td>{html.escape(str(f.evidence_path))}:{f.evidence_line}</td><td>{html.escape(str(f.compliance_note))}</td></tr>"
         if getattr(f, "timeline_flags", []):
-            timeline_rows += f"<tr><td>{html.escape(str(f.family))}</td><td>{f.evidence_path}:{f.evidence_line}</td><td>{'; '.join(f.timeline_flags)}</td></tr>"
+            timeline_rows += f"<tr><td>{html.escape(str(f.family))}</td><td>{html.escape(str(f.evidence_path))}:{f.evidence_line}</td><td>{html.escape('; '.join(f.timeline_flags))}</td></tr>"
         if getattr(f, "recommendation", ""):
-            rec_rows += f"<tr><td>{html.escape(str(f.family))}</td><td>{getattr(f, 'parameter_set', '') or '-'}</td><td>{f.recommendation}</td></tr>"
+            rec_rows += f"<tr><td>{html.escape(str(f.family))}</td><td>{html.escape(str(getattr(f, 'parameter_set', '') or '-'))}</td><td>{html.escape(str(f.recommendation))}</td></tr>"
 
     compliance_html = f"<table><thead><tr><th>Family</th><th>Location</th><th>Compliance note</th></tr></thead><tbody>{compliance_rows or '<tr><td colspan=3>None</td></tr>'}</tbody></table>" if compliance_rows else "<p>No compliance notes.</p>"
     timeline_html = f"<table><thead><tr><th>Family</th><th>Location</th><th>Timeline flags</th></tr></thead><tbody>{timeline_rows or '<tr><td colspan=3>None</td></tr>'}</tbody></table>" if timeline_rows else "<p>No timeline flags.</p>"
