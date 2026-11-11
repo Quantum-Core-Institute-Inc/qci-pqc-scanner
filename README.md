@@ -9,7 +9,8 @@
 
 **Version:** 2.3.0
 
-Release notes: [RELEASE-2.3.0.md](RELEASE-2.3.0.md). Older notes are on the tags.\n\nArtifact corpus: 6/6 in `tests/fixtures/artifacts/expected.json`. Not the source recall.  
+**2.3.0** is the artifact release. It reads a class constant pool (class, method, parameter), a JAR and a JAR inside a WAR, a wheel, an image tarball, an ELF's linked libraries, a PE's imports, and a native library on disk. Source scanning is unchanged. Source and artifact scores are not blended. Release notes: [RELEASE-2.3.0.md](RELEASE-2.3.0.md).
+
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
 
