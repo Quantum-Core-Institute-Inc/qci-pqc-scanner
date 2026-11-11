@@ -98,11 +98,12 @@ def to_cyclonedx(inv: Inventory) -> dict:
             algo_props["mode"] = mode
         # Quantum resistance hint
         fam = f.family.upper()
-        if "512" in fam or "44" in fam:
+        pqc = any(n in fam for n in ("ML-KEM", "ML-DSA", "SLH-DSA", "KYBER", "DILITHIUM", "FALCON"))
+        if pqc and ("512" in fam or "44" in fam):
             algo_props["nistQuantumSecurityLevel"] = 1
-        elif "768" in fam or "65" in fam:
+        elif pqc and ("768" in fam or "65" in fam):
             algo_props["nistQuantumSecurityLevel"] = 3
-        elif "1024" in fam or "87" in fam:
+        elif pqc and ("1024" in fam or "87" in fam):
             algo_props["nistQuantumSecurityLevel"] = 5
         elif f.quantum_status.value in ("vulnerable", "weak"):
             algo_props["nistQuantumSecurityLevel"] = 0

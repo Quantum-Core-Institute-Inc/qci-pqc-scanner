@@ -610,7 +610,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     evidence_line=1,
                     evidence_snippet=f"{name} = {value}",
                     family=value.split("/")[0],
-                    quantum_status=QuantumStatus.SAFE_SYMMETRIC if value.startswith("AES") else QuantumStatus.VULNERABLE,
+                    quantum_status=QuantumStatus.VULNERABLE if value.startswith("RSA") else QuantumStatus.SAFE_SYMMETRIC,
                     role="cipher",
                     source_scanner="qci-crossmod",
                     confidence=0.7,
