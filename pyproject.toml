@@ -1,6 +1,6 @@
 [project]
 name = "qci-pqc-scan"
-version = "2.3.3"
+version = "2.3.4"
 description = "QCI crypto inventory of source, config, and artifacts. Exports a CycloneDX CBOM."
 readme = "README.md"
 license = {text = "MIT"}
