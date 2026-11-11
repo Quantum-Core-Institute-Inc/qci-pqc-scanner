@@ -14,8 +14,6 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-# Security policy
-
 Report a vulnerability in this scanner by email.
 
 security@quantumcoreinstitute.com
