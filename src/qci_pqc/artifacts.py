@@ -53,7 +53,8 @@ def _native(name: str) -> Finding | None:
     m = re.search(r"(\d+\.\d+(?:\.\d+)?)", base)
     if m:
         ver = m.group(1)
-    fam = "OpenSSL" if "crypto" in low or "ssl" in low else ("BouncyCastle" if "bcprov" in low else "Native")
+    base_name = Path(name).name.lower()
+    fam = "OpenSSL" if base_name.startswith(("libcrypto.so", "libssl.so", "libcrypto-", "libssl-")) else ("BouncyCastle" if base_name.startswith("bcprov") else "Native")
     return Finding(
         id=f"ART-LIB-{base}",
         evidence_path="",
