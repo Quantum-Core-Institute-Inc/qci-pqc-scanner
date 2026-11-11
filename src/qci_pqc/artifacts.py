@@ -16,7 +16,7 @@ from pathlib import Path
 
 from .models import Finding, QuantumStatus
 
-ARTIFACT_SUFFIXES = {".jar", ".class", ".war", ".ear"}
+ARTIFACT_SUFFIXES = {".jar", ".class", ".war", ".ear", ".whl"}
 
 # tag -> (size after the tag, or None for variable)
 _FIXED = {
@@ -268,7 +268,7 @@ def scan_artifacts(root: Path) -> list[Finding]:
                     lib.evidence_snippet = path.name
                     findings.append(lib)
                 continue
-            if path.suffix.lower() in {".jar", ".war", ".ear"} and zipfile.is_zipfile(path):
+            if path.suffix.lower() in {".jar", ".war", ".ear", ".whl"} and zipfile.is_zipfile(path):
                 with zipfile.ZipFile(path) as zf:
                     names = zf.namelist()
                     for name in names:
