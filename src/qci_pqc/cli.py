@@ -20,7 +20,7 @@ from .calibrate import calibrate as run_calibrate
 from .scoring import compute_readiness, score_scanner
 from .scoresplit import split_scores
 from .graph import link
-from .coverage import summary
+from .coverage import summary as coverage_summary
 from .policy import evaluate_policy, load_accepted_risks, load_policy
 
 
@@ -166,7 +166,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
     inv.reproducible = reproducible
     inv.coverage = score_scanner(all_findings)
     inv.readiness_score, inv.priority_findings, inv.readiness_breakdown = compute_readiness(all_findings)
-    inv.scan_coverage = summary()
+    inv.scan_coverage = coverage_summary()
     # Calibration (only meaningful when scanning the test corpus; harmless otherwise)
     try:
         inv.calibration = run_calibrate(path)
@@ -254,8 +254,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
             click.echo(f"Policy violations: {n_viol}", err=True)
             sys.exit(1)
 
-    from .coverage import summary
-from .policy import finding_key
+    from .policy import finding_key
     open_findings = [f for f in all_findings if finding_key(f) not in waived_keys]
     if fail_on == "vulnerable" and any(f.quantum_status.value == "vulnerable" for f in open_findings):
         click.echo("Failing due to Shor-vulnerable findings.", err=True)
