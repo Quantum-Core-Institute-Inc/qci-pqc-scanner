@@ -14,8 +14,13 @@ currently being supported with security updates.
 
 ## Reporting a Vulnerability
 
-Use this section to tell people how to report a vulnerability.
+# Security policy
 
-Tell them where to go, how often they can expect to get an update on a
-reported vulnerability, what to expect if the vulnerability is accepted or
-declined, etc.
+Report a vulnerability in this scanner by email.
+
+security@quantumcoreinstitute.com
+
+Do not open a public issue. Do not post it in a pull request.
+
+Include the version, the steps to reproduce, and the impact.
+We will acknowledge within 3 business days.
