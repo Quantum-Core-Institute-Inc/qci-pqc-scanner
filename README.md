@@ -274,6 +274,17 @@ What the scanner does not cover is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md)
 
 ## Algorithms detected
 
+At risk. These are what the inventory exists to find.
+
+| Algorithm | Status | Why |
+|-----------|--------|-----|
+| RSA, DSA, DH | Vulnerable | Shor's algorithm breaks them |
+| ECDSA, ECDH, Ed25519 | Vulnerable | Shor's algorithm breaks them |
+| MD5, SHA-1, DES | Weak | Broken classically |
+| AES, SHA-256, SHA-512 | Safe symmetric | Not broken by Shor. Key size still matters. |
+
+The replacements.
+
 | Algorithm | Standard | Role | Former name |
 |-----------|----------|------|-------------|
 | ML-KEM (512/768/1024) | FIPS 203 | Key encapsulation | Kyber |
@@ -282,7 +293,7 @@ What the scanner does not cover is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md)
 | FN-DSA | FIPS 206 (draft) | Compact signatures | Falcon |
 | Hybrids (e.g. X25519+ML-KEM) | — | Transition | — |
 
-Plus classical public-key (RSA, ECDSA, Ed25519, DH/ECDH), weak hashes (MD5, SHA-1), and TLS/SSH configuration signals.
+Also TLS and SSH configuration signals.
 
 ---
 
