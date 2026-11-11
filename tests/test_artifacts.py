@@ -6,4 +6,9 @@ def test_class_constant_pool_names_the_class():
     rsa = [f for f in hits if f.family == "RSA"]
     assert rsa
     assert "Signer" in rsa[0].evidence_snippet
-    assert "SHA256withRSA" in rsa[0].evidence_snippet
+    assert rsa[0].parameter_set == "SHA-256"
+
+def test_hmac_parameter():
+    hits = scan_artifacts(Path("tests/fixtures/artifacts"))
+    hmac = [f for f in hits if f.family == "HMAC"]
+    assert hmac and hmac[0].parameter_set == "SHA-256"
