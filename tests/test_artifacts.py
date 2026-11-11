@@ -19,3 +19,9 @@ def test_native_and_manifest():
     assert native and native[0].parameter_set == "3.0.2"
     mf = [f for f in hits if "manifest" in f.evidence_snippet]
     assert mf and mf[0].parameter_set == "1.80"
+
+def test_image_tarball_config():
+    hits = scan_artifacts.__wrapped__ if False else None
+    from qci_pqc.artifacts import scan_images
+    hits = scan_images(Path("tests/fixtures/artifacts"))
+    assert any("image.tar" in (f.evidence_path or "") and f.role == "config" for f in hits)
