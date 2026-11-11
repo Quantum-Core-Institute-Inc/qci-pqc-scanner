@@ -429,15 +429,6 @@ def scan_path(root: Path) -> Iterator[Finding]:
 
             if line.strip().startswith("import ") or line.strip().startswith("from "):
                 continue
-            # String catalogs ("sha1": "SHA-1 (deprecated)") are labels, not usage.
-            if re.search(r"""^\s*['"][a-z0-9_-]+['"]\s*:""", line):
-                continue
-            if re.search(r"=\s*[\[{]\s*[\"']", line) and re.search(r"MD5|SHA-1|sha1|EVP_md5", line, re.I):
-                continue
-            if re.search(r"console\.log|printf", line) and re.search(r"sha1|md5", line, re.I):
-                continue
-            if re.search(r"""==\s*['"]sha1['"]|==\s*['"]md5['"]|==\s*['"]dsa['"]""", line, re.I):
-                continue
             # Remove inline comments before matching (Python/JS style)
             code_part = _expand_constants(line, consts)
             for alias, real in aliases.items():
@@ -451,6 +442,16 @@ def scan_path(root: Path) -> Iterator[Finding]:
 
             for regex, family, status, weak, role in COMPILED:
                 if regex.search(code_part):
+
+                    # One rule: a name inside a string does not count unless that
+                    # string is a crypto API argument, or the whole argument.
+                    quoted = re.search(r'[\'"]([^\'"]*(?:ML-KEM|ML-DSA|PBKDF2|ChaCha20|HMAC|SHA-?1|DSA|DH)[^\'"]*)[\'"]', code_part, re.I)
+                    if quoted:
+                        arg = quoted.group(1).strip()
+                        api = re.search(r"getInstance|generate_|hmac\.new|hashlib|Cipher|createCipher|createHash|createHmac|EVP_|mlkem\.|Mac\.|pbkdf2|Aes\.|RSA\.", code_part)
+                        bare = re.fullmatch(r"[A-Za-z0-9_+-]{2,40}", arg)
+                        if not api and not bare:
+                            continue
                     # Drop PQC names in comments and string catalogs; keep calls, assignments, imports, configs.
                     # A name inside a string is not usage, unless the line is a call or an assignment.
                     algorithm_return = re.search(
