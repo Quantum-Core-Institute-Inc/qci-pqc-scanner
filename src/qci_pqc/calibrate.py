@@ -73,6 +73,21 @@ def calibrate(corpus_dir: Path) -> dict:
     precision = len(true_positives) / len(detected) if detected else 0.0
     recall = len(true_positives) / len(expected_positive) if expected_positive else 0.0
 
+    def surface(name: str) -> str:
+        ext = Path(name).suffix.lower()
+        return {".py": "python", ".java": "java", ".go": "go", ".js": "javascript",
+                ".pem": "cert", ".crt": "cert", ".class": "artifact", ".jar": "artifact"}.get(ext, "other")
+
+    by_surface = {}
+    for fam, name in expected_positive:
+        s = surface(name)
+        slot = by_surface.setdefault(s, {"expected": 0, "found": 0})
+        slot["expected"] += 1
+        if (fam, name) in detected:
+            slot["found"] += 1
+    for s, slot in by_surface.items():
+        slot["recall"] = round(slot["found"] / slot["expected"], 3) if slot["expected"] else 0.0
+
     return {
         "true_positives": len(true_positives),
         "false_positives": len(false_positives),
@@ -81,4 +96,7 @@ def calibrate(corpus_dir: Path) -> dict:
         "recall": round(recall, 3),
         "total_findings": len(findings),
         "expected_positive": len(expected_positive),
+        "by_surface": by_surface,
+        "corpus": "bundled",
+        "independent": False,
     }
