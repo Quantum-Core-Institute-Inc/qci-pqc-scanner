@@ -8,6 +8,8 @@ from __future__ import annotations
 
 import re
 import struct
+import tarfile
+import tempfile
 import zipfile
 from pathlib import Path
 
@@ -178,6 +180,71 @@ def scan_artifacts(root: Path) -> list[Finding]:
                                     f.notes = (f.notes + f" Manifest {ver}.").strip()
                 continue
             findings.extend(_findings(path.read_bytes(), rel))
+        except Exception:
+            continue
+    return findings
+
+IMAGE_SUFFIXES = {".tar", ".tgz"}
+
+
+def _scan_tree(root: Path, label: str) -> list[Finding]:
+    """Certs, configs, and class files inside an extracted image."""
+    from .certs import inspect_pem
+    out = []
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        rel = f"{label}:{path.relative_to(root)}"
+        if path.suffix.lower() in {".pem", ".crt", ".cer"} or "BEGIN" in path.read_bytes()[:40].decode("latin-1", errors="ignore"):
+            try:
+                for f in inspect_pem(path, root):
+                    f.evidence_path = rel
+                    f.source_scanner = "qci-artifact"
+                    f.notes = (f.notes or "") + f" From image {label}."
+                    out.append(f)
+            except Exception:
+                pass
+        if path.suffix.lower() in {".conf", ".cnf", ".cfg"} or path.name in {"sshd_config", "nginx.conf"}:
+            text = path.read_text(encoding="utf-8", errors="ignore")
+            if re.search(r"KexAlgorithms|ssl_certificate|MinProtocol|CipherString", text):
+                out.append(Finding(
+                    id=f"ART-CFG-{path.name}",
+                    evidence_path=rel,
+                    evidence_line=1,
+                    evidence_snippet=path.name,
+                    family="TLS-Cert-Config",
+                    quantum_status=QuantumStatus.VULNERABLE,
+                    role="config",
+                    source_scanner="qci-artifact",
+                    confidence=0.7,
+                    notes=f"Config inside image {label}.",
+                ))
+    out.extend(scan_artifacts(root))
+    for f in out:
+        if not str(f.evidence_path).startswith(label):
+            f.evidence_path = f"{label}:{f.evidence_path}"
+            f.source_scanner = "qci-artifact"
+    return out
+
+
+def scan_images(root: Path) -> list[Finding]:
+    findings = []
+    for path in root.rglob("*"):
+        if not path.is_file():
+            continue
+        name = path.name.lower()
+        if not (name.endswith(".tar") or name.endswith(".tar.gz") or name.endswith(".tgz")):
+            continue
+        try:
+            with tempfile.TemporaryDirectory() as tmp:
+                dest = Path(tmp)
+                with tarfile.open(path) as tf:
+                    tf.extractall(dest, filter="data")
+                # Docker save: layers are nested tars.
+                for layer in dest.rglob("*.tar"):
+                    with tarfile.open(layer) as inner:
+                        inner.extractall(dest / "layers", filter="data")
+                findings.extend(_scan_tree(dest, path.name))
         except Exception:
             continue
     return findings

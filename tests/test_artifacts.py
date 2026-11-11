@@ -20,3 +20,9 @@ def test_native_and_manifest():
     mf = [f for f in hits if "Manifest 1.80" in (f.notes or "")]
     assert mf
     assert not any(f.family == "JAR" for f in hits)
+
+def test_image_tarball_config():
+    hits = scan_artifacts.__wrapped__ if False else None
+    from qci_pqc.artifacts import scan_images
+    hits = scan_images(Path("tests/fixtures/artifacts"))
+    assert any("image.tar" in (f.evidence_path or "") and f.role == "config" for f in hits)

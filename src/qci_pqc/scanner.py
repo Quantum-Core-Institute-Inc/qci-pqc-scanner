@@ -10,7 +10,7 @@ from typing import Iterator
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
 from .deps import scan_dependencies
-from .artifacts import scan_artifacts
+from .artifacts import scan_artifacts, scan_images
 from .crossmod import collect_constants
 from .resolve import resolve_configs, resolve_calls_and_maps
 
@@ -627,3 +627,8 @@ def scan_path(root: Path) -> Iterator[Finding]:
         finding_id += 1
         art.id = f"QCI-{finding_id:04d}"
         yield art
+
+    for img in scan_images(root):
+        finding_id += 1
+        img.id = f"QCI-{finding_id:04d}"
+        yield img
