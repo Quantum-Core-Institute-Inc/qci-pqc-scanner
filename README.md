@@ -1,4 +1,4 @@
-# QCI Crypto Inventory
+# QCI Crypto Inventory Platform
 
 **A cryptographic inventory of source, config, and artifacts. Exports a CycloneDX 1.6 CBOM. Not a complete bill of materials.**
 
