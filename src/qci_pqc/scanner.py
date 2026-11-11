@@ -194,9 +194,11 @@ PATTERNS = [
     (r"createHmac\s*\(\s*[\"']sha256[\"']", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
     (r"pbkdf2Sync|pbkdf2\s*\(", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
 
+    (r"LEGACY\(\s*\"SHA-1\"\)|CURRENT\(\s*\"SHA-256\"\)", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"\"algorithm\"\s*:\s*\"AES\"", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"digestmod\s*=\s*[\"']sha1[\"']", "HMAC", QuantumStatus.WEAK, True, "mac"),
 
+    (r"b64decode\(\s*\"bWQ1\"|Base64.*\"TUQ1\"", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"\[\"s\",\s*\"ha\",\s*\"1\"\]", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"chr\(65,\s*69,\s*83\)|map\(chr,\s*\(65,\s*69,\s*83\)\)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
 
@@ -429,15 +431,6 @@ def scan_path(root: Path) -> Iterator[Finding]:
 
             if line.strip().startswith("import ") or line.strip().startswith("from "):
                 continue
-            # String catalogs ("sha1": "SHA-1 (deprecated)") are labels, not usage.
-            if re.search(r"""^\s*['"][a-z0-9_-]+['"]\s*:""", line):
-                continue
-            if re.search(r"=\s*[\[{]\s*[\"']", line) and re.search(r"MD5|SHA-1|sha1|EVP_md5", line, re.I):
-                continue
-            if re.search(r"console\.log|printf", line) and re.search(r"sha1|md5", line, re.I):
-                continue
-            if re.search(r"""==\s*['"]sha1['"]|==\s*['"]md5['"]|==\s*['"]dsa['"]""", line, re.I):
-                continue
             # Remove inline comments before matching (Python/JS style)
             code_part = _expand_constants(line, consts)
             for alias, real in aliases.items():
@@ -451,6 +444,16 @@ def scan_path(root: Path) -> Iterator[Finding]:
 
             for regex, family, status, weak, role in COMPILED:
                 if regex.search(code_part):
+
+                    # One rule: a name inside a string does not count unless that
+                    # string is a crypto API argument, or the whole argument.
+                    quoted = re.search(r'[\'"]([^\'"]*(?:ML-KEM|ML-DSA|PBKDF2|ChaCha20|HMAC|SHA-?1|DSA|DH)[^\'"]*)[\'"]', code_part, re.I)
+                    if quoted:
+                        arg = quoted.group(1).strip()
+                        api = re.search(r"getInstance|generate_|hmac\.new|hashlib|Cipher|createCipher|createHash|createHmac|EVP_|mlkem\.|Mac\.|pbkdf2|Aes\.|RSA\.", code_part)
+                        bare = re.fullmatch(r"[A-Za-z0-9_+-]{2,40}", arg)
+                        if not api and not bare:
+                            continue
                     # Drop PQC names in comments and string catalogs; keep calls, assignments, imports, configs.
                     # A name inside a string is not usage, unless the line is a call or an assignment.
                     algorithm_return = re.search(
@@ -514,7 +517,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     curve_m = re.search(r"SECP(256|384|521)R1|secp(256|384|521)r1|prime256v1", expanded, re.I)
                     if curve_m and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
                         param = "P-256" if "256" in curve_m.group(0) else ("P-384" if "384" in curve_m.group(0) else "P-521")
-                    curve = re.search(r"SECP(256|384|521)R1|prime256v1|secp256r1|secp384r1", expanded, re.I)
+                    curve = re.search(r"SECP(256|384|521)R1|prime256v1|secp256r1|secp384r1", text, re.I)
                     if curve and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
                         bits = "256" if "256" in curve.group(0).upper() else ("384" if "384" in curve.group(0) else "521")
                         param = f"P-{bits}"
@@ -550,17 +553,17 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         param = "-".join(x for x in (size, mode) if x) or param
                     # Size on another line in the same file: kpg.initialize(3072)
                     if family in {"RSA", "DSA", "DH"} and not param:
-                        init = re.search(r"\.initialize\s*\(\s*(\d{3,5})\s*\)", expanded)
-                        bits = re.search(r"KEY_BITS\s*=\s*(\d{3,5})", expanded)
+                        init = re.search(r"\.initialize\s*\(\s*(\d{3,5})\s*\)", text)
+                        bits = re.search(r"KEY_BITS\s*=\s*(\d{3,5})", text)
                         if init:
                             param = init.group(1)
                         elif bits:
                             param = bits.group(1)
                     if family in {"3DES", "DES"} and re.search(r"modes\.CBC|CBC", code_part):
                         param = "CBC"
-                    if family in {"HMAC", "PBKDF2"} and re.search(r"sha256|SHA256", expanded, re.I):
+                    if family in {"HMAC", "PBKDF2"} and re.search(r"sha256|SHA256", text, re.I):
                         param = "SHA-256"
-                    if family == "HMAC" and re.search(r"digestmod\s*=\s*[\"']sha1[\"']|hmac-sha1", expanded, re.I):
+                    if family == "HMAC" and re.search(r"digestmod\s*=\s*[\"']sha1[\"']|hmac-sha1", text, re.I):
                         param = "SHA-1"
                     yield Finding(
                         id="QCI-" + hashlib.sha256(f"{family}|{path.name}|{param}".encode()).hexdigest()[:12],
