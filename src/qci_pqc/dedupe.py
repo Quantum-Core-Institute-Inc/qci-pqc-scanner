@@ -52,9 +52,8 @@ def _normalize_family(family: str) -> str:
 
 
 def _normalize_path(path: str) -> str:
-    """Use basename so different scanners' path prefixes still match."""
-    p = path.replace("\\", "/").rstrip("/")
-    return p.split("/")[-1] if p else ""
+    """Keep the relative path. Basename collapses main.go in two packages."""
+    return path.replace("\\", "/").rstrip("/")
 
 
 def _key(f: Finding, window: int) -> tuple:

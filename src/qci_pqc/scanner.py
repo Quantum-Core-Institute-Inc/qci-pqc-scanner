@@ -194,11 +194,9 @@ PATTERNS = [
     (r"createHmac\s*\(\s*[\"']sha256[\"']", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
     (r"pbkdf2Sync|pbkdf2\s*\(", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
 
-    (r"LEGACY\(\s*\"SHA-1\"\)|CURRENT\(\s*\"SHA-256\"\)", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"\"algorithm\"\s*:\s*\"AES\"", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"digestmod\s*=\s*[\"']sha1[\"']", "HMAC", QuantumStatus.WEAK, True, "mac"),
 
-    (r"b64decode\(\s*\"bWQ1\"|Base64.*\"TUQ1\"", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"\[\"s\",\s*\"ha\",\s*\"1\"\]", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"chr\(65,\s*69,\s*83\)|map\(chr,\s*\(65,\s*69,\s*83\)\)", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
 
@@ -517,7 +515,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     curve_m = re.search(r"SECP(256|384|521)R1|secp(256|384|521)r1|prime256v1", expanded, re.I)
                     if curve_m and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
                         param = "P-256" if "256" in curve_m.group(0) else ("P-384" if "384" in curve_m.group(0) else "P-521")
-                    curve = re.search(r"SECP(256|384|521)R1|prime256v1|secp256r1|secp384r1", text, re.I)
+                    curve = re.search(r"SECP(256|384|521)R1|prime256v1|secp256r1|secp384r1", expanded, re.I)
                     if curve and family in {"ECDSA", "ECDH", "ECC-P-256", "ECC-P-384"}:
                         bits = "256" if "256" in curve.group(0).upper() else ("384" if "384" in curve.group(0) else "521")
                         param = f"P-{bits}"
@@ -553,17 +551,17 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         param = "-".join(x for x in (size, mode) if x) or param
                     # Size on another line in the same file: kpg.initialize(3072)
                     if family in {"RSA", "DSA", "DH"} and not param:
-                        init = re.search(r"\.initialize\s*\(\s*(\d{3,5})\s*\)", text)
-                        bits = re.search(r"KEY_BITS\s*=\s*(\d{3,5})", text)
+                        init = re.search(r"\.initialize\s*\(\s*(\d{3,5})\s*\)", expanded)
+                        bits = re.search(r"KEY_BITS\s*=\s*(\d{3,5})", expanded)
                         if init:
                             param = init.group(1)
                         elif bits:
                             param = bits.group(1)
                     if family in {"3DES", "DES"} and re.search(r"modes\.CBC|CBC", code_part):
                         param = "CBC"
-                    if family in {"HMAC", "PBKDF2"} and re.search(r"sha256|SHA256", text, re.I):
+                    if family in {"HMAC", "PBKDF2"} and re.search(r"sha256|SHA256", expanded, re.I):
                         param = "SHA-256"
-                    if family == "HMAC" and re.search(r"digestmod\s*=\s*[\"']sha1[\"']|hmac-sha1", text, re.I):
+                    if family == "HMAC" and re.search(r"digestmod\s*=\s*[\"']sha1[\"']|hmac-sha1", expanded, re.I):
                         param = "SHA-1"
                     yield Finding(
                         id="QCI-" + hashlib.sha256(f"{family}|{path.name}|{param}".encode()).hexdigest()[:12],
