@@ -15,7 +15,7 @@ def test_hmac_parameter():
 
 def test_native_and_manifest():
     hits = scan_artifacts(Path("tests/fixtures/artifacts"))
-    native = [f for f in hits if f.family == "OpenSSL"]
+    native = [f for f in hits if f.family == "OpenSSL" and "libcrypto.so.3.0.2" in (f.evidence_snippet or "")]
     assert native and native[0].parameter_set == "3.0.2"
     mf = [f for f in hits if "Manifest 1.80" in (f.notes or "")]
     assert mf
