@@ -1,5 +1,6 @@
 """Local web UI for QCI PQC scanner. Stdlib only. Binds to 127.0.0.1."""
 
+import html
 import json
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
@@ -111,7 +112,7 @@ def make_handler(out_dir: Path):
                 body = f.read_bytes()
                 self.send_response(200)
                 self.send_header("Content-Type", "application/octet-stream")
-                self.send_header("Content-Disposition", f'attachment; filename="{name}"')
+                self.send_header("Content-Disposition", f'attachment; filename="{html.escape(str(name))}"')
                 self.send_header("Content-Length", str(len(body)))
                 self.end_headers()
                 self.wfile.write(body)

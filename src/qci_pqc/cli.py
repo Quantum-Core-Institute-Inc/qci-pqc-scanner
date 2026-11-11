@@ -186,6 +186,9 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
 
     # Policy evaluation (before reports so HTML can show it)
     if policy or accepted_risks:
+        if policy and not Path(policy).exists():
+            click.echo(f"Policy file not found: {policy}", err=True)
+            sys.exit(1)
         pol = load_policy(policy)
         acc = load_accepted_risks(accepted_risks)
         inv.policy_result = evaluate_policy(all_findings, pol, acc)
@@ -279,8 +282,19 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
             stale.unlink()
     if tickets:
         written.append("tickets.json")
+    else:
+        old = out_path / "tickets.json"
+        if old.exists():
+            old.unlink()
     if supplier_cbom:
         written.append("supplier-reconciliation.json")
+    else:
+        old = out_path / "supplier-reconciliation.json"
+        if old.exists():
+            old.unlink()
+    graph = out_path / "graph.json"
+    if graph.exists():
+        written.append("graph.json")
     evidence_manifest(out_path, summary, reproducible=reproducible, policy=inv.policy_result, revision=revision, written=written)
     if inv.policy_result:
         n_viol = len(inv.policy_result.get("violations", []))
