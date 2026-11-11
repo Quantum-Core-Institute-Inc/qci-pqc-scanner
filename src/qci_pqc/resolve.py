@@ -137,32 +137,7 @@ def resolve_calls_and_maps(root: Path) -> list[Finding]:
                     param = "-".join(x for x in ((bits.group(1) if bits else ""), mode) if x)
                     out.append(_finding(path, root, i, token, st, role, line.strip(), param))
             for name in ("HmacSHA256", "HmacSHA384", "HmacSHA512"):
-                if name in line:
+                if name in line and not re.search(rf'[\'"][^\'"]*{name}', line):
                     st, role = KNOWN["HmacSHA256"]
                     out.append(_finding(path, root, i, name, st, role, line.strip()))
-    return out
-
-def resolve_wiring(root: Path) -> list[Finding]:
-    """Factories and composition roots that name a crypto choice."""
-    out = []
-    interesting = ("hashlib.new", "AesCbcCipher", "LegacyDesede", "digest_factory", "forProfile")
-    for path in root.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in {".py", ".java"}:
-            continue
-        if any(part in {".git", "node_modules"} for part in path.parts):
-            continue
-        text = path.read_text(encoding="utf-8", errors="ignore")
-        if not any(tok in text for tok in interesting):
-            continue
-        for i, line in enumerate(text.splitlines(), 1):
-            low = line.lower()
-            if "hashlib.new" in low and "md5" in text.lower():
-                # composition root using a defaults constant already collected elsewhere
-                if "digest_factory" in low or "hashlib.new" in low:
-                    out.append(_finding(path, root, i, "MD5", QuantumStatus.WEAK, "hash", line.strip()))
-                    break
-            if "AesCbcCipher" in line:
-                out.append(_finding(path, root, i, "AES-CBC", QuantumStatus.SAFE_SYMMETRIC, "encrypt", line.strip()))
-            if "LegacyDesede" in line or "DESede" in line:
-                out.append(_finding(path, root, i, "3DES", QuantumStatus.WEAK, "encrypt", line.strip()))
     return out
