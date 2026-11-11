@@ -69,9 +69,10 @@ def compute_readiness(findings: list[Finding]) -> tuple[float, list[Finding], di
             "penalty_vulnerable": 0,
             "penalty_weak": 0,
             "bonus_pqc": 0,
-            "formula": "100 - (vulnerable×15) - (weak×5) + (pqc×2)",
+            "scored": False,
+            "formula": "not scored: no findings",
         }
-        return 100.0, [], breakdown
+        return None, [], breakdown
 
     vulnerable = [f for f in findings if f.quantum_status == QuantumStatus.VULNERABLE]
     weak = [f for f in findings if f.classical_weak or f.quantum_status == QuantumStatus.WEAK]
@@ -80,7 +81,8 @@ def compute_readiness(findings: list[Finding]) -> tuple[float, list[Finding], di
     pen_v = len(vulnerable) * 15
     pen_w = len(weak) * 5
     bonus = len(pqc) * 2
-    raw = 100.0 - pen_v - pen_w + bonus
+    # PQC is recorded. It does not offset a penalty.
+    raw = 100.0 - pen_v - pen_w
     score = max(0.0, min(100.0, raw))
 
     breakdown = {
@@ -91,7 +93,7 @@ def compute_readiness(findings: list[Finding]) -> tuple[float, list[Finding], di
         "penalty_weak": pen_w,
         "bonus_pqc": bonus,
         "raw": round(raw, 1),
-        "formula": "100 - (vulnerable×15) - (weak×5) + (pqc×2)",
+        "scored": True, "formula": "100 - (vulnerable×15) - (weak×5). PQC is recorded, not added.",
     }
 
     priority = sorted(

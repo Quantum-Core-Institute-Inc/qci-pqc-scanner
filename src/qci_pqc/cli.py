@@ -225,7 +225,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         click.echo(json.dumps(summary, indent=2))
     else:
         click.echo(f"Findings: {len(all_findings)}")
-        click.echo(f"Readiness score: {inv.readiness_score}/100")
+        click.echo("Readiness score: not scored" if inv.readiness_score is None else f"Readiness score: {inv.readiness_score}/100")
         if verbose and inv.readiness_breakdown:
             b = inv.readiness_breakdown
             click.echo(f"  Vulnerable: {b.get('vulnerable_count', 0)}  Weak: {b.get('weak_count', 0)}  PQC: {b.get('pqc_count', 0)}")
