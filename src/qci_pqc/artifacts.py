@@ -16,6 +16,9 @@ from pathlib import Path
 
 from .models import Finding, QuantumStatus
 
+MAX_ARCHIVE_BYTES = 50_000_000
+MAX_ARCHIVE_FILES = 2000
+
 ARTIFACT_SUFFIXES = {".jar", ".class", ".war", ".ear", ".whl"}
 
 # tag -> (size after the tag, or None for variable)
@@ -348,7 +351,10 @@ def scan_artifacts(root: Path) -> list[Finding]:
         low_name = path.name.lower()
         is_elf = path.suffix.lower() in {".elf", ".bin", ".exe", ".dll"}
         is_native = not low_name.endswith(".txt") and (low_name.endswith(NATIVE) or ".so." in low_name or ".dll." in low_name)
-        if not path.is_file() or (path.suffix.lower() not in ARTIFACT_SUFFIXES and not is_native and not is_elf):
+        if not path.is_file() or (path.suffix.lower() not in MAX_ARCHIVE_BYTES = 50_000_000
+MAX_ARCHIVE_FILES = 2000
+
+ARTIFACT_SUFFIXES and not is_native and not is_elf):
             continue
         rel = str(path.relative_to(root))
         try:
@@ -373,7 +379,9 @@ def scan_artifacts(root: Path) -> list[Finding]:
                 continue
             if path.suffix.lower() in {".jar", ".war", ".ear", ".whl"} and zipfile.is_zipfile(path):
                 with zipfile.ZipFile(path) as zf:
-                    names = zf.namelist()
+                    names = zf.namelist()[:MAX_ARCHIVE_FILES]
+                    if sum(i.file_size for i in zf.infolist()) > MAX_ARCHIVE_BYTES:
+                        continue
                     for name in names:
                         if name.endswith(".class"):
                             findings.extend(_findings(zf.read(name), rel, jar=path.name))
@@ -461,6 +469,8 @@ def scan_images(root: Path) -> list[Finding]:
             with tempfile.TemporaryDirectory() as tmp:
                 dest = Path(tmp)
                 with tarfile.open(path) as tf:
+                    if sum(m.size for m in tf.getmembers()) > MAX_ARCHIVE_BYTES:
+                        continue
                     tf.extractall(dest, filter="data")
                 # Docker save: layers are nested tars.
                 for layer in dest.rglob("*.tar"):
