@@ -7,7 +7,9 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 2.3.0\n\nArtifact corpus: 6/6 in `tests/fixtures/artifacts/expected.json`. Not the source recall.  
+**Version:** 2.3.0
+
+Release notes: [RELEASE-2.3.0.md](RELEASE-2.3.0.md). Older notes are on the tags.\n\nArtifact corpus: 6/6 in `tests/fixtures/artifacts/expected.json`. Not the source recall.  
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
 
