@@ -445,13 +445,15 @@ def scan_path(root: Path) -> Iterator[Finding]:
 
                     # One rule: a name inside a string does not count unless that
                     # string is a crypto API argument, or the whole argument.
-                    quoted = re.search(r'[\'"]([^\'"]*(?:ML-KEM|ML-DSA|PBKDF2|ChaCha20|HMAC|SHA-?1|DSA|DH)[^\'"]*)[\'"]', code_part, re.I)
+                    quoted = re.search(r'[\'"`]([^\'"`]*(?:ML-KEM|ML-DSA|PBKDF2|ChaCha20|HMAC|SHA-?1|DSA|DH|X25519)[^\'"`]*)[\'"`]', code_part, re.I)
                     if quoted:
                         arg = quoted.group(1).strip()
                         api = re.search(r"getInstance|generate_|hmac\.new|hashlib|Cipher|createCipher|createHash|createHmac|EVP_|mlkem\.|Mac\.|pbkdf2|Aes\.|RSA\.", code_part)
                         bare = re.fullmatch(r"[A-Za-z0-9_+-]{2,40}", arg)
                         if not api and not bare:
                             continue
+                    if re.search(r"==\s*['\"]sha1['\"]|==\s*['\"]md5['\"]", code_part, re.I):
+                        continue
                     # Drop PQC names in comments and string catalogs; keep calls, assignments, imports, configs.
                     # A name inside a string is not usage, unless the line is a call or an assignment.
                     algorithm_return = re.search(
@@ -461,7 +463,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     )
                     if re.search(r"[\"'][^\"']*(?:DSA|DH|HMAC|SHA-?1|PBKDF2|ML-KEM|ML-DSA)", code_part, re.I):
                         is_use = re.search(
-                            r"getInstance|generate_|hmac\.new|hashlib|Mac\.|pbkdf2|createHmac|EVP_|New\(|LEGACY\(|CURRENT\(|\b[A-Za-z_]\w*\s*=|mlkem\.|KeyEncapsulation\s*\(|Signature\s*\(",
+                            r"getInstance|generate_|hmac\.new|hashlib|Mac\.|pbkdf2|createHmac|EVP_|mlkem.|KeyEncapsulation\s*\(|Signature\s*\(",
                             code_part,
                             re.I,
                         )
