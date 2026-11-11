@@ -140,4 +140,24 @@ def resolve_calls_and_maps(root: Path) -> list[Finding]:
                 if name in line and not re.search(rf'[\'"][^\'"]*{name}', line):
                     st, role = KNOWN["HmacSHA256"]
                     out.append(_finding(path, root, i, name, st, role, line.strip()))
+    # A shared wrapper: report at each call site too, not only the definition.
+    defs = {}
+    for path in root.rglob("*"):
+        if not path.is_file() or path.suffix.lower() not in {".py", ".java"}:
+            continue
+        for i, line in enumerate(path.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
+            m = re.search(r"(?:def|function)\s+(\w+)|(?:public|private)\s+\w+\s+(\w+)\s*\(", line)
+            if m:
+                defs.setdefault(m.group(1) or m.group(2), []).append((path, i))
+    calls = []
+    for f in out:
+        for name, sites in defs.items():
+            if any(s[0] == Path(root, f.evidence_path) and s[1] == f.evidence_line for s in sites):
+                for path in root.rglob("*"):
+                    if not path.is_file() or path.suffix.lower() not in {".py", ".java"}:
+                        continue
+                    for i, line in enumerate(path.read_text(encoding="utf-8", errors="ignore").splitlines(), 1):
+                        if re.search(rf"\b{name}\s*\(", line) and not re.search(r"def |function ", line):
+                            calls.append(_finding(path, root, i, f.family, f.quantum_status, f.role, line.strip(), f.parameter_set))
+    out.extend(calls)
     return out

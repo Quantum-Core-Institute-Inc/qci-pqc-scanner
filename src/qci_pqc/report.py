@@ -240,6 +240,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
             },
         },
         "components": components,
+        "dependencies": [{"ref": inv.project, "dependsOn": [c["bom-ref"] for c in components]}],
     }
 
 

@@ -423,7 +423,13 @@ def scan_path(root: Path) -> Iterator[Finding]:
         if path.suffix.lower() in SKIP_EXTS:
             continue
         try:
-            text = path.read_text(encoding="utf-8", errors="ignore")
+            raw = path.read_bytes()
+        except Exception:
+            continue
+        if b"\x00" in raw[:1024]:
+            continue
+        try:
+            text = raw.decode("utf-8", errors="ignore")
         except Exception:
             continue
 
