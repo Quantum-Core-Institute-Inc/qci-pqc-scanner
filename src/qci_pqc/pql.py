@@ -28,10 +28,15 @@ def scan(path: Path, out: str, save_baseline: Path, json_out: bool):
     """Scan a repository and write the inventory and report."""
     from .scanner import scan_path
     from .baseline import save_baseline as write_baseline
+    from .report import write_reports
+    from .models import Inventory
     findings = list(scan_path(path))
     out_path = Path(out)
     out_path.mkdir(parents=True, exist_ok=True)
+    inv = Inventory(project=path.name, findings=findings, scanners_used=["qci-pattern"])
+    write_reports(inv, out_path)
     click.echo(f"Findings: {len(findings)}")
+    click.echo(f"Reports written to {out_path}/")
     if save_baseline:
         write_baseline(findings, save_baseline)
         click.echo(f"Baseline saved to {save_baseline}")
