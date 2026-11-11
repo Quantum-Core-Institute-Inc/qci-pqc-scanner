@@ -45,6 +45,64 @@ STRINGS = [
 NATIVE = (".so", ".dll", ".dylib")
 
 
+
+def _elf_needed(data: bytes) -> list[str]:
+    """DT_NEEDED names from an ELF. Empty if it is not one."""
+    if data[:4] != b"\x7fELF" or len(data) < 64:
+        return []
+    little = data[5] == 1
+    bits = 64 if data[4] == 2 else 32
+    e = "<" if little else ">"
+    try:
+        if bits == 64:
+            phoff = struct.unpack_from(e + "Q", data, 32)[0]
+            phentsize = struct.unpack_from(e + "H", data, 54)[0]
+            phnum = struct.unpack_from(e + "H", data, 56)[0]
+        else:
+            phoff = struct.unpack_from(e + "I", data, 28)[0]
+            phentsize = struct.unpack_from(e + "H", data, 42)[0]
+            phnum = struct.unpack_from(e + "H", data, 44)[0]
+    except Exception:
+        return []
+    needed = []
+    for n in range(phnum):
+        off = phoff + n * phentsize
+        if off + 8 > len(data):
+            break
+        p_type = struct.unpack_from(e + "I", data, off)[0]
+        if p_type != 2:  # PT_DYNAMIC
+            continue
+        if bits == 64:
+            dyn_off = struct.unpack_from(e + "Q", data, off + 8)[0]
+        else:
+            dyn_off = struct.unpack_from(e + "I", data, off + 4)[0]
+        # Walk dynamic entries for DT_STRTAB then DT_NEEDED. Two passes.
+        strtab = 0
+        entries = []
+        i = dyn_off
+        step = 16 if bits == 64 else 8
+        for _ in range(4096):
+            if i + step > len(data):
+                break
+            tag = struct.unpack_from(e + ("q" if bits == 64 else "i"), data, i)[0]
+            val = struct.unpack_from(e + ("Q" if bits == 64 else "I"), data, i + (8 if bits == 64 else 4))[0]
+            if tag == 0:
+                break
+            if tag == 5:
+                strtab = val
+            if tag == 1:
+                entries.append(val)
+            i += step
+        if not strtab:
+            break
+        for val in entries:
+            end = data.find(b"\x00", strtab + val)
+            if end > strtab + val:
+                needed.append(data[strtab + val:end].decode("utf-8", errors="replace"))
+        break
+    return needed
+
+
 def _native(name: str) -> Finding | None:
     low = name.lower()
     if low.endswith(".txt") or not (low.endswith(NATIVE) or ".so." in low or ".dll." in low):
@@ -256,11 +314,24 @@ def scan_artifacts(root: Path) -> list[Finding]:
     findings = []
     for path in root.rglob("*"):
         low_name = path.name.lower()
+        is_elf = path.suffix.lower() in {".elf", ".bin"}
         is_native = not low_name.endswith(".txt") and (low_name.endswith(NATIVE) or ".so." in low_name or ".dll." in low_name)
-        if not path.is_file() or (path.suffix.lower() not in ARTIFACT_SUFFIXES and not is_native):
+        if not path.is_file() or (path.suffix.lower() not in ARTIFACT_SUFFIXES and not is_native and not is_elf):
             continue
         rel = str(path.relative_to(root))
         try:
+            if path.suffix.lower() in {".elf", ""} or path.name.lower().endswith((".bin",)):
+                try:
+                    blob = path.read_bytes()[:4]
+                except Exception:
+                    blob = b""
+                if blob == b"\x7fELF":
+                    for lib in _elf_needed(path.read_bytes()):
+                        found = _native(lib) or None
+                        if found and found.family != "Native":
+                            found.evidence_path = rel
+                            found.evidence_snippet = f"{path.name} needs {lib}"
+                            findings.append(found)
             if path.name.lower().endswith(NATIVE) or ".so." in path.name.lower() or ".dll." in path.name.lower():
                 lib = _native(path.name)
                 if lib:
