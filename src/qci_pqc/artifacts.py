@@ -108,6 +108,76 @@ def _pool(data: bytes) -> tuple[list[str], str]:
     return list(entries.values()), this.replace("/", ".")
 
 
+
+def _methods(data: bytes, entries: dict[int, str], start: int, strings: dict[int, int] | None = None) -> dict[str, str]:
+    """Map a Utf8 algorithm string to the method that loads it."""
+    if start + 6 > len(data):
+        return {}
+    i = start
+    i += 2 + 2 + 2  # access, this, super
+    if i + 2 > len(data):
+        return {}
+    iface = struct.unpack_from(">H", data, i)[0]
+    i += 2 + 2 * iface
+    if i + 2 > len(data):
+        return {}
+    fields = struct.unpack_from(">H", data, i)[0]
+    i += 2
+    for _ in range(fields):
+        if i + 8 > len(data):
+            return {}
+        i += 6
+        ac = struct.unpack_from(">H", data, i)[0]
+        i += 2
+        for _ in range(ac):
+            if i + 6 > len(data):
+                return {}
+            ln = struct.unpack_from(">I", data, i + 2)[0]
+            i += 6 + ln
+    if i + 2 > len(data):
+        return {}
+    methods = struct.unpack_from(">H", data, i)[0]
+    i += 2
+    found = {}
+    for _ in range(methods):
+        if i + 8 > len(data):
+            break
+        name = entries.get(struct.unpack_from(">H", data, i + 2)[0], "")
+        i += 6
+        ac = struct.unpack_from(">H", data, i)[0]
+        i += 2
+        for _ in range(ac):
+            if i + 6 > len(data):
+                break
+            aname = entries.get(struct.unpack_from(">H", data, i)[0], "")
+            ln = struct.unpack_from(">I", data, i + 2)[0]
+            info = data[i + 6:i + 6 + ln]
+            i += 6 + ln
+            if aname != "Code" or len(info) < 8:
+                continue
+            code_len = struct.unpack_from(">I", info, 4)[0]
+            code = info[8:8 + code_len]
+            j = 0
+            while j < len(code):
+                op = code[j]
+                def _s(idx):
+                    if strings and idx in strings:
+                        return entries.get(strings[idx], "")
+                    return entries.get(idx, "")
+                if op == 0x12 and j + 1 < len(code):  # ldc
+                    s = _s(code[j + 1])
+                    if s:
+                        found.setdefault(s, name)
+                    j += 2
+                elif op == 0x13 and j + 2 < len(code):  # ldc_w
+                    s = _s(struct.unpack_from(">H", code, j + 1)[0])
+                    if s:
+                        found.setdefault(s, name)
+                    j += 3
+                else:
+                    j += 1
+    return found
+
 def _param(token: str, family: str) -> str:
     """Same reading as source: mode, hash, or the string itself."""
     if family == "AES":
@@ -128,14 +198,43 @@ def _findings(data: bytes, rel: str, jar: str = "") -> list[Finding]:
     strings, klass = _pool(data)
     if not strings:
         return []
+    methods = {}
+    try:
+        # Re-walk is done inside _methods from a fresh parse of entries.
+        count = struct.unpack_from(">H", data, 8)[0]
+        i = 10
+        entries = {}
+        stridx = {}
+        n = 1
+        while n < count and i < len(data):
+            tag = data[i]
+            i += 1
+            if tag == 1 and i + 2 <= len(data):
+                length = struct.unpack_from(">H", data, i)[0]
+                i += 2
+                entries[n] = data[i:i + length].decode("utf-8", errors="replace")
+                i += length
+            elif tag == 8 and i + 2 <= len(data):
+                stridx[n] = struct.unpack_from(">H", data, i)[0]
+                i += 2
+            elif tag in _FIXED and i + _FIXED[tag] <= len(data):
+                i += _FIXED[tag]
+            else:
+                break
+            n += 2 if tag in _TWO_SLOT else 1
+        methods = _methods(data, entries, i, stridx)
+    except Exception:
+        methods = {}
     text = "\n".join(strings)
     out = []
-    where = f"{jar}!{klass}" if jar else klass or rel
+    base = f"{jar}!{klass}" if jar else klass or rel
     for pat, fam, status, role in STRINGS:
         m = re.search(pat, text)
         if not m:
             continue
         token = m.group(0)
+        method = methods.get(token, "")
+        where = f"{base}.{method}" if method else base
         out.append(Finding(
             id=f"ART-{fam}-{klass or Path(rel).name}",
             evidence_path=rel,
