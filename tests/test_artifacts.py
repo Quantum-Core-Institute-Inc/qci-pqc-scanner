@@ -43,3 +43,7 @@ def test_loose_native():
 def test_jar_inside_war():
     hits = scan_artifacts(Path("tests/fixtures/artifacts"))
     assert any("app.war" in (f.evidence_snippet or "") and f.family == "RSA" for f in hits)
+
+def test_wheel():
+    hits = scan_artifacts(Path("tests/fixtures/artifacts"))
+    assert any("cryptography.whl" in (f.evidence_path or "") and f.family == "OpenSSL" for f in hits)
