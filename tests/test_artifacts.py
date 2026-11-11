@@ -39,3 +39,7 @@ def test_loose_native():
     assert ssl and ssl[0].family == "OpenSSL"
     foo = [f for f in hits if f.evidence_snippet == "libsslfoo.so"]
     assert foo and foo[0].family == "Native"
+
+def test_jar_inside_war():
+    hits = scan_artifacts(Path("tests/fixtures/artifacts"))
+    assert any("app.war" in (f.evidence_snippet or "") and f.family == "RSA" for f in hits)

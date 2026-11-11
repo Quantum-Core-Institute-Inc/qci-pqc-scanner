@@ -6,6 +6,7 @@ those. The finding names the class and the algorithm string.
 
 from __future__ import annotations
 
+import io
 import re
 import struct
 import tarfile
@@ -273,6 +274,15 @@ def scan_artifacts(root: Path) -> list[Finding]:
                     for name in names:
                         if name.endswith(".class"):
                             findings.extend(_findings(zf.read(name), rel, jar=path.name))
+                        elif name.endswith(".jar"):
+                            import io
+                            try:
+                                with zipfile.ZipFile(io.BytesIO(zf.read(name))) as inner:
+                                    for inner_name in inner.namelist():
+                                        if inner_name.endswith(".class"):
+                                            findings.extend(_findings(inner.read(inner_name), rel, jar=f"{path.name}!{Path(name).name}"))
+                            except Exception:
+                                pass
                         elif not name.lower().endswith(".txt") and (name.lower().endswith(NATIVE) or ".so." in name.lower() or ".dll." in name.lower()):
                             lib = _native(name)
                             if lib:
