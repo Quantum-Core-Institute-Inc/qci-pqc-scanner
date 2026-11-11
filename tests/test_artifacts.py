@@ -47,3 +47,7 @@ def test_jar_inside_war():
 def test_wheel():
     hits = scan_artifacts(Path("tests/fixtures/artifacts"))
     assert any("cryptography.whl" in (f.evidence_path or "") and f.family == "OpenSSL" for f in hits)
+
+def test_elf_needed():
+    hits = scan_artifacts(Path("tests/fixtures/artifacts"))
+    assert any("app.elf" in (f.evidence_snippet or "") and f.family == "OpenSSL" for f in hits)
