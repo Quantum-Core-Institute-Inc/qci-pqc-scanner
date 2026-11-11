@@ -26,3 +26,9 @@ def test_image_tarball_config():
     from qci_pqc.artifacts import scan_images
     hits = scan_images(Path("tests/fixtures/artifacts"))
     assert any("image.tar" in (f.evidence_path or "") and f.role == "config" for f in hits)
+
+def test_ssl_substring_is_not_openssl():
+    from qci_pqc.artifacts import _native
+    assert _native("lib/libsslfoo.so").family == "Native"
+    assert _native("lib/libssl.so").family == "OpenSSL"
+    assert _native("lib/bcprov-jdk18on-1.80.so").family == "BouncyCastle"
