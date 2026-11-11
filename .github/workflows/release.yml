@@ -59,7 +59,7 @@ jobs:
         run: |
           if [ -n "$RELEASE_SIGNING_KEY" ]; then
             echo "Signing SHA256SUMS"
-            # cosign sign-blob --yes --key env://RELEASE_SIGNING_KEY dist/SHA256SUMS > dist/SHA256SUMS.sig
+            cosign sign-blob --yes --key env://RELEASE_SIGNING_KEY dist/SHA256SUMS > dist/SHA256SUMS.sig
           else
             echo "RELEASE_SIGNING_KEY not set; checksums are unsigned"
           fi
