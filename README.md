@@ -7,7 +7,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 2.3.0
+**Version:** 2.3.1
 
 **2.3.0** is the artifact release. It reads a class constant pool (class, method, parameter), a JAR and a JAR inside a WAR, a wheel, an image tarball, an ELF's linked libraries, a PE's imports, and a native library on disk. Source scanning is unchanged. Source and artifact scores are not blended. Release notes: [RELEASE-2.3.0.md](RELEASE-2.3.0.md).
 
@@ -334,6 +334,7 @@ This project is an independent implementation.
 
 | Version | Summary |
 |---|---|
+| 2.3.1 | Policy gate, finding identity, score, classification, boundaries, coverage, evidence, supplier CBOM. |
 | 2.3.0 | Artifact scanner: class, method, JAR, WAR, wheel, image, ELF, PE. Separate score. |
 | 2.2.1 | v1.16.1 review: literals removed, path dedupe, parameters from the call, one string rule. |
 | 2.2.0 | C# and Rust. Terraform and CloudFormation. Dependency graph in the report. |
