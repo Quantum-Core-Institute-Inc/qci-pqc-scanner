@@ -392,7 +392,14 @@ def scan_path(root: Path) -> Iterator[Finding]:
     PROJECT_CONSTS = {}
     reset()
     used('source')
+    root_real = root.resolve()
     for path in root.rglob("*"):
+        if path.is_symlink():
+            try:
+                if not path.resolve().is_relative_to(root_real):
+                    continue
+            except Exception:
+                continue
         if path.is_file() and path.suffix.lower() in {".py", ".java", ".kt"} and not any(part in SKIP_DIRS for part in path.parts):
             try:
                 PROJECT_CONSTS.update(_string_constants(path.read_text(encoding="utf-8", errors="ignore").splitlines()))
