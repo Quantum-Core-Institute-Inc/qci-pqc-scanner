@@ -98,6 +98,24 @@ def make_handler(out_dir: Path):
                 else:
                     self._send(404, b"No report yet. Run a scan.")
                 return
+            if self.path.startswith("/download/"):
+                name = self.path.split("/download/", 1)[1]
+                allowed = {"report.html", "cbom.json", "results.sarif", "graph.json", "findings.json"}
+                if name not in allowed:
+                    self._send(404, b"Not found")
+                    return
+                f = out_dir / name
+                if not f.exists():
+                    self._send(404, b"Not generated.")
+                    return
+                body = f.read_bytes()
+                self.send_response(200)
+                self.send_header("Content-Type", "application/octet-stream")
+                self.send_header("Content-Disposition", f'attachment; filename="{name}"')
+                self.send_header("Content-Length", str(len(body)))
+                self.end_headers()
+                self.wfile.write(body)
+                return
             self._send(404, b"Not found")
 
         def do_POST(self):
@@ -125,6 +143,11 @@ def make_handler(out_dir: Path):
             <p>Artifact findings: <strong>{counts['artifact']['count']}</strong></p>
             <p>Not blended: <strong>{len(inv.findings)}</strong></p>
             <p>Readiness: <strong>{inv.readiness_score}</strong> / 100</p>
+            <p>
+              <a href="/download/report.html"><button type="button">Download report</button></a>
+              <a href="/download/cbom.json"><button type="button">Download CBOM</button></a>
+              <a href="/download/results.sarif"><button type="button">Download SARIF</button></a>
+            </p>
             <p><a href="/report">Open full report</a></p>
             <p><a href="/">New scan</a></p>
             </body></html>"""
