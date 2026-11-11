@@ -101,7 +101,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         status(f"Deduplicated: {before} → {len(all_findings)} findings")
     parts = split_scores(all_findings)
     status(f"Source findings: {parts['source']['count']}")
-    status(f"Artifact findings: {parts['artifact']['count']}")
+    status(f"Artifact findings: {parts['artifact']['count']} ({parts['artifact']['with_parameter']} with a parameter)")
     status(f"Not blended: {len(all_findings)}")
     edges = link(all_findings, path)
     out_path = Path(out)

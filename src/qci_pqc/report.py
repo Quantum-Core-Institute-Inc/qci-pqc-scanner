@@ -414,7 +414,7 @@ code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
   <p>Scanners: {', '.join(inv.scanners_used) or 'qci-pattern'}</p>
   <p>Readiness Score: <span class="score">{inv.readiness_score}</span> / 100</p>
 
-  <h2>Score Breakdown</h2>
+  <h2>Artifact score</h2>\n<p>Separate from source. Not blended.</p>\n<h2>Score Breakdown</h2>
   {breakdown_html}
 
   {policy_html}
