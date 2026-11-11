@@ -1,10 +1,12 @@
 import json
 from pathlib import Path
-from qci_pqc.artifacts import scan_artifacts
+from qci_pqc.artifacts import scan_artifacts, scan_images
 
 def test_published_artifact_corpus():
-    root = Path("tests/corpus/artifacts")
-    expected = json.loads((root / "expected.json").read_text())["positives"]
-    hits = {(Path(f.evidence_path).name, f.family) for f in scan_artifacts(root)}
-    for pair in expected:
-        assert tuple(pair) in hits
+    expected = json.loads(Path("tests/fixtures/artifacts/expected.json").read_text())["expected"]
+    hits = scan_artifacts(Path("tests/fixtures/artifacts")) + scan_images(Path("tests/fixtures/artifacts"))
+    found = 0
+    for e in expected:
+        if any(e["family"] == f.family and e["snippet"] in (f.evidence_snippet or "") and (e["parameter"] or "") == (f.parameter_set or "") for f in hits):
+            found += 1
+    assert found == len(expected)
