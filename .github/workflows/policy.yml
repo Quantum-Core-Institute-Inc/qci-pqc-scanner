@@ -30,4 +30,19 @@ jobs:
           cat > /tmp/policy.json << 'POL'
           {"fail_on": ["vulnerable"]}
           POL
+          set +e
           qci-pqc scan tests/corpus --out /tmp/scan --policy /tmp/policy.json
+          status=$?
+          set -e
+          if [ "$status" -ne 1 ]; then
+            echo "Expected policy violations to exit 1, got $status"
+            exit 1
+          fi
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          result = json.loads(Path("/tmp/scan/policy-result.json").read_text())
+          if result.get("passed") or not result.get("violations"):
+              raise SystemExit("Expected unaccepted policy violations")
+          PY
