@@ -1,0 +1,11 @@
+{
+  "corpus": "qci-artifact-1",
+  "expected": [
+    {"family": "RSA", "parameter": "SHA-256", "snippet": "Signer.sign: SHA256withRSA"},
+    {"family": "HMAC", "parameter": "SHA-256", "snippet": "Signer.sign: HmacSHA256"},
+    {"family": "OpenSSL", "parameter": "3.0.2", "snippet": "libcrypto.so.3.0.2"},
+    {"family": "OpenSSL", "parameter": "", "snippet": "libssl.so"},
+    {"family": "Native", "parameter": "", "snippet": "libsslfoo.so"},
+    {"family": "TLS-Cert-Config", "parameter": "", "snippet": "sshd_config"}
+  ]
+}
