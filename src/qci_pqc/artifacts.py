@@ -72,6 +72,22 @@ def _pool(data: bytes) -> tuple[list[str], str]:
     return list(entries.values()), this.replace("/", ".")
 
 
+def _param(token: str, family: str) -> str:
+    """Same reading as source: mode, hash, or the string itself."""
+    if family == "AES":
+        mode = "GCM" if "GCM" in token else ("CBC" if "CBC" in token else ("ECB" if "ECB" in token else ""))
+        bits = "256" if "256" in token else ("128" if "128" in token else "")
+        return "-".join(x for x in (bits, mode) if x)
+    if family == "RSA" and "with" in token.lower():
+        hash_ = token.lower().split("with")[0].replace("sha", "SHA-")
+        return hash_ if hash_.startswith("SHA") else ""
+    if family == "HMAC":
+        return "SHA-256" if "256" in token else ("SHA-512" if "512" in token else "")
+    if family == "DES" and "CBC" in token:
+        return "CBC"
+    return ""
+
+
 def _findings(data: bytes, rel: str, jar: str = "") -> list[Finding]:
     strings, klass = _pool(data)
     if not strings:
@@ -83,18 +99,19 @@ def _findings(data: bytes, rel: str, jar: str = "") -> list[Finding]:
         m = re.search(pat, text)
         if not m:
             continue
+        token = m.group(0)
         out.append(Finding(
             id=f"ART-{fam}-{klass or Path(rel).name}",
             evidence_path=rel,
             evidence_line=0,
-            evidence_snippet=f"{where}: {m.group(0)}",
+            evidence_snippet=f"{where}: {token}",
             family=fam,
             quantum_status=status,
             role=role,
             source_scanner="qci-artifact",
             confidence=0.8,
             notes=f"Constant pool of {klass or rel}.",
-            parameter_set=m.group(0),
+            parameter_set=_param(token, fam),
         ))
     return out
 
