@@ -7,9 +7,9 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 2.3.2
+**Version:** 2.3.3
 
-**2.3.2** closes the three gaps from the 2.3.1 review. An out-of-tree artifact is not read. A partial scan fails the gate. The evidence manifest hashes the final files. Release notes: [RELEASE-2.3.2.md](RELEASE-2.3.2.md).
+**2.3.3** closes the open cases from the 2.3.2 review. A linked image is not read. A corrupt archive fails the gate. The manifest hashes only the files this run wrote. Release notes: [RELEASE-2.3.3.md](RELEASE-2.3.3.md).
 
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
@@ -334,6 +334,7 @@ This project is an independent implementation.
 
 | Version | Summary |
 |---|---|
+| 2.3.3 | Linked image blocked. Corrupt archive fails the gate. Manifest hashes only this run. |
 | 2.3.2 | Out-of-tree artifact blocked. Partial scan fails the gate. Manifest hashes the final files. |
 | 2.3.1 | Policy gate, finding identity, score, classification, boundaries, coverage, evidence, supplier CBOM. |
 | 2.3.0 | Artifact scanner: class, method, JAR, WAR, wheel, image, ELF, PE. Separate score. |
