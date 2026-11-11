@@ -1,4 +1,4 @@
-# Limitations (2.0)
+# Limitations
 
 The 1.0 page is retired. This is the ceiling.
 
@@ -16,4 +16,4 @@ The 1.0 page is retired. This is the ceiling.
 Source and artifact are separate. A source recall does not describe artifact coverage, and the reverse is not true.
 
 ## Provenance
-Each finding says source, config, or artifact. If it does not, the scan is not a 2.0 scan.
+Each finding says source, config, or artifact. If it does not, the scan is not a current scan.
