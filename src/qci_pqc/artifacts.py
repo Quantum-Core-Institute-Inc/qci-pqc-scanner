@@ -351,10 +351,7 @@ def scan_artifacts(root: Path) -> list[Finding]:
         low_name = path.name.lower()
         is_elf = path.suffix.lower() in {".elf", ".bin", ".exe", ".dll"}
         is_native = not low_name.endswith(".txt") and (low_name.endswith(NATIVE) or ".so." in low_name or ".dll." in low_name)
-        if not path.is_file() or (path.suffix.lower() not in MAX_ARCHIVE_BYTES = 50_000_000
-MAX_ARCHIVE_FILES = 2000
-
-ARTIFACT_SUFFIXES and not is_native and not is_elf):
+        if not path.is_file() or (path.suffix.lower() not in ARTIFACT_SUFFIXES and not is_native and not is_elf):
             continue
         rel = str(path.relative_to(root))
         try:
