@@ -123,7 +123,7 @@ def make_handler(out_dir: Path):
             <p>Project: <strong>{inv.project}</strong></p>
             <p>Source findings: <strong>{counts['source']['count']}</strong></p>
             <p>Artifact findings: <strong>{counts['artifact']['count']}</strong></p>
-            <p>Total: <strong>{len(inv.findings)}</strong>. Not blended.</p>
+            <p>Not blended: <strong>{len(inv.findings)}</strong></p>
             <p>Readiness: <strong>{inv.readiness_score}</strong> / 100</p>
             <p><a href="/report">Open full report</a></p>
             <p><a href="/">New scan</a></p>
