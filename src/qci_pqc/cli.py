@@ -20,7 +20,7 @@ from .calibrate import calibrate as run_calibrate
 from .scoring import compute_readiness, score_scanner
 from .scoresplit import split_scores
 from .graph import link
-from .coverage import summary, skip as coverage_summary
+from .coverage import reset as reset_coverage, skip, summary as coverage_summary
 from .policy import evaluate_policy, load_accepted_risks, load_policy
 from .reconcile import reconcile
 
@@ -75,13 +75,15 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
 
     all_findings = []
     scanners_used = []
+    skipped_adapters = []
+    reset_coverage()
 
     for name in adapters:
         try:
             scanner = get_adapter(name)
             if not scanner.available():
                 click.echo(f"Adapter '{name}' not available, skipping.", err=True)
-                skip(name, "adapter not available")
+                skipped_adapters.append((name, "adapter not available"))
                 continue
             findings = scanner.scan(path)
             all_findings.extend(findings)
@@ -92,7 +94,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
                     status(f"    [{f.quantum_status.value:12}] {f.family:16} {f.evidence_path}:{f.evidence_line}")
         except Exception as e:
             click.echo(f"Adapter '{name}' failed: {e}", err=True)
-            skip(name, f"adapter failed: {e}")
+            skipped_adapters.append((name, f"adapter failed: {e}"))
 
     if not all_findings and not scanners_used:
         # full fallback
@@ -100,6 +102,9 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         scanner = get_adapter("internal")
         all_findings = scanner.scan(path)
         scanners_used = [scanner.name]
+
+    for name, reason in skipped_adapters:
+        skip(name, reason)
 
     if not no_dedupe:
         before = len(all_findings)
