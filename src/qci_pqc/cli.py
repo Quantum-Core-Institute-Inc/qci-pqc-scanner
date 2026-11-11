@@ -102,7 +102,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
     parts = split_scores(all_findings)
     status(f"Source findings: {parts['source']['count']}")
     status(f"Artifact findings: {parts['artifact']['count']}")
-    status("Scores are not blended.")
+    status(f"Not blended: {len(all_findings)}")
     edges = link(all_findings, path)
     out_path = Path(out)
     out_path.mkdir(parents=True, exist_ok=True)
