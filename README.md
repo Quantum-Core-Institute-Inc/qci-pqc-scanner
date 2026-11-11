@@ -9,7 +9,7 @@
 
 **Version:** 2.3.1
 
-**2.3.0** is the artifact release. It reads a class constant pool (class, method, parameter), a JAR and a JAR inside a WAR, a wheel, an image tarball, an ELF's linked libraries, a PE's imports, and a native library on disk. Source scanning is unchanged. Source and artifact scores are not blended. Release notes: [RELEASE-2.3.0.md](RELEASE-2.3.0.md).
+**2.3.1** is a patch on the artifact release. It fixes the policy gate, finding identity, the readiness score, two misclassifications, and the scan boundaries. It adds a coverage record, evidence that names the build, and supplier CBOM reconciliation. Release notes: [RELEASE-2.3.1.md](RELEASE-2.3.1.md).
 
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
