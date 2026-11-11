@@ -1,59 +1,56 @@
-"""Map known dependencies to cryptographic capabilities.
+"""Map known dependencies to libraries, with version and purl.
 
-Looks at requirements.txt, package.json, go.mod, pom.xml, and similar
-files for library names/versions and reports what crypto they support.
+Direct manifests and lockfiles. A library is not an algorithm.
 """
+
+from __future__ import annotations
 
 import re
 from pathlib import Path
 
 from .models import Finding, QuantumStatus
 
-# library pattern -> (family, status, note, min_pqc_version or None)
-LIBRARY_MAP = [
-    (r"cryptography\s*[=<>~!]*\s*([\d.]+)?", "Python-cryptography", QuantumStatus.VULNERABLE,
-     "ML-KEM and ML-DSA from 48.0.0 with OpenSSL 3.5.", "48.0"),
-    (r"pyopenssl|pyOpenSSL", "pyOpenSSL", QuantumStatus.VULNERABLE,
-     "Wraps OpenSSL. PQC depends on the linked OpenSSL version.", None),
-    (r"oqs(?:-python)?|liboqs", "liboqs", QuantumStatus.PQC,
-     "Provides ML-KEM, ML-DSA, SLH-DSA and hybrids.", None),
-    (r"circl", "Go-CIRCL", QuantumStatus.PQC,
-     "Cloudflare CIRCL: ML-KEM, ML-DSA, Kyber, Dilithium.", None),
-    (r"bouncycastle[^\d]*([\d.]+)?", "BouncyCastle", QuantumStatus.VULNERABLE,
-     "Final ML-KEM, ML-DSA, and SLH-DSA from 1.79.", "1.79"),
-    (r"(?<!py)openssl\s*[=<>~]*\s*([\d.]+)?", "OpenSSL", QuantumStatus.VULNERABLE,
-     "ML-KEM/ML-DSA available from OpenSSL 3.5+. Earlier versions are classical only.", "3.5"),
-
-    (r"jsonwebtoken|crypto-js|node-forge|bcryptjs|@noble/post-quantum", "npm-crypto", QuantumStatus.VULNERABLE, "npm crypto package. Check maintenance and PQC support.", None),
-    (r"PyCryptodome|pycryptodome", "PyCryptodome", QuantumStatus.VULNERABLE, "Classical ciphers and hashes.", None),
-
-    (r"jsonwebtoken|crypto-js|node-forge|bcryptjs|@noble/post-quantum", "npm-crypto", QuantumStatus.VULNERABLE, "npm crypto package. Check maintenance and PQC support.", None),
-    (r"PyCryptodome|pycryptodome", "PyCryptodome", QuantumStatus.VULNERABLE, "Classical ciphers and hashes.", None),
-    (r'"node"\s*:\s*"([^"]+)"|node\s*>=?\s*([\d.]+)', "Node.js", QuantumStatus.VULNERABLE,
-     "WebCrypto / crypto module: RSA, ECDSA, Ed25519. No native PQC.", None),
+# pattern, canonical name, purl type, min pqc version or None
+LIBS = [
+    (r"cryptography\s*[=<>~!]*\s*([\d.]+)?", "cryptography", "pypi", "48.0"),
+    (r"pycryptodome\s*[=<>~!]*\s*([\d.]+)?", "pycryptodome", "pypi", None),
+    (r"pyopenssl\s*[=<>~!]*\s*([\d.]+)?", "pyopenssl", "pypi", None),
+    (r"pyjwt\s*[=<>~!]*\s*([\d.]+)?", "pyjwt", "pypi", None),
+    (r"paramiko\s*[=<>~!]*\s*([\d.]+)?", "paramiko", "pypi", None),
+    (r"bcrypt\s*[=<>~!]*\s*([\d.]+)?", "bcrypt", "pypi", None),
+    (r"liboqs(?:-python)?\s*[=<>~!]*\s*([\d.]+)?", "liboqs", "pypi", None),
+    (r"org\.bouncycastle:bc\w*-jdk\d+on:([\d.]+)", "bouncycastle", "maven", "1.79"),
+    (r"<artifactId>bc\w*-jdk\d+on</artifactId>\s*<version>([\d.]+)", "bouncycastle", "maven", "1.79"),
+    (r"nimbus-jose-jwt</artifactId>\s*<version>([\d.]+)|nimbus-jose-jwt:([\d.]+)", "nimbus-jose-jwt", "maven", None),
+    (r"jjwt-(?:api|impl)[^<]*</artifactId>\s*<version>([\d.]+)|jjwt:([\d.]+)", "jjwt", "maven", None),
+    (r'"jsonwebtoken"\s*:\s*"[\^~]?([\d.]+)"', "jsonwebtoken", "npm", None),
+    (r'"crypto-js"\s*:\s*"[\^~]?([\d.]+)"', "crypto-js", "npm", None),
+    (r'"node-forge"\s*:\s*"[\^~]?([\d.]+)"', "node-forge", "npm", None),
+    (r'"bcryptjs"\s*:\s*"[\^~]?([\d.]+)"', "bcryptjs", "npm", None),
+    (r'"@noble/post-quantum"\s*:\s*"[\^~]?([\d.]+)"', "@noble/post-quantum", "npm", None),
+    (r'"@noble/curves"\s*:\s*"[\^~]?([\d.]+)"', "@noble/curves", "npm", None),
+    (r'"@noble/hashes"\s*:\s*"[\^~]?([\d.]+)"', "@noble/hashes", "npm", None),
+    (r'"jws"\s*:\s*"[\^~]?([\d.]+)"', "jws", "npm", None),
+    (r'"jwa"\s*:\s*"[\^~]?([\d.]+)"', "jwa", "npm", None),
+    (r"github\.com/cloudflare/circl\s+v?([\d.]+)", "circl", "golang", None),
+    (r"golang\.org/x/crypto\s+v?([\d.]+)", "golang.org/x/crypto", "golang", None),
+    (r"github\.com/golang-jwt/jwt/v\d+\s+v?([\d.]+)", "github.com/golang-jwt/jwt", "golang", None),
+    (r"openssl/([\d.]+[a-z]?)|find_package\(OpenSSL\s+([\d.]+)", "openssl", "conan", "3.5"),
+    (r"libsodium/([\d.]+)|find_package\(libsodium", "libsodium", "conan", None),
 ]
 
 DEP_FILES = {
-    "requirements.txt", "requirements-dev.txt", "pyproject.toml", "Pipfile",
-    "package.json", "package-lock.json", "go.mod", "go.sum",
-    "pom.xml", "build.gradle", "build.gradle.kts", "Cargo.toml",
-    "conanfile.txt", "CMakeLists.txt", "vcpkg.json",
+    "requirements.txt", "pyproject.toml", "package.json", "package-lock.json",
+    "go.mod", "pom.xml", "build.gradle", "build.gradle.kts", "conanfile.txt",
+    "CMakeLists.txt",
 }
 
 
-def _version_at_least(found: str | None, minimum: str | None) -> bool | None:
-    if not found or not minimum:
-        return None
-    def parts(v):
-        return [int(x) for x in re.findall(r"\d+", v)[:3]]
-    try:
-        return parts(found) >= parts(minimum)
-    except Exception:
-        return None
+def _ver(m) -> str:
+    return next((g for g in m.groups() if g), "") or ""
 
 
 def scan_dependencies(root: Path) -> list[Finding]:
-    """Scan dependency manifests and emit capability findings."""
     findings = []
     seen = set()
     for path in root.rglob("*"):
@@ -64,33 +61,25 @@ def scan_dependencies(root: Path) -> list[Finding]:
         except Exception:
             continue
         rel = str(path.relative_to(root))
-        for pattern, family, status, note, pqc_from in LIBRARY_MAP:
-            for m in re.finditer(pattern, text, re.IGNORECASE):
-                ver = next((g for g in m.groups() if g), None)
-                key = (family, rel)
+        for pat, name, eco, _pqc in LIBS:
+            for m in re.finditer(pat, text, re.I):
+                ver = _ver(m)
+                key = (name, rel)
                 if key in seen:
                     continue
                 seen.add(key)
-                extra = ""
-                if pqc_from and ver:
-                    ok = _version_at_least(ver, pqc_from)
-                    if ok is True:
-                        extra = f" Version {ver} meets PQC threshold {pqc_from}."
-                        status = QuantumStatus.PQC
-                    elif ok is False:
-                        extra = f" Version {ver} is below PQC threshold {pqc_from}."
+                purl = f"pkg:{eco}/{name}" + (f"@{ver}" if ver else "")
                 findings.append(Finding(
-                    id=f"DEP-{family}-{path.name}",
+                    id=f"DEP-{name}-{path.name}",
                     evidence_path=rel,
                     evidence_line=1,
                     evidence_snippet=m.group(0)[:120],
-                    family=family,
-                    quantum_status=status,
-                    role="dependency",
+                    family=name,
+                    quantum_status=QuantumStatus.VULNERABLE,
+                    role="library",
                     source_scanner="qci-deps",
-                    confidence=0.8,
-                    notes=note + extra + (f" purl=pkg:generic/{family.lower()}@{ver}" if ver else ""),
-                    parameter_set=ver or "",
-                    recommendation="Confirm the linked crypto library version supports your target algorithms.",
+                    confidence=0.9,
+                    parameter_set=ver,
+                    notes=purl,
                 ))
     return findings

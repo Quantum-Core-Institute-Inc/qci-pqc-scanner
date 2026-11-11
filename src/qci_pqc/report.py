@@ -166,6 +166,16 @@ def to_cyclonedx(inv: Inventory) -> dict:
 
         if f.family in {"HMAC", "PBKDF2"} and param in {"SHA-256", "SHA-1", "SHA-512", "SHA-384"}:
             name = f"{f.family}-{param}"
+        if f.source_scanner == "qci-deps" or f.role == "library":
+            components.append({
+                "type": "library",
+                "bom-ref": f.id,
+                "name": f.family,
+                "version": f.parameter_set or None,
+                "purl": (f.notes or "").split()[0] if (f.notes or "").startswith("pkg:") else None,
+                "evidence": {"occurrences": [{"location": f.evidence_path, "line": f.evidence_line}]},
+            })
+            continue
         components.append({
             "type": "cryptographic-asset",
             "bom-ref": f.id,
