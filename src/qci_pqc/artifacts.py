@@ -15,6 +15,7 @@ import zipfile
 from pathlib import Path
 
 from .models import Finding, QuantumStatus
+from .coverage import skip, used
 
 MAX_ARCHIVE_BYTES = 50_000_000
 MAX_ARCHIVE_FILES = 2000
@@ -347,6 +348,7 @@ def _findings(data: bytes, rel: str, jar: str = "") -> list[Finding]:
 
 def scan_artifacts(root: Path) -> list[Finding]:
     findings = []
+    used('artifact')
     for path in root.rglob("*"):
         low_name = path.name.lower()
         is_elf = path.suffix.lower() in {".elf", ".bin", ".exe", ".dll"}
@@ -378,6 +380,7 @@ def scan_artifacts(root: Path) -> list[Finding]:
                 with zipfile.ZipFile(path) as zf:
                     names = zf.namelist()[:MAX_ARCHIVE_FILES]
                     if sum(i.file_size for i in zf.infolist()) > MAX_ARCHIVE_BYTES:
+                        skip(rel, 'archive over 50 MB')
                         continue
                     for name in names:
                         if name.endswith(".class"):

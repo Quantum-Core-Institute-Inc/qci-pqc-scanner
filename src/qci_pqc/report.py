@@ -416,7 +416,7 @@ code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
   <p>Scanners: {', '.join(inv.scanners_used) or 'qci-pattern'}</p>
   <p>Readiness Score: <span class="score">{"not scored" if inv.readiness_score is None else inv.readiness_score}</span> / 100</p>
 
-  <h2>Artifact score</h2>\n<p>Separate from source. Not blended.</p>\n<h2>Score Breakdown</h2>
+  <h2>Coverage</h2>\n<p>Files read: {getattr(inv, 'scan_coverage', {}).get('files_read', 0)}. Skipped: {len(getattr(inv, 'scan_coverage', {}).get('skipped', []))}.</p>\n<h2>Artifact score</h2>\n<p>Separate from source. Not blended.</p>\n<h2>Score Breakdown</h2>
   {breakdown_html}
 
   {policy_html}
@@ -478,4 +478,5 @@ def write_reports(inv: Inventory, out_dir: Path):
     out_dir.mkdir(parents=True, exist_ok=True)
     (out_dir / "cbom.json").write_text(json.dumps(to_cyclonedx(inv), indent=2))
     (out_dir / "results.sarif").write_text(json.dumps(to_sarif(inv), indent=2))
+    (out_dir / "scan-coverage.json").write_text(json.dumps(getattr(inv, 'scan_coverage', {}), indent=2) + "\n")
     (out_dir / "report.html").write_text(to_html(inv))
