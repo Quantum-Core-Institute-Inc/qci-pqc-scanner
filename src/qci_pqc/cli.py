@@ -22,6 +22,7 @@ from .scoresplit import split_scores
 from .graph import link
 from .coverage import summary as coverage_summary
 from .policy import evaluate_policy, load_accepted_risks, load_policy
+from .reconcile import reconcile
 
 
 @click.group()
@@ -61,7 +62,8 @@ def serve(host: str, port: int, out: str):
 @click.option("--policy", type=click.Path(path_type=Path), help="Policy JSON (fail_on, require_acceptance_for)")
 @click.option("--accepted-risks", type=click.Path(path_type=Path), help="Accepted-risk JSON with justifications")
 def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
-         ignore: Path, baseline: Path, save_baseline: Path, tickets: bool, metadata: Path,
+         ignore: Path, baseline: Path, save_baseline: Path, tickets: bool, supplier_cbom: Path,
+         metadata: Path,
          calibrate: bool, verbose: bool, json_out: bool, reproducible: bool,
          policy: Path, accepted_risks: Path):
     """Scan a directory for cryptographic usage and produce readiness reports."""
@@ -216,6 +218,12 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         n = export_tickets(all_findings, out_path / "tickets.json")
         status(f"Exported {n} tickets to {out_path}/tickets.json")
 
+    supplier_reconciliation = None
+    if supplier_cbom:
+        supplier_reconciliation = reconcile(all_findings, supplier_cbom)
+        reconciliation_path = out_path / "supplier-reconciliation.json"
+        reconciliation_path.write_text(json.dumps(supplier_reconciliation, indent=2) + "\n")
+
     summary = {
         "project": inv.project,
         "findings": len(all_findings),
@@ -230,6 +238,8 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
             "sarif": str(out_path / "results.sarif"),
         },
     }
+    if supplier_reconciliation is not None:
+        summary["outputs"]["supplier_reconciliation"] = str(reconciliation_path)
 
     if json_out:
         click.echo(json.dumps(summary, indent=2))
@@ -249,6 +259,8 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         click.echo(f"  - {out_path}/results.sarif")
         click.echo(f"  - {out_path}/findings.json")
         click.echo(f"  - {out_path}/evidence-manifest.json")
+        if supplier_reconciliation is not None:
+            click.echo(f"  - {reconciliation_path}")
 
     # Policy artifacts and gate
     waived_keys = set()
