@@ -30,10 +30,14 @@ def scan(path: Path, out: str, save_baseline: Path, json_out: bool):
     from .baseline import save_baseline as write_baseline
     from .report import write_reports
     from .models import Inventory
+    from .scoring import compute_readiness
+    from .coverage import summary
     findings = list(scan_path(path))
     out_path = Path(out)
     out_path.mkdir(parents=True, exist_ok=True)
     inv = Inventory(project=path.name, findings=findings, scanners_used=["qci-pattern"])
+    inv.readiness_score, inv.priority_findings, inv.readiness_breakdown = compute_readiness(findings)
+    inv.scan_coverage = summary()
     write_reports(inv, out_path)
     click.echo(f"Findings: {len(findings)}")
     click.echo(f"Reports written to {out_path}/")

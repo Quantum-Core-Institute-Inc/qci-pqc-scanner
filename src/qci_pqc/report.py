@@ -327,12 +327,12 @@ def to_html(inv: Inventory) -> str:
     pr = getattr(inv, "policy_result", None) or {}
     if pr:
         viol_rows = "".join(
-            f"<tr class='vulnerable'><td>{v.get('family','')}</td><td>{v.get('status','')}</td>"
-            f"<td>{v.get('path','')}:{v.get('line','')}</td><td>{v.get('reason','')}</td></tr>"
+            f"<tr class='vulnerable'><td>{html.escape(str(v.get('family','')))}</td><td>{html.escape(str(v.get('status','')))}</td>"
+            f"<td>{html.escape(str(v.get('path','')))}:{v.get('line','')}</td><td>{html.escape(str(v.get('reason','')))}</td></tr>"
             for v in pr.get("violations", [])
         ) or "<tr><td colspan=4>None</td></tr>"
         waived_rows = "".join(
-            f"<tr><td>{w.get('family','')}</td><td>{w.get('key','')}</td><td>{w.get('justification','')}</td></tr>"
+            f"<tr><td>{html.escape(str(w.get('family','')))}</td><td>{html.escape(str(w.get('key','')))}</td><td>{html.escape(str(w.get('justification','')))}</td></tr>"
             for w in pr.get("waived", [])
         ) or "<tr><td colspan=3>None</td></tr>"
         status = "PASS" if pr.get("passed") else "FAIL"
@@ -357,9 +357,9 @@ def to_html(inv: Inventory) -> str:
     if dep_findings:
         dep_rows = "".join(
             f"<tr class='{f.quantum_status.value}'><td>{html.escape(str(f.family))}</td>"
-            f"<td>{f.quantum_status.value}</td><td>{f.evidence_path}</td>"
-            f"<td><code>{(f.evidence_snippet or '')[:80]}</code></td>"
-            f"<td>{f.notes or ''}</td></tr>"
+            f"<td>{f.quantum_status.value}</td><td>{html.escape(str(f.evidence_path))}</td>"
+            f"<td><code>{html.escape(str(f.evidence_snippet or '')[:80])}</code></td>"
+            f"<td>{html.escape(str(f.notes or ''))}</td></tr>"
             for f in dep_findings
         )
         deps_html = f"""

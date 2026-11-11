@@ -74,11 +74,12 @@ def ruleset_hash() -> str:
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
-def evidence_manifest(out_dir: Path, inv_summary: dict, reproducible: bool = False, policy: dict | None = None, revision: str = "") -> dict:
+def evidence_manifest(out_dir: Path, inv_summary: dict, reproducible: bool = False, policy: dict | None = None, revision: str = "", written: list[str] | None = None) -> dict:
     """Create an evidence manifest with file hashes and ruleset identity."""
     from . import __version__
+    names = written or ["report.html", "cbom.json", "results.sarif", "findings.json", "scan-coverage.json"]
     files = {}
-    for name in ("report.html", "cbom.json", "results.sarif", "findings.json", "policy-result.json", "scan-coverage.json"):
+    for name in names:
         fp = out_dir / name
         if fp.exists():
             h = hashlib.sha256(fp.read_bytes()).hexdigest()
