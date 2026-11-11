@@ -212,8 +212,6 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         revision = subprocess.check_output(["git", "-c", "core.fsmonitor=", "-c", "core.hooksPath=/dev/null", "rev-parse", "HEAD"], cwd=path, text=True, stderr=subprocess.DEVNULL, env={"GIT_CONFIG_NOSYSTEM": "1", "GIT_CONFIG_GLOBAL": "/dev/null", "PATH": "/usr/bin:/bin"}).strip()
     except Exception:
         revision = ""
-    evidence_manifest(out_path, summary, reproducible=reproducible, policy=inv.policy_result, revision=revision)
-
     if tickets:
         n = export_tickets(all_findings, out_path / "tickets.json")
         status(f"Exported {n} tickets to {out_path}/tickets.json")
@@ -262,10 +260,12 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         if supplier_reconciliation is not None:
             click.echo(f"  - {reconciliation_path}")
 
-    # Policy artifacts and gate
+    # Policy artifacts, then the manifest, then the gate
     waived_keys = set()
     if inv.policy_result:
         (out_path / "policy-result.json").write_text(json.dumps(inv.policy_result, indent=2))
+    evidence_manifest(out_path, summary, reproducible=reproducible, policy=inv.policy_result, revision=revision)
+    if inv.policy_result:
         n_viol = len(inv.policy_result.get("violations", []))
         n_waived = len(inv.policy_result.get("waived", []))
         waived_keys = {w.get("key") for w in inv.policy_result.get("waived", [])}
