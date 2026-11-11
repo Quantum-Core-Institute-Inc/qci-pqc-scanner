@@ -5,7 +5,7 @@ description = "QCI crypto inventory of source, config, and artifacts. Exports a 
 readme = "README.md"
 license = {text = "MIT"}
 requires-python = ">=3.10"
-authors = [{name = "Quantum Core Institute"}]
+authors = [{name = "Quantum Core Institute Inc."}]
 dependencies = ["click>=8.1"]
 
 [project.optional-dependencies]
