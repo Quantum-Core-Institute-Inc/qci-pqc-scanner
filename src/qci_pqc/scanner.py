@@ -432,7 +432,10 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 continue
             if re.search(r"console\.log|printf", line) and re.search(r"sha1|md5", line, re.I):
                 continue
-            if re.search(r"log\.(warning|info|debug)|logger\.", line):
+            if re.search(r"log\.(warning|info|debug)|logger\.|console\.(log|warn|info)|System\.Logger|\.log\(|printf\s*\(", line):
+                continue
+            # A name only inside a string literal is a label, not a use.
+            if re.search(r'(=\s*|\(\s*)['"`].*(?:ML-KEM|ML-DSA|PBKDF2|ChaCha20|HMAC)', line):
                 continue
             if re.search(r"""==\s*['"]sha1['"]|==\s*['"]md5['"]|==\s*['"]dsa['"]""", line, re.I):
                 continue
