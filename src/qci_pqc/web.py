@@ -12,6 +12,7 @@ from .enrich import enrich_findings
 from .models import Inventory
 from .report import write_reports
 from .scoring import compute_readiness, score_scanner
+from .scoresplit import split_scores
 
 PAGE = """<!DOCTYPE html>
 <html lang="en">
@@ -116,10 +117,13 @@ def make_handler(out_dir: Path):
             except Exception as e:
                 self._send(500, f"<p>Scan failed: {e}</p><p><a href='/'>Back</a></p>".encode())
                 return
+            counts = split_scores(inv.findings)
             body = f"""<!DOCTYPE html><html><body style="font-family:system-ui;margin:2rem">
             <h1>Scan complete</h1>
             <p>Project: <strong>{inv.project}</strong></p>
-            <p>Findings: <strong>{len(inv.findings)}</strong></p>
+            <p>Source findings: <strong>{counts['source']['count']}</strong></p>
+            <p>Artifact findings: <strong>{counts['artifact']['count']}</strong></p>
+            <p>Total: <strong>{len(inv.findings)}</strong>. Not blended.</p>
             <p>Readiness: <strong>{inv.readiness_score}</strong> / 100</p>
             <p><a href="/report">Open full report</a></p>
             <p><a href="/">New scan</a></p>
