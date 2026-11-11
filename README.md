@@ -7,7 +7,7 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 2.2.1\n\nArtifact corpus: 6/6 in `tests/fixtures/artifacts/expected.json`. Not the source recall.  
+**Version:** 2.3.0\n\nArtifact corpus: 6/6 in `tests/fixtures/artifacts/expected.json`. Not the source recall.  
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
 
@@ -331,6 +331,7 @@ This project is an independent implementation.
 
 | Version | Summary |
 |---|---|
+| 2.3.0 | Artifact scanner: class, method, JAR, WAR, wheel, image, ELF, PE. Separate score. |
 | 2.2.1 | v1.16.1 review: literals removed, path dedupe, parameters from the call, one string rule. |
 | 2.2.0 | C# and Rust. Terraform and CloudFormation. Dependency graph in the report. |
 | 2.1.0 | Artifact corpus, separate scores, provenance on every path, 1.x baselines still load. |
