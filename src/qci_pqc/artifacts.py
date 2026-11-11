@@ -254,10 +254,19 @@ def _findings(data: bytes, rel: str, jar: str = "") -> list[Finding]:
 def scan_artifacts(root: Path) -> list[Finding]:
     findings = []
     for path in root.rglob("*"):
-        if not path.is_file() or path.suffix.lower() not in ARTIFACT_SUFFIXES:
+        low_name = path.name.lower()
+        is_native = low_name.endswith(NATIVE) or ".so." in low_name or ".dll." in low_name
+        if not path.is_file() or (path.suffix.lower() not in ARTIFACT_SUFFIXES and not is_native):
             continue
         rel = str(path.relative_to(root))
         try:
+            if path.name.lower().endswith(NATIVE) or ".so." in path.name.lower() or ".dll." in path.name.lower():
+                lib = _native(path.name)
+                if lib:
+                    lib.evidence_path = rel
+                    lib.evidence_snippet = path.name
+                    findings.append(lib)
+                continue
             if path.suffix.lower() in {".jar", ".war", ".ear"} and zipfile.is_zipfile(path):
                 with zipfile.ZipFile(path) as zf:
                     names = zf.namelist()
