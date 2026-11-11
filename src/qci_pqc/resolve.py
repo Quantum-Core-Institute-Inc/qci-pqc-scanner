@@ -169,10 +169,15 @@ def resolve_calls_and_maps(root: Path) -> list[Finding]:
                     owner = name
         if not owner:
             continue
+        origin = Path(f.evidence_path).stem
         for path in root.rglob("*"):
             if not path.is_file() or path.suffix.lower() not in {".py", ".java"}:
                 continue
-            for i, line in enumerate(_text(path).splitlines(), 1):
+            body = _text(path)
+            imported = origin in body and re.search(rf"import\s+{origin}|from\s+{origin}\s+import", body)
+            if path.stem != origin and not imported:
+                continue
+            for i, line in enumerate(body.splitlines(), 1):
                 if re.search(rf"\b{owner}\s*\(", line) and not re.search(r"def |function ", line):
                     calls.append(_finding(path, root, i, f.family, f.quantum_status, f.role, line.strip(), f.parameter_set))
     out.extend(calls)

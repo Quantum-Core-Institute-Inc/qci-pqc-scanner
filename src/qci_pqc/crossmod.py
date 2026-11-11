@@ -11,6 +11,12 @@ def collect_constants(root: Path) -> dict[str, str]:
     for path in root.rglob("*"):
         if path.suffix not in {".py", ".java", ".go"}:
             continue
+        if path.is_symlink():
+            try:
+                if not path.resolve().is_relative_to(root.resolve()):
+                    continue
+            except Exception:
+                continue
         try:
             text = path.read_text(encoding="utf-8", errors="ignore")
         except Exception:
