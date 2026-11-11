@@ -200,7 +200,13 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         "ruleset_hash": __import__("qci_pqc.compliance", fromlist=["ruleset_hash"]).ruleset_hash(),
         "reproducible": reproducible,
     }
-    evidence_manifest(out_path, summary, reproducible=reproducible)
+    revision = ""
+    try:
+        import subprocess
+        revision = subprocess.check_output(["git", "rev-parse", "HEAD"], cwd=path, text=True, stderr=subprocess.DEVNULL).strip()
+    except Exception:
+        revision = ""
+    evidence_manifest(out_path, summary, reproducible=reproducible, policy=inv.policy_result, revision=revision)
 
     if tickets:
         n = export_tickets(all_findings, out_path / "tickets.json")

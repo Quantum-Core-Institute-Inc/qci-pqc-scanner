@@ -74,19 +74,23 @@ def ruleset_hash() -> str:
     return hashlib.sha256(payload.encode()).hexdigest()[:16]
 
 
-def evidence_manifest(out_dir: Path, inv_summary: dict, reproducible: bool = False) -> dict:
+def evidence_manifest(out_dir: Path, inv_summary: dict, reproducible: bool = False, policy: dict | None = None, revision: str = "") -> dict:
     """Create an evidence manifest with file hashes and ruleset identity."""
+    from . import __version__
     files = {}
-    for name in ("report.html", "cbom.json", "results.sarif", "findings.json"):
-        p = out_dir / name
-        if p.exists():
-            h = hashlib.sha256(p.read_bytes()).hexdigest()
-            files[name] = {"sha256": h, "size": p.stat().st_size}
+    for name in ("report.html", "cbom.json", "results.sarif", "findings.json", "policy-result.json", "scan-coverage.json"):
+        fp = out_dir / name
+        if fp.exists():
+            h = hashlib.sha256(fp.read_bytes()).hexdigest()
+            files[name] = {"sha256": h, "size": fp.stat().st_size}
     manifest = {
         "generated": None if reproducible else datetime.now(timezone.utc).isoformat(),
-        "scanner_version": "2.3.0",
+        "scanner_version": __version__,
+        "scanner_build": __version__,
+        "input_revision": revision,
         "ruleset_hash": ruleset_hash(),
         "reproducible": reproducible,
+        "policy": policy or {},
         "summary": inv_summary,
         "files": files,
     }
