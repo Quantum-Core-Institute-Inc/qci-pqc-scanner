@@ -64,3 +64,4 @@ class Inventory:
     calibration: dict = field(default_factory=dict)
     reproducible: bool = False
     policy_result: dict = field(default_factory=dict)
+    scan_coverage: dict = field(default_factory=dict)

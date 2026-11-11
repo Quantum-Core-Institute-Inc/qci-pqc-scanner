@@ -9,6 +9,7 @@ from typing import Iterator
 
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
+from .coverage import reset, saw_file, skip, used, summary
 from .deps import scan_dependencies
 from .artifacts import scan_artifacts, scan_images
 from .crossmod import collect_constants
@@ -389,6 +390,8 @@ def scan_path(root: Path) -> Iterator[Finding]:
     """Scan a directory tree for cryptographic patterns."""
     global PROJECT_CONSTS
     PROJECT_CONSTS = {}
+    reset()
+    used('source')
     for path in root.rglob("*"):
         if path.is_file() and path.suffix.lower() in {".py", ".java", ".kt"} and not any(part in SKIP_DIRS for part in path.parts):
             try:
@@ -402,9 +405,12 @@ def scan_path(root: Path) -> Iterator[Finding]:
         if path.is_symlink():
             try:
                 if not path.resolve().is_relative_to(root.resolve()):
+                    skip(str(path.relative_to(root)), "symlink leaves the tree")
                     continue
             except Exception:
+                skip(str(path), "symlink could not be resolved")
                 continue
+        saw_file()
         if any(part in SKIP_DIRS for part in path.parts):
             continue
         if path.suffix.lower() in SKIP_EXTS:
