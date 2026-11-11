@@ -387,7 +387,11 @@ def scan_artifacts(root: Path) -> list[Finding]:
                 continue
             if path.suffix.lower() in {".jar", ".war", ".ear", ".whl"} and zipfile.is_zipfile(path):
                 with zipfile.ZipFile(path) as zf:
-                    names = zf.namelist()[:MAX_ARCHIVE_FILES]
+                    all_names = zf.namelist()
+                    if len(all_names) > MAX_ARCHIVE_FILES:
+                        skip(rel, 'archive over 2000 files')
+                        continue
+                    names = all_names
                     if sum(i.file_size for i in zf.infolist()) > MAX_ARCHIVE_BYTES or any(i.file_size > MAX_ARCHIVE_BYTES for i in zf.infolist()):
                         skip(rel, 'archive over 50 MB')
                         continue
@@ -468,7 +472,16 @@ def _scan_tree(root: Path, label: str) -> list[Finding]:
 
 def scan_images(root: Path) -> list[Finding]:
     findings = []
+    root_real = root.resolve()
     for path in root.rglob("*"):
+        if path.is_symlink():
+            try:
+                if not path.resolve().is_relative_to(root_real):
+                    skip(str(path.relative_to(root)), "symlink leaves the tree")
+                    continue
+            except Exception:
+                skip(str(path), "symlink could not be resolved")
+                continue
         if not path.is_file():
             continue
         name = path.name.lower()
@@ -487,5 +500,6 @@ def scan_images(root: Path) -> list[Finding]:
                         inner.extractall(dest / "layers", filter="data")
                 findings.extend(_scan_tree(dest, path.name))
         except Exception:
+            skip(str(path.relative_to(root)), "corrupt archive")
             continue
     return findings
