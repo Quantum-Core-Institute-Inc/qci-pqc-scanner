@@ -129,17 +129,17 @@ def make_handler(out_dir: Path):
             adapter = (data.get("adapter") or ["internal"])[0]
             target = Path(raw_path)
             if not target.is_dir():
-                self._send(400, f"<p>Not a directory: {raw_path}</p><p><a href='/'>Back</a></p>".encode())
+                self._send(400, f"<p>Not a directory: {html.escape(str(raw_path))}</p><p><a href='/'>Back</a></p>".encode())
                 return
             try:
                 inv = run_scan(target, adapter, out_dir)
             except Exception as e:
-                self._send(500, f"<p>Scan failed: {e}</p><p><a href='/'>Back</a></p>".encode())
+                self._send(500, f"<p>Scan failed: {html.escape(str(e))}</p><p><a href='/'>Back</a></p>".encode())
                 return
             counts = split_scores(inv.findings)
             body = f"""<!DOCTYPE html><html><body style="font-family:system-ui;margin:2rem">
             <h1>Scan complete</h1>
-            <p>Project: <strong>{inv.project}</strong></p>
+            <p>Project: <strong>{html.escape(str(inv.project))}</strong></p>
             <p>Source findings: <strong>{counts['source']['count']}</strong></p>
             <p>Artifact findings: <strong>{counts['artifact']['count']}</strong></p>
             <p>Not blended: <strong>{len(inv.findings)}</strong></p>

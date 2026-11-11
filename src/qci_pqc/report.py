@@ -378,7 +378,7 @@ def to_html(inv: Inventory) -> str:
 
     edges = link(inv.findings, Path(inv.project or "app"))
     graph_rows = "".join(
-        f"<tr><td>{e['app']}</td><td>{e['library'] or '—'}</td><td>{e['finding']}</td><td><code>{e['path']}</code></td></tr>"
+        f"<tr><td>{html.escape(str(e['app']))}</td><td>{html.escape(str(e['library'] or '—'))}</td><td>{html.escape(str(e['finding']))}</td><td><code>{html.escape(str(e['path']))}</code></td></tr>"
         for e in edges[:200]
     ) or "<tr><td colspan=4>No edges</td></tr>"
     graph_html = f"""
