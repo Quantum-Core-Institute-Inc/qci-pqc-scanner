@@ -269,9 +269,19 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
 
     # Policy artifacts, then the manifest, then the gate
     waived_keys = set()
+    written = ["report.html", "cbom.json", "results.sarif", "findings.json", "scan-coverage.json"]
     if inv.policy_result:
         (out_path / "policy-result.json").write_text(json.dumps(inv.policy_result, indent=2))
-    evidence_manifest(out_path, summary, reproducible=reproducible, policy=inv.policy_result, revision=revision)
+        written.append("policy-result.json")
+    else:
+        stale = out_path / "policy-result.json"
+        if stale.exists():
+            stale.unlink()
+    if tickets:
+        written.append("tickets.json")
+    if supplier_cbom:
+        written.append("supplier-reconciliation.json")
+    evidence_manifest(out_path, summary, reproducible=reproducible, policy=inv.policy_result, revision=revision, written=written)
     if inv.policy_result:
         n_viol = len(inv.policy_result.get("violations", []))
         n_waived = len(inv.policy_result.get("waived", []))
