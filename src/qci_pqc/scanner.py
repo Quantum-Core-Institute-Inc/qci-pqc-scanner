@@ -399,6 +399,12 @@ def scan_path(root: Path) -> Iterator[Finding]:
     for path in root.rglob("*"):
         if not path.is_file():
             continue
+        if path.is_symlink():
+            try:
+                if not path.resolve().is_relative_to(root.resolve()):
+                    continue
+            except Exception:
+                continue
         if any(part in SKIP_DIRS for part in path.parts):
             continue
         if path.suffix.lower() in SKIP_EXTS:

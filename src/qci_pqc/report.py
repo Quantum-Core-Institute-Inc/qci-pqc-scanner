@@ -1,5 +1,6 @@
 """Report generation: CycloneDX CBOM, SARIF, and self-contained HTML."""
 
+import html
 import json
 from datetime import datetime, timezone
 from pathlib import Path
@@ -277,11 +278,11 @@ def to_html(inv: Inventory) -> str:
         }.get(f.quantum_status, "")
         findings_rows += f"""
         <tr class="{status_class}">
-            <td>{f.id}</td>
-            <td>{f.family}</td>
+            <td>{html.escape(str(f.id))}</td>
+            <td>{html.escape(str(f.family))}</td>
             <td>{f.quantum_status.value}</td>
-            <td>{f.evidence_path}:{f.evidence_line or '?'}</td>
-            <td><code>{f.evidence_snippet[:120]}</code></td>
+            <td>{html.escape(str(f.evidence_path))}:{f.evidence_line or '?'}</td>
+            <td><code>{html.escape(str(f.evidence_snippet)[:120])}</code></td>
             <td>{f.confidence:.1f}</td>
         </tr>"""
 
@@ -301,11 +302,11 @@ def to_html(inv: Inventory) -> str:
     rec_rows = ""
     for f in inv.findings:
         if getattr(f, "compliance_note", ""):
-            compliance_rows += f"<tr><td>{f.family}</td><td>{f.evidence_path}:{f.evidence_line}</td><td>{f.compliance_note}</td></tr>"
+            compliance_rows += f"<tr><td>{html.escape(str(f.family))}</td><td>{f.evidence_path}:{f.evidence_line}</td><td>{f.compliance_note}</td></tr>"
         if getattr(f, "timeline_flags", []):
-            timeline_rows += f"<tr><td>{f.family}</td><td>{f.evidence_path}:{f.evidence_line}</td><td>{'; '.join(f.timeline_flags)}</td></tr>"
+            timeline_rows += f"<tr><td>{html.escape(str(f.family))}</td><td>{f.evidence_path}:{f.evidence_line}</td><td>{'; '.join(f.timeline_flags)}</td></tr>"
         if getattr(f, "recommendation", ""):
-            rec_rows += f"<tr><td>{f.family}</td><td>{getattr(f, 'parameter_set', '') or '-'}</td><td>{f.recommendation}</td></tr>"
+            rec_rows += f"<tr><td>{html.escape(str(f.family))}</td><td>{getattr(f, 'parameter_set', '') or '-'}</td><td>{f.recommendation}</td></tr>"
 
     compliance_html = f"<table><thead><tr><th>Family</th><th>Location</th><th>Compliance note</th></tr></thead><tbody>{compliance_rows or '<tr><td colspan=3>None</td></tr>'}</tbody></table>" if compliance_rows else "<p>No compliance notes.</p>"
     timeline_html = f"<table><thead><tr><th>Family</th><th>Location</th><th>Timeline flags</th></tr></thead><tbody>{timeline_rows or '<tr><td colspan=3>None</td></tr>'}</tbody></table>" if timeline_rows else "<p>No timeline flags.</p>"
@@ -355,7 +356,7 @@ def to_html(inv: Inventory) -> str:
     ]
     if dep_findings:
         dep_rows = "".join(
-            f"<tr class='{f.quantum_status.value}'><td>{f.family}</td>"
+            f"<tr class='{f.quantum_status.value}'><td>{html.escape(str(f.family))}</td>"
             f"<td>{f.quantum_status.value}</td><td>{f.evidence_path}</td>"
             f"<td><code>{(f.evidence_snippet or '')[:80]}</code></td>"
             f"<td>{f.notes or ''}</td></tr>"
@@ -391,7 +392,7 @@ def to_html(inv: Inventory) -> str:
 <html lang="en">
 <head>
 <meta charset="utf-8">
-<title>QCI PQC Readiness Report – {inv.project}</title>
+<title>QCI PQC Readiness Report – {html.escape(str(inv.project))}</title>
 <style>
 body {{ font-family: system-ui, sans-serif; margin: 2rem; background: #f8f9fa; }}
 .container {{ max-width: 1100px; margin: auto; background: white; padding: 2rem; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,.1); }}
@@ -411,7 +412,7 @@ code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
 <body>
 <div class="container">
   <h1>Quantum Core Institute – PQC Readiness Report</h1>
-  <p>Project: <strong>{inv.project}</strong></p>
+  <p>Project: <strong>{html.escape(str(inv.project))}</strong></p>
   <p>Scanners: {', '.join(inv.scanners_used) or 'qci-pattern'}</p>
   <p>Readiness Score: <span class="score">{"not scored" if inv.readiness_score is None else inv.readiness_score}</span> / 100</p>
 
