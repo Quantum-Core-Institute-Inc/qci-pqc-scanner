@@ -194,7 +194,6 @@ PATTERNS = [
     (r"createHmac\s*\(\s*[\"']sha256[\"']", "HMAC", QuantumStatus.SAFE_SYMMETRIC, False, "mac"),
     (r"pbkdf2Sync|pbkdf2\s*\(", "PBKDF2", QuantumStatus.SAFE_SYMMETRIC, False, "kdf"),
 
-    (r"LEGACY\(\s*\"SHA-1\"\)|CURRENT\(\s*\"SHA-256\"\)", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"\"algorithm\"\s*:\s*\"AES\"", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     (r"digestmod\s*=\s*[\"']sha1[\"']", "HMAC", QuantumStatus.WEAK, True, "mac"),
 
