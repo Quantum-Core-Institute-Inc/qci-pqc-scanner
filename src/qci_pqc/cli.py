@@ -52,6 +52,7 @@ def serve(host: str, port: int, out: str):
 @click.option("--baseline", type=click.Path(path_type=Path), help="Baseline JSON for diff")
 @click.option("--save-baseline", type=click.Path(path_type=Path), help="Write current findings as baseline")
 @click.option("--tickets", is_flag=True, help="Export ticket JSON for GRC/ticketing")
+@click.option("--supplier-cbom", type=click.Path(path_type=Path), help="Supplier CycloneDX CBOM to reconcile")
 @click.option("--metadata", type=click.Path(path_type=Path), help="Optional metadata JSON (owner, system, data_lifetime)")
 @click.option("--calibrate", is_flag=True, help="Print precision/recall metrics and exit (no full report)")
 @click.option("--verbose", "-v", is_flag=True, help="Print each finding and extra details")
