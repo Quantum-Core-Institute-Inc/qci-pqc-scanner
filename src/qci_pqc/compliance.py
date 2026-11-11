@@ -110,6 +110,9 @@ def export_tickets(findings: list[Finding], path: Path):
             "priority": "High" if f.quantum_status.value == "vulnerable" else "Medium",
             "labels": ["pqc", f.quantum_status.value, f.family.lower()],
             "location": f"{f.evidence_path}:{f.evidence_line}",
+            "owner": getattr(f, "owner", ""),
+            "system": getattr(f, "system", ""),
+            "data_lifetime": getattr(f, "lifetime", ""),
         })
     path.write_text(json.dumps(tickets, indent=2))
     return len(tickets)
