@@ -241,20 +241,23 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         click.echo(f"  - {out_path}/evidence-manifest.json")
 
     # Policy artifacts and gate
+    waived_keys = set()
     if inv.policy_result:
         (out_path / "policy-result.json").write_text(json.dumps(inv.policy_result, indent=2))
         n_viol = len(inv.policy_result.get("violations", []))
         n_waived = len(inv.policy_result.get("waived", []))
+        waived_keys = {w.get("key") for w in inv.policy_result.get("waived", [])}
         click.echo(f"Policy: {n_viol} violations, {n_waived} waived")
         if not inv.policy_result.get("passed", True):
             click.echo(f"Policy violations: {n_viol}", err=True)
-            if fail_on != "none":
-                sys.exit(1)
+            sys.exit(1)
 
-    if fail_on == "vulnerable" and any(f.quantum_status.value == "vulnerable" for f in all_findings):
+    from .policy import finding_key
+    open_findings = [f for f in all_findings if finding_key(f) not in waived_keys]
+    if fail_on == "vulnerable" and any(f.quantum_status.value == "vulnerable" for f in open_findings):
         click.echo("Failing due to Shor-vulnerable findings.", err=True)
         sys.exit(1)
-    if fail_on == "weak" and any(f.classical_weak or f.quantum_status.value == "weak" for f in all_findings):
+    if fail_on == "weak" and any(f.classical_weak or f.quantum_status.value == "weak" for f in open_findings):
         click.echo("Failing due to weak findings.", err=True)
         sys.exit(1)
 
