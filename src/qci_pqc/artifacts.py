@@ -173,19 +173,11 @@ def scan_artifacts(root: Path) -> list[Finding]:
                     if "META-INF/MANIFEST.MF" in names:
                         ver = _manifest(zf.read("META-INF/MANIFEST.MF").decode("utf-8", errors="ignore"))
                         if ver:
-                            findings.append(Finding(
-                                id=f"ART-MF-{path.name}",
-                                evidence_path=rel,
-                                evidence_line=0,
-                                evidence_snippet=f"{path.name} manifest {ver}",
-                                family="JAR",
-                                quantum_status=QuantumStatus.VULNERABLE,
-                                role="library",
-                                source_scanner="qci-artifact",
-                                confidence=0.5,
-                                parameter_set=ver,
-                                notes="Implementation-Version from the JAR manifest.",
-                            ))
+                            for f in findings:
+                                if f.evidence_path == rel and not f.parameter_set:
+                                    f.parameter_set = ver
+                                if f.evidence_path == rel:
+                                    f.notes = (f.notes + f" Manifest {ver}.").strip()
                 continue
             findings.extend(_findings(path.read_bytes(), rel))
         except Exception:
