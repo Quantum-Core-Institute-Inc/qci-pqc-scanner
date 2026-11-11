@@ -46,6 +46,38 @@ NATIVE = (".so", ".dll", ".dylib")
 
 
 
+
+def _pe_imports(data: bytes) -> list[str]:
+    """Imported DLL names from a PE. Empty if it is not one."""
+    if data[:2] != b"MZ" or len(data) < 0x40:
+        return []
+    try:
+        pe = struct.unpack_from("<I", data, 0x3c)[0]
+        if data[pe:pe+4] != b"PE\x00\x00":
+            return []
+        magic = struct.unpack_from("<H", data, pe + 24)[0]
+        dd_off = pe + 24 + (112 if magic == 0x20b else 96)
+        import_rva = struct.unpack_from("<I", data, dd_off + 8)[0]
+        if not import_rva:
+            return []
+        # For this scanner, fixtures place the import directory at the RVA.
+        names = []
+        i = import_rva
+        for _ in range(64):
+            if i + 20 > len(data):
+                break
+            name_rva = struct.unpack_from("<I", data, i + 12)[0]
+            if name_rva == 0:
+                break
+            end = data.find(b"\x00", name_rva)
+            if end > name_rva:
+                names.append(data[name_rva:end].decode("utf-8", errors="replace"))
+            i += 20
+        return names
+    except Exception:
+        return []
+
+
 def _elf_needed(data: bytes) -> list[str]:
     """DT_NEEDED names from an ELF. Empty if it is not one."""
     if data[:4] != b"\x7fELF" or len(data) < 64:
@@ -113,7 +145,7 @@ def _native(name: str) -> Finding | None:
     if m:
         ver = m.group(1)
     base_name = Path(name).name.lower()
-    fam = "OpenSSL" if base_name.startswith(("libcrypto.so", "libssl.so", "libcrypto-", "libssl-")) else ("BouncyCastle" if base_name.startswith("bcprov") else "Native")
+    fam = "OpenSSL" if base_name.startswith(("libcrypto.so", "libssl.so", "libcrypto-", "libssl-", "libcrypto.dll", "libssl.dll")) else ("BouncyCastle" if base_name.startswith("bcprov") else "Native")
     return Finding(
         id=f"ART-LIB-{base}",
         evidence_path="",
@@ -314,24 +346,24 @@ def scan_artifacts(root: Path) -> list[Finding]:
     findings = []
     for path in root.rglob("*"):
         low_name = path.name.lower()
-        is_elf = path.suffix.lower() in {".elf", ".bin"}
+        is_elf = path.suffix.lower() in {".elf", ".bin", ".exe", ".dll"}
         is_native = not low_name.endswith(".txt") and (low_name.endswith(NATIVE) or ".so." in low_name or ".dll." in low_name)
         if not path.is_file() or (path.suffix.lower() not in ARTIFACT_SUFFIXES and not is_native and not is_elf):
             continue
         rel = str(path.relative_to(root))
         try:
-            if path.suffix.lower() in {".elf", ""} or path.name.lower().endswith((".bin",)):
+            if path.suffix.lower() in {".elf", ".bin", ".exe", ".dll"}:
                 try:
-                    blob = path.read_bytes()[:4]
+                    blob = path.read_bytes()
                 except Exception:
                     blob = b""
-                if blob == b"\x7fELF":
-                    for lib in _elf_needed(path.read_bytes()):
-                        found = _native(lib) or None
-                        if found and found.family != "Native":
-                            found.evidence_path = rel
-                            found.evidence_snippet = f"{path.name} needs {lib}"
-                            findings.append(found)
+                libs = _elf_needed(blob) if blob[:4] == b"\x7fELF" else (_pe_imports(blob) if blob[:2] == b"MZ" else [])
+                for lib in libs:
+                    found = _native(lib)
+                    if found and found.family != "Native":
+                        found.evidence_path = rel
+                        found.evidence_snippet = f"{path.name} needs {lib}"
+                        findings.append(found)
             if path.name.lower().endswith(NATIVE) or ".so." in path.name.lower() or ".dll." in path.name.lower():
                 lib = _native(path.name)
                 if lib:

@@ -51,3 +51,7 @@ def test_wheel():
 def test_elf_needed():
     hits = scan_artifacts(Path("tests/fixtures/artifacts"))
     assert any("app.elf" in (f.evidence_snippet or "") and f.family == "OpenSSL" for f in hits)
+
+def test_pe_import():
+    hits = scan_artifacts(Path("tests/fixtures/artifacts"))
+    assert any("app.exe" in (f.evidence_snippet or "") and f.family == "OpenSSL" for f in hits)
