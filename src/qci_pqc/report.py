@@ -283,7 +283,7 @@ def to_html(inv: Inventory) -> str:
             <td>{f.quantum_status.value}</td>
             <td>{html.escape(str(f.evidence_path))}:{f.evidence_line or '?'}</td>
             <td><code>{html.escape(str(f.evidence_snippet)[:120])}</code></td>
-            <td>{f.confidence:.1f}</td>
+            <td>{f.confidence:.1f}</td>\n            <td>{html.escape(str(getattr(f, 'owner', '') or ''))}</td>
         </tr>"""
 
     coverage_html = ""

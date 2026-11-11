@@ -157,6 +157,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
             f.lifetime = meta.get("data_lifetime", "")
             f.owner = meta.get("owner", "")
             f.system = meta.get("system", "")
+            f.system = meta.get("system", "")
 
     inv = Inventory(
         project=path.name,
