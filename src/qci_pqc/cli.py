@@ -20,7 +20,7 @@ from .calibrate import calibrate as run_calibrate
 from .scoring import compute_readiness, score_scanner
 from .scoresplit import split_scores
 from .graph import link
-from .coverage import summary as coverage_summary
+from .coverage import reset as reset_coverage, skip, summary as coverage_summary
 from .policy import evaluate_policy, load_accepted_risks, load_policy
 from .reconcile import reconcile
 
@@ -75,12 +75,15 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
 
     all_findings = []
     scanners_used = []
+    skipped_adapters = []
+    reset_coverage()
 
     for name in adapters:
         try:
             scanner = get_adapter(name)
             if not scanner.available():
                 click.echo(f"Adapter '{name}' not available, skipping.", err=True)
+                skipped_adapters.append((name, "adapter not available"))
                 continue
             findings = scanner.scan(path)
             all_findings.extend(findings)
@@ -91,6 +94,7 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
                     status(f"    [{f.quantum_status.value:12}] {f.family:16} {f.evidence_path}:{f.evidence_line}")
         except Exception as e:
             click.echo(f"Adapter '{name}' failed: {e}", err=True)
+            skipped_adapters.append((name, f"adapter failed: {e}"))
 
     if not all_findings and not scanners_used:
         # full fallback
@@ -98,6 +102,9 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         scanner = get_adapter("internal")
         all_findings = scanner.scan(path)
         scanners_used = [scanner.name]
+
+    for name, reason in skipped_adapters:
+        skip(name, reason)
 
     if not no_dedupe:
         before = len(all_findings)
@@ -273,6 +280,10 @@ def scan(path: Path, out: str, adapter: str, fail_on: str, no_dedupe: bool,
         if not inv.policy_result.get("passed", True):
             click.echo(f"Policy violations: {n_viol}", err=True)
             sys.exit(1)
+
+    if inv.scan_coverage.get("partial"):
+        click.echo(f"Incomplete scan: {len(inv.scan_coverage.get('skipped', []))} skipped", err=True)
+        sys.exit(1)
 
     from .policy import finding_key
     open_findings = [f for f in all_findings if finding_key(f) not in waived_keys]
