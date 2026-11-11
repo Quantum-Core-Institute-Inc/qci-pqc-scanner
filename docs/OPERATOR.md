@@ -74,9 +74,9 @@ Do not add them.
 | Score | Counts | Does not count |
 |-------|--------|----------------|
 | Source | Source and config findings | JARs, class files, binaries |
-| Artifact | Strings in compiled files | Source recall |
+| Artifact | Class pool, JAR, WAR, wheel, image, ELF, PE | Source recall |
 
-A high source score says nothing about the JAR. A high artifact score says nothing about the source. 2.1 prints both and does not blend them.
+A high source score says nothing about the JAR. A high artifact score says nothing about the source. 2.3 prints both and does not blend them.
 
 
 ## What the file is

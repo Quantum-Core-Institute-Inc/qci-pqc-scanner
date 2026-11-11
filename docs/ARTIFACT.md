@@ -2,7 +2,26 @@
 
 This number is not the source recall.
 
-An artifact finding comes from a class constant pool, a native library in a JAR, or a file inside an image tarball.
+## What an artifact finding comes from
+
+| Source | How |
+|--------|-----|
+| `.class` | Constant pool. Class, method, algorithm, parameter. |
+| JAR, WAR, EAR | A zip of those. A JAR inside a WAR is opened. |
+| Wheel | A zip. A native library inside it. |
+| Image tarball | Certs, configs, and class files inside it. |
+| ELF | `DT_NEEDED`. The libraries it links. |
+| PE | The import directory. The DLLs it loads. |
+| `.so`, `.dll`, `.dylib` | By name. `libcrypto` is OpenSSL. `libsslfoo` is not. |
+
+## What it does not
+
+- A string scan of the whole binary.
+- Packed or obfuscated code.
+- A Go binary that statically links its crypto.
+- A runtime tracer or network traffic.
+
+## The number
 
 | Field | Meaning |
 |-------|---------|
@@ -10,11 +29,4 @@ An artifact finding comes from a class constant pool, a native library in a JAR,
 | named_class | The snippet names the class |
 | with_parameter | Mode, hash, or version is set |
 
-The fixtures in `tests/fixtures/artifacts` are the corpus: `Signer.class`, `app.jar`, `native.jar`, `image.tar`.
-
-
-## Published corpus
-
-`tests/fixtures/artifacts/expected.json` is the artifact corpus. Six expected findings: RSA and HMAC from `Signer.sign`, OpenSSL from a JAR and from disk, a native that must not be called OpenSSL, and a config from an image tarball.
-
-This number is not the source recall.
+`tests/fixtures/artifacts/expected.json` is the corpus. Six expected findings, two negatives. CI runs it.
