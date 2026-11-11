@@ -349,7 +349,16 @@ def _findings(data: bytes, rel: str, jar: str = "") -> list[Finding]:
 def scan_artifacts(root: Path) -> list[Finding]:
     findings = []
     used('artifact')
+    root_real = root.resolve()
     for path in root.rglob("*"):
+        if path.is_symlink():
+            try:
+                if not path.resolve().is_relative_to(root_real):
+                    skip(str(path.relative_to(root)), "symlink leaves the tree")
+                    continue
+            except Exception:
+                skip(str(path), "symlink could not be resolved")
+                continue
         low_name = path.name.lower()
         is_elf = path.suffix.lower() in {".elf", ".bin", ".exe", ".dll"}
         is_native = not low_name.endswith(".txt") and (low_name.endswith(NATIVE) or ".so." in low_name or ".dll." in low_name)
