@@ -412,7 +412,7 @@ code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
   <h1>Quantum Core Institute – PQC Readiness Report</h1>
   <p>Project: <strong>{inv.project}</strong></p>
   <p>Scanners: {', '.join(inv.scanners_used) or 'qci-pattern'}</p>
-  <p>Readiness Score: <span class="score">{inv.readiness_score}</span> / 100</p>
+  <p>Readiness Score: <span class="score">{"not scored" if inv.readiness_score is None else inv.readiness_score}</span> / 100</p>
 
   <h2>Artifact score</h2>\n<p>Separate from source. Not blended.</p>\n<h2>Score Breakdown</h2>
   {breakdown_html}
