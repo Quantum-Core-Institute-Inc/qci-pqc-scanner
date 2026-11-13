@@ -26,24 +26,24 @@ These numbers apply to this corpus only. They do not transfer automatically to a
 
 ## External corpus (QCI CBOM Benchmark)
 
-Version 2.3.4.3, measured on [QCI CBOM Benchmark](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark) 2.6.5.1: 410 findings across seven languages, certificates, keys, configs and compiled code.
+Version 2.3.4.5, measured on [QCI CBOM Benchmark](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark) 2.6.6: 410 findings across seven languages, certificates, keys, configs and compiled code.
 
 | Metric | In declared scope | Everything |
 |--------|------:|------:|
-| Recall | 65.5% | 62.2% |
+| Recall | 79.8% | 76.6% |
 | Precision | 100% | 100% |
-| Parameters correct (of detected) | 90.8% | 90.2% |
-| Ticket-ready (of detected) | 81.3% | 80.0% |
+| Parameters correct (of detected) | 92.6% | 92.7% |
+| Ticket-ready (of detected) | 87.5% | 86.9% |
 | False positives | 0 | 0 |
 | PQC over-claims | 0 | 0 |
-| Holdout recall, matched cells | 68.2% | |
-| Overfit gap | -0.8 (95% interval -5.6 to +4.2) | |
+| Holdout recall, matched cells | 78.0% | |
+| Overfit gap | -1.6 (95% interval -6.5 to +3.2) | |
 
 These are the figures for the last version the benchmark has measured. Later versions are measured when the benchmark cuts a release against them; until then they have no external number.
 
 The corpus is larger and harder than the v12 corpus the older figures below were taken on, so the two sets of numbers are not comparable. Recall went down between them because the denominator grew, not because the scanner found less.
 
-Quantum Core Institute writes both the scanner and the benchmark. The benchmark publishes the evidence bundle for this run (`evidence/qci-v2.3.4.3`); `python tools/bench.py verify` re-derives the score from the scanner's raw output.
+Quantum Core Institute writes both the scanner and the benchmark. The benchmark publishes the evidence bundle for this run (`evidence/qci-v2.3.4.5`); `python tools/bench.py verify` re-derives the score from the scanner's raw output.
 
 Reproduce, in a checkout of the benchmark, with a private holdout seed:
 
