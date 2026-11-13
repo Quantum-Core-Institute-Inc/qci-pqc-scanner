@@ -2,6 +2,8 @@
 
 from __future__ import annotations
 
+from pathlib import Path
+
 _files = 0
 _skipped: list[str] = []
 _parsers: set[str] = set()
@@ -34,3 +36,12 @@ def summary() -> dict:
         "skipped": list(dict.fromkeys(_skipped)),
         "partial": bool(_skipped),
     }
+
+
+def is_binary(path: Path) -> bool:
+    """A file with a null byte in the first 8 KB is not source."""
+    try:
+        with path.open("rb") as f:
+            return b"\x00" in f.read(8192)
+    except Exception:
+        return False

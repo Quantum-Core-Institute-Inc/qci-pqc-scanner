@@ -9,7 +9,7 @@ from typing import Iterator
 
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
-from .coverage import reset, saw_file, skip, used, summary
+from .coverage import reset, saw_file, skip, used, summary, is_binary
 from .deps import scan_dependencies
 from .artifacts import scan_artifacts, scan_images
 from .crossmod import collect_constants
@@ -422,14 +422,11 @@ def scan_path(root: Path) -> Iterator[Finding]:
             continue
         if path.suffix.lower() in SKIP_EXTS:
             continue
-        try:
-            raw = path.read_bytes()
-        except Exception:
-            continue
-        if b"\x00" in raw[:1024]:
+        if is_binary(path):
+            skip(str(path.relative_to(root)), "binary")
             continue
         try:
-            text = raw.decode("utf-8", errors="ignore")
+            text = path.read_text(encoding="utf-8", errors="ignore")
         except Exception:
             continue
 
