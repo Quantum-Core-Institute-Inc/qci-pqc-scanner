@@ -584,45 +584,12 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         elif cipher:
                             mode = cipher.group(2).upper()
                         param = "-".join(x for x in (size, mode) if x) or param
-                    # Size on another line in the same file: kpg.initialize(3072)
-                    if family in {"RSA", "DSA", "DH"} and not param:
-                        init = re.search(r"\.initialize\s*\(\s*(\d{3,5})\s*\)", text)
-                        bits = re.search(r"KEY_BITS\s*=\s*(\d{3,5})", text)
-                        if init:
-                            param = init.group(1)
-                        elif bits:
-                            param = bits.group(1)
                     if family in {"3DES", "DES"} and re.search(r"modes\.CBC|CBC", code_part):
                         param = "CBC"
                     if family in {"HMAC", "PBKDF2"} and re.search(r"sha256|SHA256", expanded, re.I):
                         param = "SHA-256"
                     if family == "HMAC" and re.search(r"digestmod\s*=\s*[\"']sha1[\"']|hmac-sha1", expanded, re.I):
                         param = "SHA-1"
-                    # Go, C, C#, JS/TS parameter shapes.
-                    go = re.search(r"GenerateKey\s*\([^)]*,\s*(\d{3,5})|elliptic\.P(256|384|521)|NewGCM|NewCBC", text)
-                    if go and not param:
-                        if go.group(1):
-                            param = go.group(1)
-                        elif go.group(2):
-                            param = f"P-{go.group(2)}"
-                    c = re.search(r"EVP_aes_(\d+)_(gcm|cbc)|set_rsa_keygen_bits\s*\([^,]*,\s*(\d+)|NID_X9_62_prime(256|384)v1", text)
-                    if c and not param:
-                        param = c.group(1) or c.group(3) or (f"P-{c.group(4)}" if c.group(4) else "")
-                        if c.group(2):
-                            param = f"{param}-{c.group(2).upper()}" if param else c.group(2).upper()
-                    cs = re.search(r"RSA\.Create\s*\(\s*(\d{3,5})|nistP(256|384)|CipherMode\.(CBC|ECB|GCM)", text)
-                    if cs and not param:
-                        param = cs.group(1) or (f"P-{cs.group(2)}" if cs.group(2) else "") or (cs.group(3) or "")
-                    js = re.search(r"modulusLength\s*:\s*(\d{3,5})|namedCurve\s*:\s*[\'\"]P-(256|384)|aes-(\d+)-(gcm|cbc)", text, re.I)
-                    if js and not param:
-                        param = js.group(1) or (f"P-{js.group(2)}" if js.group(2) else "") or (f"{js.group(3)}-{js.group(4).upper()}" if js.group(3) else "")
-                    # HMAC and PBKDF2 hashes beyond SHA-256.
-                    if family in {"HMAC", "PBKDF2"}:
-                        h = re.search(r"sha(1|256|384|512)|SHA(1|256|384|512)", expanded, re.I)
-                        if h and param in {"", "HMAC", "PBKDF2"}:
-                            n = h.group(1) or h.group(2)
-                            param = f"SHA-{n}"
-
                     param = params.refine(family, param or "", lines, line_no - 1)
                     yield Finding(
                         id="QCI-" + hashlib.sha256(f"{family}|{path.name}|{param}".encode()).hexdigest()[:12],
