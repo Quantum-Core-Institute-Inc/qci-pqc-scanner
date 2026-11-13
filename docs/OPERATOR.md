@@ -54,7 +54,7 @@ The readiness score is a summary of what the scanner found in the files it can r
 
 These figures are for version 2.3.4.3, the last one the benchmark has measured.
 
-String assembly, reflection and hand-rolled algorithms are out of scope; a miss there is expected. Compiled Java, native binaries and minified JavaScript are read by releases after 2.3.4.4, within the limits in LIMITATIONS.md.
+String assembly, reflection and hand-rolled algorithms are out of scope; a miss there is expected. Compiled Java, native binaries and minified JavaScript are read from 2.3.4.5 on, within the limits in LIMITATIONS.md.
 
 Read [LIMITATIONS.md](LIMITATIONS.md) before treating a score as coverage.
 
