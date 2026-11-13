@@ -1,0 +1,61 @@
+# Tags a release when its version lands on main, so the tag is never a manual step that gets missed.
+#
+# On a push to main that changes the version: reads the version, and if no tag v<version> exists,
+# creates it on that commit and starts release.yml on the tag. A tag that exists is left alone.
+# Run by hand (Actions > tag > Run workflow) to tag an older commit: give its SHA, and the version
+# recorded in that commit names the tag.
+#
+# release.yml is started explicitly because a tag created by a workflow does not trigger other
+# workflows on its own.
+name: tag
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - pyproject.toml
+      - .github/workflows/tag.yml
+  workflow_dispatch:
+    inputs:
+      commit:
+        description: "Commit to tag (default: the tip of main). The version in its pyproject.toml names the tag."
+        required: false
+        default: ""
+
+permissions:
+  contents: write      # create the tag
+  actions: write       # start release.yml
+
+concurrency:
+  group: tag
+  cancel-in-progress: false
+
+jobs:
+  tag:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v5
+        with:
+          ref: ${{ inputs.commit || github.sha }}
+
+      - name: Tag the commit with its own version
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          SHA="$(git rev-parse HEAD)"
+          TAG="v$(sed -n 's/^version = "\(.*\)"/\1/p' pyproject.toml | head -1)"
+          case "$TAG" in v[0-9]*.[0-9]*) ;; *) echo "::error::could not read a version (got '$TAG')"; exit 1;; esac
+          # The commit a tag of that name points at, if there is one (the ^{} line for an annotated tag).
+          EXISTING="$(git ls-remote --tags origin "refs/tags/$TAG" "refs/tags/$TAG^{}" | sort -k2 | tail -1 | cut -f1)"
+          if [ -n "$EXISTING" ]; then
+            if [ "$EXISTING" = "$SHA" ]; then echo "$TAG already points at $SHA. Nothing to do."
+            else echo "::warning::$TAG already exists on $EXISTING, not $SHA. Left alone: a published tag is not moved."; fi
+            echo "$TAG exists on ${EXISTING:0:7}; nothing created." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          gh api "repos/$GITHUB_REPOSITORY/git/refs" -f ref="refs/tags/$TAG" -f sha="$SHA" --jq .ref
+          echo "Created $TAG on ${SHA:0:7}." >> "$GITHUB_STEP_SUMMARY"
+          # An older commit's release.yml may not accept a manual start; the tag still stands.
+          if gh workflow run release.yml --ref "$TAG"; then echo "Started release.yml on $TAG." >> "$GITHUB_STEP_SUMMARY"
+          else echo "::warning::release.yml could not be started on $TAG (the workflow at that commit has no manual trigger)."; fi
