@@ -14,7 +14,7 @@ from .models import Finding, QuantumStatus
 from .certs import inspect_pem
 from .coverage import reset, saw_file, skip, used, summary, is_binary
 from .deps import scan_dependencies
-from .artifacts import ARTIFACT_SUFFIXES, scan_artifacts, scan_images
+from .artifacts import ARTIFACT_SUFFIXES, scan_artifacts, scan_images, is_elf
 from .crossmod import collect_constants
 from .resolve import resolve_configs, resolve_calls_and_maps
 
@@ -444,7 +444,10 @@ def scan_path(root: Path) -> Iterator[Finding]:
         if path.suffix.lower() in SKIP_EXTS:
             continue
         if is_binary(path):
-            skip(str(path.relative_to(root)), "binary")
+            # An ELF binary is read by the artifact pass (imports, strings, Go functions), so it is
+            # not a skipped file. Other binaries are still listed as not read.
+            if not is_elf(path):
+                skip(str(path.relative_to(root)), "binary")
             continue
         try:
             text = path.read_text(encoding="utf-8", errors="ignore")
