@@ -46,12 +46,15 @@ The readiness score is a summary of what the scanner found in the files it can r
 
 | Number | Means | Does not mean |
 |--------|-------|----------------|
-| Recall 69.2% | Of the known findings in the v12 corpus, this share was reported | The other 30.8% of a real repo is safe |
+| Recall 62.2% | Of the 410 known findings in QCI CBOM Benchmark 2.6.5.1, version 2.3.4.3 reported this share | The other 37.8% of a real repo is safe |
 | Precision 100% | Nothing in the negative controls was reported | Every finding is a vulnerability |
-| Ticket-ready 61.4% | The finding has enough detail to open a ticket | The ticket is already approved |
-| Holdout 84.8% | On code the scanner has not seen, it still finds most of the same shapes | It will find hand-rolled crypto |
+| Parameters 90.2% | Of what was detected, the key size, curve, mode or hash was right | The other 9.8% were wrong: they were left blank |
+| Ticket-ready 80.0% | The finding has enough detail to open a ticket | The ticket is already approved |
+| Holdout 68.2% | On generated code the scanner has not seen, it finds the same share as on the published corpus | It will find hand-rolled crypto |
 
-Tier 5 (string assembly, reflection, hand-rolled algorithms) is out of scope. A miss there is expected.
+These figures are for version 2.3.4.3, the last one the benchmark has measured.
+
+String assembly, reflection and hand-rolled algorithms are out of scope; a miss there is expected. Compiled Java, native binaries and minified JavaScript are read by releases after 2.3.4.4, within the limits in LIMITATIONS.md.
 
 Read [LIMITATIONS.md](LIMITATIONS.md) before treating a score as coverage.
 
