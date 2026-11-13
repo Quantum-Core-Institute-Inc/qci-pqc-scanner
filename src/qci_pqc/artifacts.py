@@ -15,7 +15,7 @@ import zipfile
 from pathlib import Path
 
 from .models import Finding, QuantumStatus
-from .coverage import skip, used
+from .coverage import is_binary,  skip, used
 
 MAX_ARCHIVE_BYTES = 50_000_000
 MAX_ARCHIVE_FILES = 2000
@@ -346,6 +346,33 @@ def _findings(data: bytes, rel: str, jar: str = "") -> list[Finding]:
     return out
 
 
+
+def scan_binary_strings(path: Path, root: Path) -> list[Finding]:
+    """Printable strings in a binary. Long algorithm names only, so DH does not match."""
+    try:
+        data = path.read_bytes()
+    except Exception:
+        return []
+    text = "".join(chr(b) if 32 <= b < 127 else "\n" for b in data)
+    rel = str(path.relative_to(root))
+    out = []
+    for pat, fam, status, role in STRINGS:
+        m = re.search(pat, text)
+        if m:
+            out.append(Finding(
+                id=f"BIN-{fam}-{path.name}",
+                evidence_path=rel,
+                evidence_line=0,
+                evidence_snippet=m.group(0),
+                family=fam,
+                quantum_status=status,
+                role=role,
+                source_scanner="qci-binary",
+                confidence=0.6,
+                notes="Printable string in a binary.",
+            ))
+    return out
+
 def scan_artifacts(root: Path) -> list[Finding]:
     findings = []
     used('artifact')
@@ -362,7 +389,11 @@ def scan_artifacts(root: Path) -> list[Finding]:
         low_name = path.name.lower()
         is_elf = path.suffix.lower() in {".elf", ".bin", ".exe", ".dll"}
         is_native = not low_name.endswith(".txt") and (low_name.endswith(NATIVE) or ".so." in low_name or ".dll." in low_name)
-        if not path.is_file() or (path.suffix.lower() not in ARTIFACT_SUFFIXES and not is_native and not is_elf):
+        if not path.is_file():
+            continue
+        if path.suffix.lower() not in ARTIFACT_SUFFIXES and not is_native and not is_elf:
+            if is_binary(path):
+                findings.extend(scan_binary_strings(path, root))
             continue
         rel = str(path.relative_to(root))
         try:
