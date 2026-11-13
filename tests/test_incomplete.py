@@ -1,4 +1,5 @@
 import json
+import zipfile
 
 import pytest
 from click.testing import CliRunner
@@ -42,3 +43,18 @@ def test_skipped_adapter_marks_scan_partial(tmp_path, monkeypatch, failure, adap
     assert coverage["partial"] is True
     assert coverage["skipped"] == [f"broken: {reason}"]
     assert "Incomplete scan: 1 skipped" in result.output
+
+
+def test_scanned_archive_does_not_mark_scan_partial(tmp_path):
+    project = tmp_path / "project"
+    project.mkdir()
+    with zipfile.ZipFile(project / "app.jar", "w") as archive:
+        archive.writestr("App.class", b"\xca\xfe\xba\xbe" + b"\x00" * 16)
+    out = tmp_path / "out"
+
+    result = CliRunner().invoke(cli, ["scan", str(project), "--out", str(out)])
+
+    assert result.exit_code == 0, result.output
+    coverage = json.loads((out / "scan-coverage.json").read_text())
+    assert coverage["partial"] is False
+    assert coverage["skipped"] == []

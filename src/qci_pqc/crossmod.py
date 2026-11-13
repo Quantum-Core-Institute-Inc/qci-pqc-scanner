@@ -4,12 +4,15 @@ from __future__ import annotations
 
 import re
 from pathlib import Path
+from .coverage import is_binary
 
 
 def collect_constants(root: Path) -> dict[str, str]:
     constants = {}
     for path in root.rglob("*"):
         if path.suffix not in {".py", ".java", ".go"}:
+            continue
+        if is_binary(path):
             continue
         if path.is_symlink():
             try:

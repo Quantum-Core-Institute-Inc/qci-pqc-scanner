@@ -9,9 +9,9 @@ from typing import Iterator
 
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
-from .coverage import reset, saw_file, skip, used, summary
+from .coverage import reset, saw_file, skip, used, summary, is_binary
 from .deps import scan_dependencies
-from .artifacts import scan_artifacts, scan_images
+from .artifacts import ARTIFACT_SUFFIXES, scan_artifacts, scan_images
 from .crossmod import collect_constants
 from .resolve import resolve_configs, resolve_calls_and_maps
 
@@ -326,7 +326,10 @@ COMPILED = [(re.compile(pat, re.IGNORECASE), fam, status, weak, role) for pat, f
 
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build", "target"}
 PROJECT_CONSTS: dict[str, str] = {}
-SKIP_EXTS = {".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".tar", ".gz", ".so", ".dll", ".exe", ".md", ".rst"}
+SKIP_EXTS = {
+    ".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".tar", ".gz",
+    ".so", ".dll", ".exe", ".md", ".rst",
+} | ARTIFACT_SUFFIXES
 
 
 
@@ -422,14 +425,11 @@ def scan_path(root: Path) -> Iterator[Finding]:
             continue
         if path.suffix.lower() in SKIP_EXTS:
             continue
-        try:
-            raw = path.read_bytes()
-        except Exception:
-            continue
-        if b"\x00" in raw[:1024]:
+        if is_binary(path):
+            skip(str(path.relative_to(root)), "binary")
             continue
         try:
-            text = raw.decode("utf-8", errors="ignore")
+            text = path.read_text(encoding="utf-8", errors="ignore")
         except Exception:
             continue
 
