@@ -78,14 +78,12 @@ def to_cyclonedx(inv: Inventory) -> dict:
         if param.upper().startswith("P-") or "SECP" in param.upper():
             key_size = ""
             curve = param if param.upper().startswith("P-") else param
-        if "ECB" in (param + f.family).upper():
-            mode = "ecb"
-        elif "GCM" in (param + f.family).upper():
-            mode = "gcm"
-        elif "CBC" in (param + f.family).upper():
-            mode = "cbc"
+        for known in ("ECB", "GCM", "CBC", "CTR", "CFB", "OFB", "CCM", "XTS"):
+            if known in re.split(r"[-/_ ]", (param + "-" + f.family).upper()):
+                mode = known.lower()
+                break
         param_id = key_size or curve or (
-            param if param in {"SHA-256", "SHA-1", "SHA-512"} else f.family
+            param if re.fullmatch(r"SHA-(?:1|224|256|384|512)|SHA3-(?:224|256|384|512)|MD5", param) else f.family
         )
         algo_props = {
             "primitive": primitive,
@@ -166,7 +164,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
             "safe_symmetric": "resistant",
         }.get(f.quantum_status.value, "unknown")
 
-        if f.family in {"HMAC", "PBKDF2"} and param in {"SHA-256", "SHA-1", "SHA-512", "SHA-384"}:
+        if f.family in {"HMAC", "PBKDF2"} and re.fullmatch(r"SHA-(?:1|224|256|384|512)|SHA3-(?:224|256|384|512)|MD5", param):
             name = f"{f.family}-{param}"
         if f.source_scanner == "qci-deps" or f.role == "library":
             lib = {

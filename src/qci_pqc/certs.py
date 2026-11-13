@@ -13,6 +13,14 @@ except ImportError:
     HAS_CRYPTO = False
 
 
+_NIST_CURVES = {"secp256r1": "P-256", "prime256v1": "P-256", "secp384r1": "P-384", "secp521r1": "P-521"}
+
+
+def _curve_label(key) -> str:
+    name = getattr(getattr(key, "curve", None), "name", "") or ""
+    return _NIST_CURVES.get(name, name)
+
+
 def inspect_pem(path: Path, root: Path) -> list[Finding]:
     """Parse PEM certificates and keys. Uses cryptography if available."""
     findings = []
@@ -117,8 +125,9 @@ def _from_cert(cert, rel: str) -> list[Finding]:
         notes=f"{note}; subject={subject}; notAfter={not_after}; signature={sig}",
         recommendation=rec,
         parameter_set=(
-            f"{family}-{getattr(pub, 'key_size', '')}" if getattr(pub, "key_size", None)
-            else (getattr(getattr(pub, "curve", None), "name", "") or family)
+            _curve_label(pub) or (
+                f"{family}-{getattr(pub, 'key_size', '')}" if getattr(pub, "key_size", None) else family
+            )
         ),
         subject=subject,
         not_after=not_after,
@@ -214,5 +223,5 @@ def _parse_pkcs8(data: bytes, rel: str):
         source_scanner="qci-x509",
         confidence=0.95,
         notes=f"Parsed PKCS#8/SPKI key type {name}",
-        parameter_set=str(getattr(key, "key_size", "") or ""),
+        parameter_set=_curve_label(key) or str(getattr(key, "key_size", "") or ""),
     )

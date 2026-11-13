@@ -11,6 +11,7 @@ When merging:
 - Prefer more specific quantum_status
 """
 
+import re
 from collections import defaultdict
 from typing import Optional
 
@@ -68,6 +69,22 @@ def _key(f: Finding, window: int) -> tuple:
     )
 
 
+def _param_parts(f):
+    p = (f.parameter_set or "").strip()
+    if not p or p.upper() == (f.family or "").upper():
+        return set()
+    return {x for x in p.upper().split("-") if x}
+
+
+def _richest_param(primary, group):
+    mine = _param_parts(primary)
+    best = max(group, key=lambda f: len(_param_parts(f)))
+    theirs = _param_parts(best)
+    if len(theirs) > len(mine) and mine <= theirs:
+        return best.parameter_set
+    return primary.parameter_set
+
+
 def deduplicate(findings: list[Finding], window: int = 3) -> list[Finding]:
     """Return a deduplicated list of findings."""
     groups: dict[tuple, list[Finding]] = defaultdict(list)
@@ -104,7 +121,7 @@ def deduplicate(findings: list[Finding], window: int = 3) -> list[Finding]:
             evidence_line=primary.evidence_line,
             evidence_snippet=primary.evidence_snippet or (snippets[0] if snippets else ""),
             family=primary.family,
-            parameter_set=primary.parameter_set,
+            parameter_set=_richest_param(primary, group),
             role=primary.role or next((f.role for f in group if f.role), None),
             quantum_status=best_status,
             classical_weak=any(f.classical_weak for f in group),

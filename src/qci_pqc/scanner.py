@@ -7,6 +7,7 @@ import re
 from pathlib import Path
 from typing import Iterator
 
+from . import params
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
 from .coverage import reset, saw_file, skip, used, summary, is_binary
@@ -622,6 +623,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                             n = h.group(1) or h.group(2)
                             param = f"SHA-{n}"
 
+                    param = params.refine(family, param or "", lines, line_no - 1)
                     yield Finding(
                         id="QCI-" + hashlib.sha256(f"{family}|{path.name}|{param}".encode()).hexdigest()[:12],
                         evidence_path=str(path.relative_to(root)),
