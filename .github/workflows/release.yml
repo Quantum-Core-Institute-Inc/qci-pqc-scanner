@@ -4,6 +4,7 @@ on:
   push:
     tags:
       - "v*"
+  workflow_dispatch:      # started by tag.yml on the tag it just created
 
 permissions:
   contents: write
