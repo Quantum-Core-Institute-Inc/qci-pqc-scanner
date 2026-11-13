@@ -15,6 +15,7 @@ import zipfile
 from pathlib import Path
 
 from .models import Finding, QuantumStatus
+from . import classfile
 from .coverage import is_binary,  skip, used
 
 MAX_ARCHIVE_BYTES = 50_000_000
@@ -323,9 +324,29 @@ def _findings(data: bytes, rel: str, jar: str = "") -> list[Finding]:
     text = "\n".join(strings)
     out = []
     base = f"{jar}!{klass}" if jar else klass or rel
+    # First what the bytecode says: a constant handed to a JCA call, with its key size, curve and
+    # mode. This reads obfuscated classes as well as plain ones, and ignores strings nothing uses.
+    info = classfile.parse(data)
+    for use in classfile.uses(info) if info else []:
+        out.append(Finding(
+            id=f"ART-{use.family}-{klass or Path(rel).name}-{use.param}",
+            evidence_path=rel,
+            evidence_line=0,
+            evidence_snippet=f"{base}.{use.method}: {use.api}",
+            family=use.family,
+            quantum_status=classfile.status_of(use.family),
+            classical_weak=classfile.status_of(use.family) == QuantumStatus.WEAK,
+            role=use.role,
+            source_scanner="qci-artifact",
+            confidence=0.9,
+            notes=f"JCA call in the bytecode of {klass or rel}.",
+            parameter_set=use.param,
+        ))
+    seen = {f.family for f in out}
+    # Then the older reading of the constant pool, for a name the bytecode walk did not tie to a call.
     for pat, fam, status, role in STRINGS:
         m = re.search(pat, text)
-        if not m:
+        if not m or fam in seen:
             continue
         token = m.group(0)
         method = methods.get(token, "")
