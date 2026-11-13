@@ -298,6 +298,7 @@ PATTERNS = [
     (r"ssl_protocols\s+.*TLSv1\.[01]|SSLProtocol\s+.*TLSv1\.[01]", "TLS-Weak-Protocol", QuantumStatus.WEAK, True, "protocol"),
     (r"ssl_ciphers\s+.*(?:RC4|DES|3DES|NULL|EXPORT|MD5)", "TLS-Weak-Cipher", QuantumStatus.WEAK, True, "cipher"),
     (r"ssl_ciphers\s+.*(?:ECDHE|DHE).*AES", "TLS-Classical-Cipher", QuantumStatus.VULNERABLE, False, "cipher"),
+    (r"\b(?:cipher|algorithm)\s*[:=]\s*[\"']?AES[-_/](?:128|192|256)[-_/](?:ECB|GCM|CBC)\b", "AES", QuantumStatus.SAFE_SYMMETRIC, False, "cipher"),
     # OpenSSL config
     (r"MinProtocol\s*=\s*TLSv1\.[01]|CipherString\s*=.*DEFAULT", "OpenSSL-Config", QuantumStatus.WEAK, True, "config"),
     # sshd_config — weak KEX
@@ -568,6 +569,9 @@ def scan_path(root: Path) -> Iterator[Finding]:
                             size = str(int(ur.group(1)) * 8)
                         elif param.isdigit():
                             size = param
+                        cipher = re.search(r"\bAES[-_/](128|192|256)[-_/](ECB|GCM|CBC)\b", code_part, re.I)
+                        if cipher:
+                            size = size or cipher.group(1)
                         mode = ""
                         if re.search(r"modes\.ECB|AES/ECB", code_part):
                             mode = "ECB"
@@ -575,6 +579,8 @@ def scan_path(root: Path) -> Iterator[Finding]:
                             mode = "GCM"
                         elif re.search(r"modes\.CBC|AES/CBC", code_part):
                             mode = "CBC"
+                        elif cipher:
+                            mode = cipher.group(2).upper()
                         param = "-".join(x for x in (size, mode) if x) or param
                     # Size on another line in the same file: kpg.initialize(3072)
                     if family in {"RSA", "DSA", "DH"} and not param:
