@@ -16,6 +16,7 @@ from pathlib import Path
 
 from .models import Finding, QuantumStatus
 from . import classfile
+from . import native
 from .coverage import is_binary,  skip, used
 
 MAX_ARCHIVE_BYTES = 50_000_000
@@ -394,6 +395,45 @@ def scan_binary_strings(path: Path, root: Path) -> list[Finding]:
             ))
     return out
 
+def is_elf(path: Path) -> bool:
+    try:
+        with path.open("rb") as f:
+            return f.read(4) == b"\x7fELF"
+    except Exception:
+        return False
+
+
+def elf_findings(path: Path, root: Path) -> list[Finding] | None:
+    """Findings from an ELF binary's imports, fetch-by-name strings and Go function names.
+    None when the file is not ELF, so the caller can try something else."""
+    if not is_elf(path):
+        return None
+    try:
+        data = path.read_bytes()
+    except Exception:
+        return []
+    rel = str(path.relative_to(root))
+    out = []
+    for use in native.analyze(data):
+        status = classfile.status_of(use.family)
+        out.append(Finding(
+            id=f"BIN-{use.family}-{path.name}-{use.param}",
+            evidence_path=rel,
+            evidence_line=0,
+            evidence_snippet=f"{path.name}: {use.evidence}",
+            family=use.family,
+            quantum_status=status,
+            classical_weak=status == QuantumStatus.WEAK,
+            role=use.role,
+            source_scanner="qci-binary",
+            # A linked Go function is reachable code, which is weaker than a call the program makes.
+            confidence=0.6 if use.evidence.startswith("links ") else 0.8,
+            notes="Imported symbol, fetch-by-name string or linked Go function in a native binary.",
+            parameter_set=use.param,
+        ))
+    return out
+
+
 def scan_artifacts(root: Path) -> list[Finding]:
     findings = []
     used('artifact')
@@ -414,7 +454,10 @@ def scan_artifacts(root: Path) -> list[Finding]:
             continue
         if path.suffix.lower() not in ARTIFACT_SUFFIXES and not is_native and not is_elf:
             if is_binary(path):
-                findings.extend(scan_binary_strings(path, root))
+                # An ELF file is read for what it imports and links; anything else falls back to
+                # long algorithm names among its printable strings.
+                elf = elf_findings(path, root)
+                findings.extend(elf if elf is not None else scan_binary_strings(path, root))
             continue
         rel = str(path.relative_to(root))
         try:
