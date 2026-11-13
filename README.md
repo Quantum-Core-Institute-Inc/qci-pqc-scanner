@@ -270,23 +270,23 @@ These numbers apply to the included corpus only. They are not a claim of complet
 
 ### On the QCI CBOM Benchmark
 
-Version 2.3.4.3, measured on [QCI CBOM Benchmark](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark) 2.6.5.1 (410 findings across seven languages, certificates, keys, configs and compiled code):
+Version 2.3.4.5, measured on [QCI CBOM Benchmark](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark) 2.6.6 (410 findings across seven languages, certificates, keys, configs and compiled code):
 
 | Metric | Value |
 |--------|-------|
-| Recall | 62.2% (65.5% in the scanner's declared scope) |
+| Recall | 76.6% (79.8% in the scanner's declared scope) |
 | Precision | 100%, no false positives |
 | PQC over-claims | 0 |
-| Parameters correct (of detected) | 90.2% |
-| Ticket-ready (of detected) | 80.0% |
+| Parameters correct (of detected) | 92.7% |
+| Ticket-ready (of detected) | 86.9% |
 | Crypto libraries in the right manifest | 27 of 28 |
-| Overfit gap on a private holdout set | -0.8 points (95% interval -5.6 to +4.2), not significant |
+| Overfit gap on a private holdout set | -1.6 points (95% interval -6.5 to +3.2), not significant |
 
-Quantum Core Institute writes both this scanner and the benchmark, so check the result instead of taking it on trust. The benchmark publishes the evidence bundle for this run (`evidence/qci-v2.3.4.3`), which `bench.py verify` re-derives from the scanner's raw output, and [its comparison](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark/blob/main/reports/comparison.md) scores other scanners on the same corpus.
+Quantum Core Institute writes both this scanner and the benchmark, so check the result instead of taking it on trust. The benchmark publishes the evidence bundle for this run (`evidence/qci-v2.3.4.5`), which `bench.py verify` re-derives from the scanner's raw output, and [its comparison](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark/blob/main/reports/comparison.md) scores other scanners on the same corpus.
 
-Version 2.3.4.5 adds TLS cipher suites and reads compiled and minified code. It has not been measured in a benchmark release yet; the numbers above are for 2.3.4.3.
+Version 2.3.4.3 scored 62.2% recall on the same corpus. The gain is TLS cipher suites, minified JavaScript, compiled Java and native binaries.
 
-Where 2.3.4.3 falls short on that corpus: compiled and minified code (4 of 42 findings), non-code assets (22 of 66), and TLS cipher suites, SHA3-256, LMS and XMSS, which it does not detect. The benchmark's [findings for this scanner](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark/blob/main/integrations/qci-pqc/FINDINGS.md) list each gap.
+Where 2.3.4.5 falls short on that corpus: non-code assets (39 of 66 findings, with IPsec configs the largest in-scope gap), string assembly, reflection and hand-rolled algorithms (12 of 42 Tier 5 findings missed), and SHA3-256, LMS and XMSS, which it does not detect. The benchmark's [findings for this scanner](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark/blob/main/integrations/qci-pqc/FINDINGS.md) list each gap.
 
 What the scanner does not cover is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
