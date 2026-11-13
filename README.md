@@ -7,9 +7,9 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 2.3.4.3
+**Version:** 2.3.4.4
 
-**2.3.4.3** removes the file-wide parameter search. A parameter comes from the statement or the object, not from anywhere in the file. Release notes: [RELEASE-2.3.4.3.md](RELEASE-2.3.4.3.md).
+**2.3.4.4** reports each TLS cipher suite a configuration names, under its IANA name, and reads protocol versions from Apache, HAProxy, Spring, Go, OpenSSL, Python and .NET as well as nginx. Release notes: [RELEASE-2.3.4.4.md](RELEASE-2.3.4.4.md).
 
 **2.3.4.2** scans binaries for algorithm strings, reads parameters from the statement, from a name the file defines once, and from a later call on the object, and opens the config file types that were skipped. Release notes: [RELEASE-2.3.4.2.md](RELEASE-2.3.4.2.md).
 
@@ -284,7 +284,9 @@ Version 2.3.4.3, measured on [QCI CBOM Benchmark](https://github.com/Quantum-Cor
 
 Quantum Core Institute writes both this scanner and the benchmark, so check the result instead of taking it on trust. The benchmark publishes the evidence bundle for this run (`evidence/qci-v2.3.4.3`), which `bench.py verify` re-derives from the scanner's raw output, and [its comparison](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark/blob/main/reports/comparison.md) scores other scanners on the same corpus.
 
-Where it falls short on that corpus: compiled and minified code (4 of 42 findings), non-code assets (22 of 66), and TLS cipher suites, SHA3-256, LMS and XMSS, which it does not detect. The benchmark's [findings for this scanner](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark/blob/main/integrations/qci-pqc/FINDINGS.md) list each gap.
+Version 2.3.4.4 adds TLS cipher suites and has not been measured in a benchmark release yet; the numbers above are for 2.3.4.3.
+
+Where 2.3.4.3 falls short on that corpus: compiled and minified code (4 of 42 findings), non-code assets (22 of 66), and TLS cipher suites, SHA3-256, LMS and XMSS, which it does not detect. The benchmark's [findings for this scanner](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark/blob/main/integrations/qci-pqc/FINDINGS.md) list each gap.
 
 What the scanner does not cover is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
@@ -363,6 +365,7 @@ This project is an independent implementation.
 
 | Version | Summary |
 |---|---|
+| 2.3.4.4 | TLS cipher suites reported one by one. Protocol versions from more servers and languages. |
 | 2.3.4.3 | File-wide parameter search removed. |
 | 2.3.4.2 | Binary string scan. Parameters from the statement, a name, or a later call. Config file types. |
 | 2.3.4.1 | Every pass checks the boundary. Wrapper match uses the nearest function. |
