@@ -133,6 +133,16 @@ def to_cyclonedx(inv: Inventory) -> dict:
             crypto["relatedCryptoMaterialProperties"] = {"type": "private-key" if "PRIVATE" in (f.evidence_snippet or "") else "public-key"}
         if (f.role or "") == "protocol":
             crypto["protocolProperties"] = {"type": "tls", "version": f.parameter_set or f.family}
+        version = re.fullmatch(r"(TLS|SSL)-(\d\.\d)", f.family or "")
+        if version and (f.role or "") == "protocol":
+            # A protocol version is a protocol asset with a version, not an algorithm.
+            crypto = {"assetType": "protocol",
+                      "protocolProperties": {"type": "tls" if version.group(1) == "TLS" else "ssl",
+                                             "version": f"{version.group(1)}v{version.group(2)}"}}
+        if (f.role or "") == "cipher-suite":
+            # A cipher suite is a property of the protocol, not an algorithm of its own.
+            crypto = {"assetType": "protocol",
+                      "protocolProperties": {"type": "tls", "cipherSuites": [{"name": f.family}]}}
         # NIST OIDs where known
         oid_map = {
             "ML-KEM-512": "2.16.840.1.101.3.4.4.1",
@@ -150,9 +160,7 @@ def to_cyclonedx(inv: Inventory) -> dict:
             if k.lower() in f.family.lower():
                 oid = v
                 break
-        if oid:
-            crypto["oid"] = oid
-        if oid:
+        if oid and (f.role or "") != "cipher-suite":   # a suite name contains "RSA"; it has no OID of its own
             crypto["oid"] = oid
 
         # Quantum resistance property

@@ -8,6 +8,7 @@ from pathlib import Path
 from typing import Iterator
 
 from . import params
+from . import tls
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
 from .coverage import reset, saw_file, skip, used, summary, is_binary
@@ -467,6 +468,22 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 code_part = code_part.split("//", 1)[0]
             if not code_part.strip():
                 continue
+
+            # TLS as configured: each enabled protocol version and each named cipher suite.
+            for hit in tls.hits_in(code_part, path.suffix):
+                yield Finding(
+                    id="QCI-" + hashlib.sha256(f"{hit.family}|{path.name}|{line_no}".encode()).hexdigest()[:12],
+                    evidence_path=str(path.relative_to(root)),
+                    evidence_line=line_no,
+                    evidence_snippet=line.strip()[:200],
+                    family=hit.family,
+                    quantum_status=hit.status,
+                    classical_weak=hit.weak,
+                    role=hit.role,
+                    source_scanner="qci-pattern",
+                    confidence=0.85,
+                    parameter_set=hit.param,
+                )
 
             for regex, family, status, weak, role in COMPILED:
                 if regex.search(code_part):

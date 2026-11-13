@@ -30,6 +30,9 @@ STATUS_PRIORITY = {
 
 def _normalize_family(family: str) -> str:
     f = family.lower().strip()
+    # A cipher suite or a protocol version is its own thing: TLS_RSA_WITH_AES_128_CBC_SHA is not "rsa".
+    if f.startswith(("tls_", "tls-", "ssl-")):
+        return f
     # Collapse common variants
     replacements = {
         "rsa": "rsa",
