@@ -9,7 +9,7 @@
 
 **Version:** 2.3.4.2
 
-**2.3.4.2** scans binaries for algorithm strings, reads parameters from the surrounding lines, and opens the config file types that were skipped. Release notes: [RELEASE-2.3.4.2.md](RELEASE-2.3.4.2.md).
+**2.3.4.2** scans binaries for algorithm strings, reads parameters from the statement, from a name the file defines once, and from a later call on the object, and opens the config file types that were skipped. Release notes: [RELEASE-2.3.4.2.md](RELEASE-2.3.4.2.md).
 
 **Author:** Quantum Core Institute  
 **License:** MIT (see [LICENSE](LICENSE))
@@ -345,7 +345,7 @@ This project is an independent implementation.
 
 | Version | Summary |
 |---|---|
-| 2.3.4.2 | Binary string scan. Parameters from the call. Config file types. |
+| 2.3.4.2 | Binary string scan. Parameters from the statement, a name, or a later call. Config file types. |
 | 2.3.4.1 | Every pass checks the boundary. Wrapper match uses the nearest function. |
 | 2.3.4 | Corrupt nested archive recorded. Source pass stays inside the tree. |
 | 2.3.3 | Linked image blocked. Corrupt archive fails the gate. Manifest hashes only this run. |
