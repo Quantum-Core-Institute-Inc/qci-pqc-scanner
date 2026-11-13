@@ -268,7 +268,23 @@ PYTHONPATH=src python -m pytest tests/test_calibration.py -q
 
 These numbers apply to the included corpus only. They are not a claim of complete coverage.
 
-External check on the CBOM testbench (v0.7.0, v12 corpus): precision 100%, 0 false positives, 0 PQC over-claims, parameters 71.2%, ticket-ready 61.4%, recall 69.2% in scope. Gates are locked at these numbers.
+### On the QCI CBOM Benchmark
+
+Version 2.3.4.3, measured on [QCI CBOM Benchmark](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark) 2.6.5.1 (410 findings across seven languages, certificates, keys, configs and compiled code):
+
+| Metric | Value |
+|--------|-------|
+| Recall | 62.2% (65.5% in the scanner's declared scope) |
+| Precision | 100%, no false positives |
+| PQC over-claims | 0 |
+| Parameters correct (of detected) | 90.2% |
+| Ticket-ready (of detected) | 80.0% |
+| Crypto libraries in the right manifest | 27 of 28 |
+| Overfit gap on a private holdout set | -0.8 points (95% interval -5.6 to +4.2), not significant |
+
+Quantum Core Institute writes both this scanner and the benchmark, so check the result instead of taking it on trust. The benchmark publishes the evidence bundle for this run (`evidence/qci-v2.3.4.3`), which `bench.py verify` re-derives from the scanner's raw output, and [its comparison](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark/blob/main/reports/comparison.md) scores other scanners on the same corpus.
+
+Where it falls short on that corpus: compiled and minified code (4 of 42 findings), non-code assets (22 of 66), and TLS cipher suites, SHA3-256, LMS and XMSS, which it does not detect. The benchmark's [findings for this scanner](https://github.com/Quantum-Core-Institute-Inc/CBOM-Benchmark/blob/main/integrations/qci-pqc/FINDINGS.md) list each gap.
 
 What the scanner does not cover is in [docs/LIMITATIONS.md](docs/LIMITATIONS.md).
 
