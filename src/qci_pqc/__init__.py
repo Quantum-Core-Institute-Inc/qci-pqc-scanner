@@ -2,4 +2,4 @@
 CLI tool for cryptographic inventory and post-quantum readiness assessment.
 """
 
-__version__ = "2.3.4.2"
+__version__ = "2.3.4.3"
