@@ -9,6 +9,7 @@ from typing import Iterator
 
 from . import params
 from . import tls
+from . import minified
 from .models import Finding, QuantumStatus
 from .certs import inspect_pem
 from .coverage import reset, saw_file, skip, used, summary, is_binary
@@ -329,6 +330,9 @@ PATTERNS = [
 COMPILED = [(re.compile(pat, re.IGNORECASE), fam, status, weak, role) for pat, fam, status, weak, role in PATTERNS]
 
 SKIP_DIRS = {".git", "node_modules", "__pycache__", ".venv", "venv", "dist", "build", "target"}
+# Where a build puts what ships. Source files here are copies and stay skipped; a minified bundle
+# is the only form its code exists in, so it is read.
+BUILD_OUTPUT_DIRS = {"dist", "build", "target"}
 PROJECT_CONSTS: dict[str, str] = {}
 SKIP_EXTS = {
     ".png", ".jpg", ".jpeg", ".gif", ".pdf", ".zip", ".tar", ".gz",
@@ -425,8 +429,18 @@ def scan_path(root: Path) -> Iterator[Finding]:
                 skip(str(path), "symlink could not be resolved")
                 continue
         saw_file()
-        if any(part in SKIP_DIRS for part in path.parts):
-            continue
+        rel_parts = path.relative_to(root).parts[:-1]
+        skipped_dirs = {part for part in rel_parts if part in SKIP_DIRS}
+        bundle = None
+        if skipped_dirs:
+            if not (skipped_dirs <= BUILD_OUTPUT_DIRS and path.suffix.lower() in minified.JS_SUFFIXES):
+                continue
+            try:
+                bundle = path.read_text(encoding="utf-8", errors="ignore")
+            except Exception:
+                continue
+            if not minified.is_minified(path.name, bundle):
+                continue
         if path.suffix.lower() in SKIP_EXTS:
             continue
         if is_binary(path):
@@ -438,10 +452,25 @@ def scan_path(root: Path) -> Iterator[Finding]:
             continue
 
         lines = text.splitlines()
+        # A minified bundle is one long line with the crypto names shortened: split it into
+        # statements and put the names back. line_map keeps each statement's line in the file.
+        line_map = None
+        if path.suffix.lower() in minified.JS_SUFFIXES and minified.is_minified(path.name, text):
+            lines, line_map = minified.expand(text)
         consts = {**PROJECT_CONSTS, **_string_constants(lines), **_int_constants(lines)}
         aliases = _alias_map(lines)
-        for line_no, line in enumerate(lines, 1):
+        in_pem = False
+        for index, line in enumerate(lines):
+            line_no = line_map[index] if line_map else index + 1
             stripped = line.strip()
+            # The body of a PEM block is base64. Two letters of it can spell "DH"; they mean nothing.
+            if stripped.startswith("-----BEGIN "):
+                in_pem = True
+            elif stripped.startswith("-----END "):
+                in_pem = False
+                continue
+            elif in_pem and re.fullmatch(r"[A-Za-z0-9+/=]+", stripped):
+                continue
             # Skip pure comments and empty lines to reduce false positives
             # Do not skip PEM headers (-----BEGIN...)
             if not stripped:
@@ -607,7 +636,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         param = "SHA-256"
                     if family == "HMAC" and re.search(r"digestmod\s*=\s*[\"']sha1[\"']|hmac-sha1", expanded, re.I):
                         param = "SHA-1"
-                    param = params.refine(family, param or "", lines, line_no - 1)
+                    param = params.refine(family, param or "", lines, index)
                     yield Finding(
                         id="QCI-" + hashlib.sha256(f"{family}|{path.name}|{param}".encode()).hexdigest()[:12],
                         evidence_path=str(path.relative_to(root)),
