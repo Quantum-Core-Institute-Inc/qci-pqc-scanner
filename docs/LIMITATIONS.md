@@ -11,6 +11,7 @@ The 1.0 page is retired. This is the ceiling.
 
 ## Out of scope
 - Obfuscated or packed code
+- A name assembled at runtime: joined fragments, base64, or character codes. Tier 5.
 - A value that exists only at deploy time
 - Native binaries that link their crypto statically with symbols stripped, or reach it through another library (a program that uses libcurl, not libcrypto, imports nothing from OpenSSL)
 - Mach-O and PE binaries beyond their import tables; call-site parameters on architectures other than x86-64
