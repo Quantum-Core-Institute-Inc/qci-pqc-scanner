@@ -12,7 +12,6 @@ def test_policy_violation_exits_1(tmp_path):
     result = CliRunner().invoke(scan, [str(target), "--policy", str(pol), "--out", str(tmp_path / "out")])
     assert result.exit_code == 1
 
-@pytest.mark.xfail(reason='known gap, v2.3 review')
 def test_waived_finding_does_not_fail(tmp_path):
     target = tmp_path / "src"
     target.mkdir()

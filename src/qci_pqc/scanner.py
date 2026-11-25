@@ -58,7 +58,7 @@ PATTERNS = [
     (r"SecP384r1MLKEM1024|mlkem768x25519|sntrup761x25519", "Named-Hybrid", QuantumStatus.HYBRID, False, "kem"),
 
     (r"Cipher\.getInstance\s*\(\s*\"DESede", "3DES", QuantumStatus.WEAK, True, "encrypt"),
-    (r"hashes\.SHA1\b|SHA1\b", "SHA-1", QuantumStatus.WEAK, True, "hash"),
+    (r"hashes\.SHA1\b|SHA1\b|[\"']SHA-1[\"']", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"MessageDigest\.getInstance\s*\(\s*\"MD5", "MD5", QuantumStatus.WEAK, True, "hash"),
     (r"MessageDigest\.getInstance\s*\(\s*\"SHA-1", "SHA-1", QuantumStatus.WEAK, True, "hash"),
     (r"MessageDigest\.getInstance\s*\(\s*\"SHA-256", "SHA-256", QuantumStatus.SAFE_SYMMETRIC, False, "hash"),
@@ -543,11 +543,12 @@ def scan_path(root: Path) -> Iterator[Finding]:
                     )
                     if re.search(r"[\"'][^\"']*(?:DSA|DH|HMAC|SHA-?1|PBKDF2|ML-KEM|ML-DSA)", code_part, re.I):
                         is_use = re.search(
-                            r"getInstance|generate_|hmac\.new|hashlib|Mac\.|pbkdf2|createHash|createHmac|EVP_|mlkem.|KeyEncapsulation\s*\(|Signature\s*\(",
+                            r"getInstance|generate_|hmac\.new|hashlib|Mac\.|pbkdf2|createHash|createHmac|EVP_|mlkem.|KeyEncapsulation\s*\(|Signature\s*\(|[A-Z_]+\s*\(\s*[\"']",
                             code_part,
                             re.I,
                         )
-                        if not is_use and not algorithm_return:
+                        expanded_const = code_part != line
+                        if not is_use and not algorithm_return and not expanded_const:
                             continue
                     if status in (QuantumStatus.PQC, QuantumStatus.HYBRID):
                         low = code_part.lower().strip()
@@ -559,7 +560,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         if re.search(r"=\s*[\[{]\s*[\"']", code_part):
                             continue
                         if not algorithm_return and not any(
-                            tok in low for tok in ("import", "=", "(", "groups", "kexalgorithms", "ssl_ecdh", "algorithm:")
+                            tok in low for tok in ("import", "=", "(", "groups", "kexalgorithms", "ssl_ecdh", "algorithm:", "legacy", "current")
                         ):
                             continue
                         # Prefer the concrete level when the file names one.
