@@ -321,6 +321,8 @@ Also TLS and SSH configuration signals.
 
 ## Documentation
 
+- [How a finding is made](docs/HOW-A-FINDING.md). What is read, how a name becomes a finding, what is written.
+
 | Document | Contents |
 |----------|----------|
 | [docs/OPERATOR.md](docs/OPERATOR.md) | Operator & auditor guide, offline use, evidence handling |
