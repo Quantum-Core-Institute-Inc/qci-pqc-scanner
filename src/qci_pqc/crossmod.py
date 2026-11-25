@@ -10,7 +10,7 @@ from .coverage import is_binary
 def collect_constants(root: Path) -> dict[str, str]:
     constants = {}
     for path in root.rglob("*"):
-        if path.suffix not in {".py", ".java", ".go"}:
+        if path.suffix not in {".py", ".java", ".go", ".c", ".h", ".cs", ".js", ".ts"}:
             continue
         if is_binary(path):
             continue
@@ -25,6 +25,11 @@ def collect_constants(root: Path) -> dict[str, str]:
         except Exception:
             continue
         for m in re.finditer(r"([A-Z][A-Z0-9_]*)\s*=\s*[\"']([^\"']+)[\"']", text):
+            constants[m.group(1)] = m.group(2)
+        # C #define and JS/TS const
+        for m in re.finditer(r"#define\s+([A-Z][A-Z0-9_]*)\s+[\"']([^\"']+)[\"']", text):
+            constants[m.group(1)] = m.group(2)
+        for m in re.finditer(r"(?:const|let)\s+([A-Z][A-Z0-9_]*)\s*=\s*[\"']([^\"']+)[\"']", text):
             constants[m.group(1)] = m.group(2)
     return constants
 
