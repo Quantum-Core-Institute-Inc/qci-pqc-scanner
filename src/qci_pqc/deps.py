@@ -12,7 +12,7 @@ from .models import Finding, QuantumStatus
 
 # pattern, canonical name, purl type, min pqc version or None
 LIBS = [
-    (r"cryptography\s*[=<>~!]*\s*([\d.]+)?", "cryptography", "pypi", "48.0"),
+    (r"cryptography\s*[=<>~!]*\s*([\d.]+)?|name = \"cryptography\".*?version = \"([\d.]+)\"", "cryptography", "pypi", "48.0"),
     (r"pycryptodome\s*[=<>~!]*\s*([\d.]+)?", "pycryptodome", "pypi", None),
     (r"pyopenssl\s*[=<>~!]*\s*([\d.]+)?", "pyopenssl", "pypi", None),
     (r"pyjwt\s*[=<>~!]*\s*([\d.]+)?", "pyjwt", "pypi", None),
