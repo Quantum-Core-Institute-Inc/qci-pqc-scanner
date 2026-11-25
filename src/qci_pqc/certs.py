@@ -183,6 +183,54 @@ def _key_finding(rel: str, family: str, note: str) -> Finding:
     )
 
 
+# SPKI OIDs the cryptography library does not load. LMS and XMSS public keys are
+# SubjectPublicKeyInfo with only the OID; load_pem_public_key raises on them.
+_SPKI_OID_FAMILY = {
+    "1.2.840.113549.1.9.16.3.17": "LMS",   # HSS/LMS (RFC 8708)
+    "1.3.6.1.5.5.7.6.34": "XMSS",          # XMSS (RFC 8708)
+    "0.4.0.127.0.15.1.1.13.0": "XMSS",     # XMSS (BSI)
+}
+
+
+def _spki_oid(data: bytes) -> str | None:
+    """The algorithm OID of a PEM SubjectPublicKeyInfo, or None."""
+    import base64
+    import re
+    m = re.search(rb"-----BEGIN PUBLIC KEY-----\s*(.+?)\s*-----END PUBLIC KEY-----", data, re.S)
+    if not m:
+        return None
+    try:
+        der = base64.b64decode(re.sub(rb"\s", b"", m.group(1)))
+    except Exception:
+        return None
+    # SEQUENCE { SEQUENCE { OID ... } BIT STRING }
+    if len(der) < 4 or der[0] != 0x30:
+        return None
+    i = 2
+    if der[1] & 0x80:
+        i = 2 + (der[1] & 0x7f)
+    if i >= len(der) or der[i] != 0x30:
+        return None
+    i += 2
+    if der[i - 1] & 0x80:
+        i += der[i - 1] & 0x7f
+    if i >= len(der) or der[i] != 0x06:
+        return None
+    n = der[i + 1]
+    raw = der[i + 2:i + 2 + n]
+    # Decode OID
+    if not raw:
+        return None
+    parts = [raw[0] // 40, raw[0] % 40]
+    val = 0
+    for b in raw[1:]:
+        val = (val << 7) | (b & 0x7f)
+        if not (b & 0x80):
+            parts.append(val)
+            val = 0
+    return ".".join(str(p) for p in parts)
+
+
 def _parse_pkcs8(data: bytes, rel: str):
     from cryptography.hazmat.primitives.serialization import load_pem_private_key, load_pem_public_key
     key = None
@@ -192,7 +240,23 @@ def _parse_pkcs8(data: bytes, rel: str):
         try:
             key = load_pem_public_key(data)
         except Exception:
-            return None
+            oid = _spki_oid(data)
+            family = _SPKI_OID_FAMILY.get(oid) if oid else None
+            if not family:
+                return None
+            return Finding(
+                id=f"KEY-{rel}-{family}",
+                evidence_path=rel,
+                evidence_line=1,
+                evidence_snippet=f"{family} SPKI OID {oid}",
+                family=family,
+                quantum_status=QuantumStatus.PQC,
+                role="key",
+                source_scanner="qci-x509",
+                confidence=0.95,
+                notes=f"SubjectPublicKeyInfo OID {oid} ({family})",
+                parameter_set="",
+            )
     name = type(key).__name__.upper()
     if "MLDSA44" in name or "ML-DSA-44" in name:
         family, status = "ML-DSA-44", QuantumStatus.PQC
