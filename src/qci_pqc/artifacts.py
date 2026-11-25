@@ -457,7 +457,12 @@ def scan_artifacts(root: Path) -> list[Finding]:
                 # An ELF file is read for what it imports and links; anything else falls back to
                 # long algorithm names among its printable strings.
                 elf = elf_findings(path, root)
-                findings.extend(elf if elf is not None else scan_binary_strings(path, root))
+                if elf is None:
+                    findings.extend(scan_binary_strings(path, root))
+                else:
+                    findings.extend(elf)
+                    if not elf:
+                        skip(str(path.relative_to(root)), "binary: no symbol evidence")
             continue
         rel = str(path.relative_to(root))
         try:
