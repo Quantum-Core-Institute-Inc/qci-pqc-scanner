@@ -267,6 +267,11 @@ PATTERNS = [
     (r"\bml-?dsa\b|\bmldsa\b|\bdilithium\b", "ML-DSA", QuantumStatus.PQC, False, "sign"),
     # SLH-DSA (FIPS 205, formerly SPHINCS+)
     (r"\bslh-?dsa\b|\bslhdsa\b|\bsphincs\+?\b|slhdsa_", "SLH-DSA", QuantumStatus.PQC, False, "sign"),
+    # Config lines the residual misses named.
+    (r"HostKeyAlgorithms\s+.*ssh-rsa|default_bits\s*=\s*1024", "RSA", QuantumStatus.VULNERABLE, False, "config"),
+    (r"default_md\s*=\s*sha1", "SHA-1", QuantumStatus.WEAK, True, "hash"),
+    (r"ike=3des|3des-sha1", "3DES", QuantumStatus.WEAK, True, "cipher"),
+
     # LMS and XMSS: stateful hash-based signatures, used for firmware.
     (r"\bLMS(?:[_-]|\b)|lms_verify|LMSigParameters|LMOTS_", "LMS", QuantumStatus.PQC, False, "sign"),
     (r"\bXMSS(?:[_-]|\b)|XMSSParameterSpec", "XMSS", QuantumStatus.PQC, False, "sign"),
