@@ -267,6 +267,9 @@ PATTERNS = [
     (r"\bml-?dsa\b|\bmldsa\b|\bdilithium\b", "ML-DSA", QuantumStatus.PQC, False, "sign"),
     # SLH-DSA (FIPS 205, formerly SPHINCS+)
     (r"\bslh-?dsa\b|\bslhdsa\b|\bsphincs\+?\b|slhdsa_", "SLH-DSA", QuantumStatus.PQC, False, "sign"),
+    # LMS and XMSS: stateful hash-based signatures, used for firmware.
+    (r"\bLMS(?:[_-]|\b)|lms_verify|LMSigParameters|LMOTS_", "LMS", QuantumStatus.PQC, False, "sign"),
+    (r"\bXMSS(?:[_-]|\b)|XMSSParameterSpec", "XMSS", QuantumStatus.PQC, False, "sign"),
     # FN-DSA (FIPS 206 draft, formerly Falcon)
     (r"\bfn-?dsa\b|\bfalcon\b", "FN-DSA", QuantumStatus.PQC, False, "sign"),
     # Other candidates / backups
@@ -556,7 +559,7 @@ def scan_path(root: Path) -> Iterator[Finding]:
                         if re.search(r"=\s*[\[{]\s*[\"']", code_part):
                             continue
                         if not algorithm_return and not any(
-                            tok in low for tok in ("import", "=", "(", "groups", "kexalgorithms", "ssl_ecdh")
+                            tok in low for tok in ("import", "=", "(", "groups", "kexalgorithms", "ssl_ecdh", "algorithm:")
                         ):
                             continue
                         # Prefer the concrete level when the file names one.
