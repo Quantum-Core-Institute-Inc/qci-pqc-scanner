@@ -7,7 +7,9 @@
 [![Python 3.10+](https://img.shields.io/badge/python-3.10+-blue.svg)](https://www.python.org/downloads/)
 [![CycloneDX 1.6](https://img.shields.io/badge/CycloneDX-1.6-green.svg)](https://cyclonedx.org/)
 
-**Version:** 2.3.4.5
+**Version:** 2.3.4.6
+
+**2.3.4.6** reads dependency versions from lockfiles, detects LMS and XMSS, and states when key exchange and signatures differ. A waiver key matches. Release notes: [RELEASE-2.3.4.6.md](RELEASE-2.3.4.6.md).
 
 **2.3.4.5** reads compiled and minified code instead of skipping it: minified JavaScript, Java class files and archives, and native ELF binaries. It also carries the TLS cipher-suite work of 2.3.4.4, which was never tagged. Release notes: [RELEASE-2.3.4.5.md](RELEASE-2.3.4.5.md).
 
@@ -365,6 +367,7 @@ This project is an independent implementation.
 
 | Version | Summary |
 |---|---|
+| 2.3.4.6 | Versions from lockfiles. LMS and XMSS. Role summary. |
 | 2.3.4.5 | Minified JavaScript, compiled Java and native binaries read instead of skipped. |
 | 2.3.4.4 | Not tagged. TLS cipher suites reported one by one. Protocol versions from more servers and languages. |
 | 2.3.4.3 | File-wide parameter search removed. |
