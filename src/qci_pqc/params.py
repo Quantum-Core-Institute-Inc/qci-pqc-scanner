@@ -59,6 +59,8 @@ _SIZE_SITE_RE = [re.compile(p) for p in _SIZE_SITES]
 _NAMED_SIZE_RE = re.compile(r"modp(\d{1,2})\b|ffdhe(\d{4})\b|\bL(\d{4})N\d{3}\b|group(\d{1,2})[-_]sha", re.I)
 _PQ_LEVEL_RE = {"ML-KEM": re.compile(r"ML[-_]?KEM[-_]?(512|768|1024)(?![0-9])|Kyber(512|768|1024)", re.I),
                 "ML-DSA": re.compile(r"ML[-_]?DSA[-_]?(44|65|87)(?![0-9])", re.I)}
+_SLH_PARAM_RE = re.compile(
+    r"\b(?:SLH[-_]?DSA|SPHINCS\+?)[-_](SHA2|SHAKE)[-_]?(128|192|256)([sf])\b", re.I)
 
 _KEY_BYTES_RE = re.compile(
     r"(?:urandom|token_bytes|get_random_bytes|randomBytes|GetBytes|random_bytes|RAND_bytes|make\(\s*\[\]byte\s*,|"
@@ -411,6 +413,11 @@ def refine(family: str, param: str, lines: list[str], idx: int) -> str:
     if fam in _PQ_LEVEL_RE:
         level = near(lambda s: {next(g for g in m.groups() if g) for m in _PQ_LEVEL_RE[fam].finditer(s)})
         return f"{fam}-{level}" if level else given
+
+    if fam == "SLH-DSA":
+        match = _SLH_PARAM_RE.search(stmt)
+        if match:
+            return f"{match.group(1).upper()}-{match.group(2)}{match.group(3).lower()}"
 
     if fam == "AES" or fam.startswith("AES-"):
         size = next((p for p in param.split("-") if p in ("128", "192", "256")), "")
