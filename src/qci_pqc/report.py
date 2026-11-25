@@ -277,6 +277,30 @@ def to_sarif(inv: Inventory) -> dict:
     }
 
 
+
+def role_summary(inv) -> str:
+    """One line: key establishment and signatures, and whether they differ."""
+    kex, sig = [], []
+    for f in inv.findings:
+        r = (f.role or "").lower()
+        if r in ("kex", "kem"):
+            kex.append(f)
+        elif r in ("sign", "signature"):
+            sig.append(f)
+    def names(fs):
+        return ", ".join(sorted({f.family for f in fs})) or "none"
+    def status(fs):
+        if any(f.quantum_status.value == "hybrid" for f in fs):
+            return "hybrid"
+        if any(f.quantum_status.value == "pqc" for f in fs):
+            return "post-quantum"
+        if fs:
+            return "classical"
+        return "not found"
+    differ = status(kex) != status(sig) and (kex or sig)
+    flag = " The two roles differ." if differ else ""
+    return f"Key establishment: {status(kex)} ({names(kex)}). Signatures: {status(sig)} ({names(sig)}).{flag}"
+
 def to_html(inv: Inventory) -> str:
     """Self-contained HTML report."""
     findings_rows = ""
@@ -427,7 +451,7 @@ code {{ background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }}
   <p>Scanners: {', '.join(inv.scanners_used) or 'qci-pattern'}</p>
   <p>Readiness Score: <span class="score">{"not scored" if inv.readiness_score is None else inv.readiness_score}</span> / 100</p>
 
-  <h2>Coverage</h2>\n<p>Files read: {getattr(inv, 'scan_coverage', {}).get('files_read', 0)}. Skipped: {len(getattr(inv, 'scan_coverage', {}).get('skipped', []))}.</p>\n<h2>Artifact score</h2>\n<p>Separate from source. Not blended.</p>\n<h2>Score Breakdown</h2>
+  <h2>Roles</h2>\n<p>{html.escape(role_summary(inv))}</p>\n<h2>Coverage</h2>\n<p>Files read: {getattr(inv, 'scan_coverage', {}).get('files_read', 0)}. Skipped: {len(getattr(inv, 'scan_coverage', {}).get('skipped', []))}.</p>\n<h2>Artifact score</h2>\n<p>Separate from source. Not blended.</p>\n<h2>Score Breakdown</h2>
   {breakdown_html}
 
   {policy_html}
