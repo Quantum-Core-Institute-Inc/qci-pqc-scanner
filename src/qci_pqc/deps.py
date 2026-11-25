@@ -41,13 +41,14 @@ LIBS = [
 
 DEP_FILES = {
     "requirements.txt", "pyproject.toml", "package.json", "package-lock.json",
-    "go.mod", "pom.xml", "build.gradle", "build.gradle.kts", "conanfile.txt",
-    "CMakeLists.txt",
+    "go.mod", "go.sum", "pom.xml", "build.gradle", "build.gradle.kts", "conanfile.txt",
+    "CMakeLists.txt", "poetry.lock", "Cargo.lock",
 }
 
 
 def _ver(m) -> str:
-    return next((g for g in m.groups() if g), "") or ""
+    raw = next((g for g in m.groups() if g), "") or ""
+    return raw.lstrip("^~>=<!")
 
 
 def scan_dependencies(root: Path) -> list[Finding]:
